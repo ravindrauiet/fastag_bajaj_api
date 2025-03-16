@@ -22,7 +22,7 @@ const BarcodeScannerScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.errorContainer}>
-        <Icon name="barcode-scan" size={60} color="#A52A2A" />
+        <Icon name="barcode-scan" size={60} color="#333333" />
         <Text style={styles.errorTitle}>Barcode Scanner Temporarily Unavailable</Text>
         <Text style={styles.errorMessage}>
           The barcode scanner functionality has been temporarily disabled due to a native module issue.
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   button: {
-    backgroundColor: '#A52A2A',
+    backgroundColor: '#333333',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,

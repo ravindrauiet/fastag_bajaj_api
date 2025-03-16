@@ -7,11 +7,9 @@ import {
   ScrollView, 
   SafeAreaView, 
   StatusBar, 
-  TextInput, 
-  Alert, 
-  Modal, 
+  TextInput,
+  Alert,
   Animated,
-  Image,
   Switch,
   ActivityIndicator
 } from 'react-native';
@@ -24,6 +22,9 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
   // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
+  const [fadeOutAnim] = useState(new Animated.Value(1));
+  const [slideUpAnim] = useState(new Animated.Value(0));
+  const [paymentOptionsAnim] = useState(new Animated.Value(50));
   
   // Payment state
   const [amount, setAmount] = useState('');
@@ -31,17 +32,21 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCommercialVehicle, setIsCommercialVehicle] = useState(false);
   const [selectedProductOption, setSelectedProductOption] = useState('option1');
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  
+  // Generated fastag ID
+  const [fastagId, setFastagId] = useState('');
+  
+  // Scroll view reference
+  const scrollViewRef = useRef(null);
   
   const productOptions = [
     { id: 'option1', name: 'Basic FASTag', price: 500, description: 'Standard FASTag with basic features' },
     { id: 'option2', name: 'Premium FASTag', price: 750, description: 'Premium FASTag with enhanced features' },
     { id: 'option3', name: 'Commercial FASTag', price: 1000, description: 'Designed for commercial vehicles' }
   ];
-  
-  // Calculate total amount
-  useEffect(() => {
-    calculateTotalAmount();
-  }, [selectedProductOption, isCommercialVehicle]);
   
   // Start animations when component mounts
   useEffect(() => {
@@ -58,6 +63,11 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
       })
     ]).start();
   }, []);
+  
+  // Calculate total amount
+  useEffect(() => {
+    calculateTotalAmount();
+  }, [selectedProductOption, isCommercialVehicle]);
   
   const calculateTotalAmount = () => {
     // Find selected product
@@ -77,6 +87,17 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
     
     setAmount(total.toString());
   };
+  
+  // Payment breakdown data
+  const paymentBreakdown = [
+    { label: 'Tag Insurance Fee', value: 100 },
+    { label: 'Security Deposit', value: 0 },
+    { label: 'Minimum Balance', value: 150 },
+    { label: 'First Recharge', value: 0 },
+  ];
+  
+  // Calculate breakdown total amount
+  const breakdownTotal = paymentBreakdown.reduce((sum, item) => sum + item.value, 0);
   
   const handleScanBarcode = () => {
     // Simulate barcode scanning
@@ -116,26 +137,71 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
     setTimeout(() => {
       setIsProcessing(false);
       
-      // Show success message
-      Alert.alert(
-        'Payment Successful',
-        'Your FASTag has been activated successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate back to home screen and reset the navigation stack
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: 'HomeScreen' }],
-                })
-              );
-            },
-          },
-        ]
-      );
-    }, 2000);
+      // Show payment options and scroll to it
+      setShowPaymentOptions(true);
+      
+      // Animate slide out of form and slide in of payment options
+      Animated.parallel([
+        // Fade out and slide up the form
+        Animated.timing(fadeOutAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideUpAnim, {
+          toValue: -50,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        
+        // Slide in the payment options
+        Animated.spring(paymentOptionsAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        })
+      ]).start();
+      
+      // Scroll to the payment options section
+      setTimeout(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: 0, animated: true });
+        }
+      }, 100);
+      
+    }, 1500);
+  };
+  
+  const handlePaymentOptions = () => {
+    // Show payment options instead of alert
+    setShowPaymentOptions(true);
+  };
+  
+  const handleBackToForm = () => {
+    // Animate back to the form
+    Animated.parallel([
+      // Fade in and slide down the form
+      Animated.timing(fadeOutAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideUpAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      
+      // Slide out the payment options
+      Animated.timing(paymentOptionsAnim, {
+        toValue: 50,
+        duration: 300,
+        useNativeDriver: true,
+      })
+    ]).start(() => {
+      setShowPaymentOptions(false);
+    });
   };
   
   const handleProductOptionSelect = (option) => {
@@ -144,6 +210,31 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
   
   const handleCommercialVehicleToggle = () => {
     setIsCommercialVehicle(!isCommercialVehicle);
+  };
+  
+  const handlePayment = (method) => {
+    setPaymentMethod(method);
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    setTimeout(() => {
+      setIsProcessing(false);
+      setPaymentComplete(true);
+      
+      // Generate random FASTag ID
+      const randomId = Math.floor(10000000000 + Math.random() * 90000000000);
+      setFastagId(`34161FAB${randomId.toString().substring(0, 10)}`);
+    }, 1500);
+  };
+  
+  const handleComplete = () => {
+    // Navigate back to home screen and reset the navigation stack
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'HomeScreen' }],
+      })
+    );
   };
   
   return (
@@ -159,166 +250,303 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
         <View style={{ width: 40 }} />
       </View>
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View 
-          style={[
-            styles.formContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.title}>Payment Details</Text>
-          <Text style={styles.subtitle}>Confirm your payment details</Text>
-          
-          {/* Product Options */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Select Product</Text>
-            
-            {productOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  styles.productOption,
-                  selectedProductOption === option.id && styles.selectedProductOption
-                ]}
-                onPress={() => handleProductOptionSelect(option.id)}
-              >
-                <View style={styles.productOptionHeader}>
-                  <View style={styles.radioButton}>
-                    {selectedProductOption === option.id && (
-                      <View style={styles.radioButtonInner} />
-                    )}
-                  </View>
-                  <Text style={styles.productName}>{option.name}</Text>
-                  <Text style={styles.productPrice}>₹{option.price}</Text>
-                </View>
-                <Text style={styles.productDescription}>{option.description}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          {/* Commercial Vehicle Toggle */}
-          <View style={styles.toggleContainer}>
-            <View style={styles.toggleTextContainer}>
-              <Text style={styles.toggleLabel}>Commercial Vehicle</Text>
-              <Text style={styles.toggleDescription}>Additional charges apply for commercial vehicles</Text>
-            </View>
-            <Switch
-              trackColor={{ false: '#D3D3D3', true: '#86939e' }}
-              thumbColor={isCommercialVehicle ? '#333333' : '#f4f3f4'}
-              ios_backgroundColor="#D3D3D3"
-              onValueChange={handleCommercialVehicleToggle}
-              value={isCommercialVehicle}
-            />
-          </View>
-          
-          {/* Barcode Section */}
-          <View style={styles.barcodeContainer}>
-            <Text style={styles.sectionTitle}>Scan Barcode</Text>
-            <View style={styles.scanFrame}>
-              <Text style={styles.scanText}>
-                {scannedBarcode ? scannedBarcode : 'No barcode scanned yet'}
-              </Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.scanButton} 
-              onPress={handleScanBarcode}
-              activeOpacity={0.8}
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+      >
+        {!paymentComplete ? (
+          <>
+            {/* Original Payment Details */}
+            <Animated.View 
+              style={[
+                styles.formContainer,
+                showPaymentOptions ? {
+                  opacity: fadeOutAnim,
+                  transform: [{ translateY: slideUpAnim }],
+                } : {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }]
+                },
+                showPaymentOptions && styles.collapsedContainer
+              ]}
             >
-              <Icon name="barcode-scan" size={20} color="#FFFFFF" />
-              <Text style={styles.scanButtonText}>Scan Barcode</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Payment Amount */}
-          <View style={styles.amountContainer}>
-            <Text style={styles.sectionTitle}>Payment Amount</Text>
-            <View style={styles.amountInputContainer}>
-              <Text style={styles.currencySymbol}>₹</Text>
-              <TextInput
-                style={styles.amountInput}
-                placeholder="0.00"
-                value={amount}
-                onChangeText={handleAmountChange}
-                keyboardType="numeric"
-                editable={false}
-              />
-            </View>
-          </View>
-          
-          {/* Payment Summary */}
-          <View style={styles.summaryContainer}>
-            <Text style={styles.summaryTitle}>Summary</Text>
-            
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Selected Product:</Text>
-              <Text style={styles.summaryValue}>
-                {productOptions.find(p => p.id === selectedProductOption)?.name}
-              </Text>
-            </View>
-            
-            {selectedProducts && selectedProducts.length > 0 && (
-              <View style={styles.addOnsContainer}>
-                <Text style={styles.addOnsTitle}>Add-ons:</Text>
-                {selectedProducts.map((product, index) => (
-                  <View key={index} style={styles.summaryRow}>
-                    <Text style={styles.addOnLabel}>{product.name}</Text>
-                    <Text style={styles.addOnValue}>₹{product.price}</Text>
-                  </View>
+              <Text style={styles.title}>Payment Details</Text>
+              <Text style={styles.subtitle}>Confirm your payment details</Text>
+              
+              {/* Product Options */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Select Product</Text>
+                
+                {productOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.productOption,
+                      selectedProductOption === option.id && styles.selectedProductOption
+                    ]}
+                    onPress={() => handleProductOptionSelect(option.id)}
+                  >
+                    <View style={styles.productOptionHeader}>
+                      <View style={styles.radioButton}>
+                        {selectedProductOption === option.id && (
+                          <View style={styles.radioButtonInner} />
+                        )}
+                      </View>
+                      <Text style={styles.productName}>{option.name}</Text>
+                      <Text style={styles.productPrice}>₹{option.price}</Text>
+                    </View>
+                    <Text style={styles.productDescription}>{option.description}</Text>
+                  </TouchableOpacity>
                 ))}
               </View>
-            )}
-            
-            {isCommercialVehicle && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Commercial Vehicle Fee:</Text>
-                <Text style={styles.summaryValue}>₹200</Text>
+              
+              {/* Commercial Vehicle Toggle */}
+              <View style={styles.toggleContainer}>
+                <View style={styles.toggleTextContainer}>
+                  <Text style={styles.toggleLabel}>Commercial Vehicle</Text>
+                  <Text style={styles.toggleDescription}>Additional charges apply for commercial vehicles</Text>
+                </View>
+                <Switch
+                  trackColor={{ false: '#D3D3D3', true: '#86939e' }}
+                  thumbColor={isCommercialVehicle ? '#333333' : '#f4f3f4'}
+                  ios_backgroundColor="#D3D3D3"
+                  onValueChange={handleCommercialVehicleToggle}
+                  value={isCommercialVehicle}
+                />
               </View>
+              
+              {/* Barcode Section */}
+              <View style={styles.barcodeContainer}>
+                <Text style={styles.sectionTitle}>Scan Barcode</Text>
+                <View style={styles.scanFrame}>
+                  <Text style={styles.scanText}>
+                    {scannedBarcode ? scannedBarcode : 'No barcode scanned yet'}
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.scanButton} 
+                  onPress={handleScanBarcode}
+                  activeOpacity={0.8}
+                >
+                  <Icon name="barcode-scan" size={20} color="#FFFFFF" />
+                  <Text style={styles.scanButtonText}>Scan Barcode</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Payment Amount */}
+              <View style={styles.amountContainer}>
+                <Text style={styles.sectionTitle}>Payment Amount</Text>
+                <View style={styles.amountInputContainer}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="0.00"
+                    value={amount}
+                    onChangeText={handleAmountChange}
+                    keyboardType="numeric"
+                    editable={false}
+                  />
+                </View>
+              </View>
+              
+              {/* Payment Summary */}
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryTitle}>Summary</Text>
+                
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Selected Product:</Text>
+                  <Text style={styles.summaryValue}>
+                    {productOptions.find(p => p.id === selectedProductOption)?.name}
+                  </Text>
+                </View>
+                
+                {selectedProducts && selectedProducts.length > 0 && (
+                  <View style={styles.addOnsContainer}>
+                    <Text style={styles.addOnsTitle}>Add-ons:</Text>
+                    {selectedProducts.map((product, index) => (
+                      <View key={index} style={styles.summaryRow}>
+                        <Text style={styles.addOnLabel}>{product.name}</Text>
+                        <Text style={styles.addOnValue}>₹{product.price}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                
+                {isCommercialVehicle && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Commercial Vehicle Fee:</Text>
+                    <Text style={styles.summaryValue}>₹200</Text>
+                  </View>
+                )}
+                
+                <View style={styles.divider} />
+                
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Total Amount:</Text>
+                  <Text style={styles.totalValue}>₹{amount}</Text>
+                </View>
+              </View>
+              
+              {/* User Information Summary */}
+              <View style={styles.userSummaryContainer}>
+                <Text style={styles.summaryTitle}>User Information</Text>
+                
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Name:</Text>
+                  <Text style={styles.summaryValue}>
+                    {userDetails?.firstName} {userDetails?.lastName}
+                  </Text>
+                </View>
+                
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Vehicle:</Text>
+                  <Text style={styles.summaryValue}>{vehicleDetails?.vehicleNo}</Text>
+                </View>
+              </View>
+            </Animated.View>
+            
+            {/* Original Confirm Button */}
+            {!showPaymentOptions && (
+              <TouchableOpacity 
+                style={[styles.confirmButton, isProcessing && styles.disabledButton]} 
+                onPress={handleConfirmPayment}
+                disabled={isProcessing}
+                activeOpacity={0.8}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>Confirm Payment</Text>
+                )}
+              </TouchableOpacity>
             )}
             
-            <View style={styles.divider} />
+            {/* New Payment Options Section */}
+            {showPaymentOptions && (
+              <Animated.View 
+                style={[
+                  styles.paymentOptionsContainer,
+                  {
+                    opacity: fadeAnim,
+                    transform: [{ translateY: paymentOptionsAnim }]
+                  }
+                ]}
+              >
+                <View style={styles.paymentOptionsHeader}>
+                  <TouchableOpacity 
+                    style={styles.backToFormButton}
+                    onPress={handleBackToForm}
+                  >
+                    <Text style={styles.backToFormText}>←</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.paymentOptionsTitle}>Complete Payment</Text>
+                </View>
+                {/* Payment Breakdown Section */}
+                <Text style={styles.breakdownTitle}>Payment breakdown</Text>
+                
+                {paymentBreakdown.map((item, index) => (
+                  <View key={index} style={styles.breakdownRow}>
+                    <Text style={styles.breakdownLabel}>{item.label}</Text>
+                    <Text style={styles.breakdownValue}>₹ {item.value}</Text>
+                  </View>
+                ))}
+                
+                <View style={styles.divider} />
+                
+                {/* Final Amount */}
+                <View style={styles.finalAmountContainer}>
+                  <Text style={styles.finalAmountLabel}>Final amount</Text>
+                  <View style={styles.finalAmountBadge}>
+                    <Text style={styles.finalAmountValue}>₹ {breakdownTotal}</Text>
+                  </View>
+                </View>
+                
+                {/* Payment Buttons */}
+                <View style={styles.paymentButtonsContainer}>
+                  <TouchableOpacity 
+                    style={[styles.paymentButton, styles.upiButton]} 
+                    onPress={() => handlePayment('UPI')}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing && paymentMethod === 'UPI' ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.paymentButtonText}>Paid via UPI</Text>
+                    )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.paymentButton, styles.cashButton]} 
+                    onPress={() => handlePayment('Cash')}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing && paymentMethod === 'Cash' ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.paymentButtonText}>Paid by Cash</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            )}
             
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total Amount:</Text>
-              <Text style={styles.totalValue}>₹{amount}</Text>
+            <View style={{ height: 20 }} />
+          </>
+        ) : (
+          /* Success Message and Details */
+          <Animated.View 
+            style={[
+              styles.formContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <View style={styles.successContainer}>
+              <View style={styles.successHeader}>
+                <Text style={styles.successMessage}>FASTag has been issued successfully!</Text>
+                <View style={styles.completeBadge}>
+                  <Text style={styles.completeText}>COMPLETE</Text>
+                </View>
+              </View>
+              
+              <View style={styles.fastagDetailsCard}>
+                <View style={styles.detailRow}>
+                  <View style={styles.detailColumn}>
+                    <Text style={styles.detailLabel}>FASTAG ID</Text>
+                    <Text style={styles.detailValue}>{fastagId}</Text>
+                  </View>
+                  <View style={styles.detailColumn}>
+                    <Text style={styles.detailLabel}>VEHICLE NO.</Text>
+                    <Text style={styles.detailValue}>{vehicleDetails?.vehicleNo || 'MH02FU6974'}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <View style={styles.detailColumn}>
+                    <Text style={styles.detailLabel}>MOBILE NUMBER</Text>
+                    <Text style={styles.detailValue}>
+                      {userDetails?.mobile || vehicleDetails?.vrnMobileNo || '8435120730'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailColumn}>
+                    <Text style={styles.detailLabel}>KYC STATUS</Text>
+                    <Text style={styles.detailValue}>Min KYC</Text>
+                  </View>
+                </View>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.completeButton} 
+                onPress={handleComplete}
+              >
+                <Text style={styles.completeButtonText}>Back to Home</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-          
-          {/* User Information Summary */}
-          <View style={styles.userSummaryContainer}>
-            <Text style={styles.summaryTitle}>User Information</Text>
-            
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Name:</Text>
-              <Text style={styles.summaryValue}>
-                {userDetails?.firstName} {userDetails?.lastName}
-              </Text>
-            </View>
-            
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Vehicle:</Text>
-              <Text style={styles.summaryValue}>{vehicleDetails?.vehicleNo}</Text>
-            </View>
-          </View>
-        </Animated.View>
-        
-        {/* Confirm Payment Button */}
-        <TouchableOpacity 
-          style={[styles.confirmButton, isProcessing && styles.disabledButton]} 
-          onPress={handleConfirmPayment}
-          disabled={isProcessing}
-          activeOpacity={0.8}
-        >
-          {isProcessing ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <Text style={styles.confirmButtonText}>Confirm Payment</Text>
-          )}
-        </TouchableOpacity>
-        
-        <View style={{ height: 20 }} />
+          </Animated.View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -327,7 +555,7 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F8F8',
   },
   header: {
     backgroundColor: '#333333',
@@ -557,11 +785,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333333',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#EEEEEE',
-    marginVertical: 8,
-  },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -596,7 +819,197 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: '#9e9e9e',
-  }
+  },
+  // New payment options styles
+  paymentOptionsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  paymentOptionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+    paddingBottom: 16,
+    marginBottom: 16,
+  },
+  paymentOptionsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333333',
+    flex: 1,
+  },
+  backToFormButton: {
+    paddingRight: 12,
+  },
+  backToFormText: {
+    fontSize: 20,
+    color: '#333333',
+  },
+  breakdownTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 16,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  breakdownLabel: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  breakdownValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333333',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#EEEEEE',
+    marginVertical: 16,
+  },
+  finalAmountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  finalAmountLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  finalAmountBadge: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  finalAmountValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  paymentButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+  },
+  paymentButton: {
+    flex: 1,
+    borderRadius: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 8,
+  },
+  upiButton: {
+    backgroundColor: '#333333',
+  },
+  cashButton: {
+    backgroundColor: '#333333',
+  },
+  paymentButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // Success UI styles
+  successContainer: {
+    marginTop: 24,
+  },
+  successHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  successMessage: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    flex: 1,
+  },
+  completeBadge: {
+    backgroundColor: '#007F56',
+    borderRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  completeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  fastagDetailsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  detailColumn: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#777777',
+    marginBottom: 4,
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  completeButton: {
+    backgroundColor: '#333333',
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 24,
+  },
+  completeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  collapsedContainer: {
+    maxHeight: 0,
+    overflow: 'hidden',
+    padding: 0,
+    margin: 0,
+    borderWidth: 0,
+  },
 });
 
 export default ConfirmPaymentScreen; 

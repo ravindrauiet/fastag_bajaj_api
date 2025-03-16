@@ -206,7 +206,7 @@ const OtpVerificationScreen = ({ route, navigation }) => {
                   onKeyPress={(e) => handleKeyPress(index, e)}
                   keyboardType="number-pad"
                   maxLength={1}
-                  selectionColor="#A52A2A"
+                  selectionColor="#333333"
                 />
               ))}
             </View>
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
   },
   header: {
-    backgroundColor: '#A52A2A',
+    backgroundColor: '#333333',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -382,8 +382,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   otpInputFilled: {
-    borderColor: '#A52A2A',
-    backgroundColor: '#FFF8F8',
+    borderColor: '#333333',
+    backgroundColor: '#F5F5F5',
   },
   otpInfo: {
     fontSize: 14,
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   resendButton: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#A52A2A',
+    color: '#333333',
   },
   resendButtonDisabled: {
     color: '#999999',
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderWidth: 2,
-    borderColor: '#A52A2A',
+    borderColor: '#333333',
     borderRadius: 4,
     marginRight: 12,
     justifyContent: 'center',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   checkboxChecked: {
-    backgroundColor: '#A52A2A',
+    backgroundColor: '#333333',
   },
   termsTextContainer: {
     flex: 1,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   termsLink: {
-    color: '#A52A2A',
+    color: '#333333',
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   verifyButton: {
-    backgroundColor: '#A52A2A',
+    backgroundColor: '#333333',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
