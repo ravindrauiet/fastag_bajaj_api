@@ -111,11 +111,11 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
           return;
         }
 
-        // Launch camera
+        // Launch camera with simplified options
         const result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          quality: 0.8,
+          mediaTypes: "images",
+          allowsEditing: false, // Disable editing to prevent issues
+          quality: 0.5, // Lower quality to avoid memory issues
         });
 
         if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -132,7 +132,7 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
 
         // Launch image picker
         const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: "images",
           allowsEditing: true,
           quality: 0.8,
         });
@@ -145,7 +145,8 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
       // Close the modal
       setShowImageOptions(false);
     } catch (error) {
-      Alert.alert('Error', 'Failed to process image: ' + error.message);
+      console.log('Image selection error:', error);
+      Alert.alert('Error', 'Failed to process image. Please try again.');
       setShowImageOptions(false);
     }
   };

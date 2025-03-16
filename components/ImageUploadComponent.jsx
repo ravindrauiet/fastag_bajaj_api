@@ -54,18 +54,33 @@ const ImageUploadComponent = ({
         return;
       }
 
-      // Launch camera
+      // Launch camera with reduced quality and no editing
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-        base64: true,
+        mediaTypes: "images",
+        allowsEditing: false, // Set to false to prevent editing issues
+        quality: 0.5, // Reduce quality to avoid memory issues
+        base64: false, // Set to false initially
       });
 
-      processImageResult(result);
-    } catch (error) {
+      // Handle the result safely
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        setImage(selectedAsset.uri);
+        
+        // Get base64 in a separate step if needed
+        if (onImageSelected) {
+          onImageSelected({
+            uri: selectedAsset.uri,
+            type: 'image/jpeg',
+            name: 'image.jpg'
+          });
+        }
+      }
       setLoading(false);
-      Alert.alert('Error', 'Failed to take photo: ' + error.message);
+    } catch (error) {
+      console.log('Camera error:', error);
+      setLoading(false);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
   };
 
@@ -84,7 +99,7 @@ const ImageUploadComponent = ({
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: "images",
         allowsEditing: true,
         quality: 0.8,
         base64: true,
