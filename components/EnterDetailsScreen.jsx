@@ -13,6 +13,7 @@ import {
   Dimensions,
   Alert
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window');
 
@@ -66,52 +67,68 @@ const EnterDetailsScreen = ({ navigation }) => {
     );
   };
   
-  const takePhoto = (type) => {
-    // Simulate taking a photo from camera
-    const simulatedImage = { uri: 'https://via.placeholder.com/300x200' };
-    
-    if (type === 'front') {
-      setFrontRCImage(simulatedImage);
-    } else {
-      setBackRCImage(simulatedImage);
+  const takePhoto = async (type) => {
+    try {
+      // Request camera permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'We need camera permission to take photos');
+        return;
+      }
+
+      // Launch camera
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        const imageData = { uri: selectedAsset.uri };
+        
+        if (type === 'front') {
+          setFrontRCImage(imageData);
+        } else {
+          setBackRCImage(imageData);
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to take photo: ' + error.message);
     }
-    
-    // In a real app:
-    // ImagePicker.launchCamera({
-    //   mediaType: 'photo',
-    //   includeBase64: false,
-    //   maxHeight: 1200,
-    //   maxWidth: 1200,
-    // }, (response) => {
-    //   if (!response.didCancel && !response.error) {
-    //     if (type === 'front') setFrontRCImage(response);
-    //     else setBackRCImage(response);
-    //   }
-    // });
   };
   
-  const chooseFromGallery = (type) => {
-    // Simulate choosing from gallery
-    const simulatedImage = { uri: 'https://via.placeholder.com/300x200' };
-    
-    if (type === 'front') {
-      setFrontRCImage(simulatedImage);
-    } else {
-      setBackRCImage(simulatedImage);
+  const chooseFromGallery = async (type) => {
+    try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'We need gallery permission to select images');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        const imageData = { uri: selectedAsset.uri };
+        
+        if (type === 'front') {
+          setFrontRCImage(imageData);
+        } else {
+          setBackRCImage(imageData);
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to select image: ' + error.message);
     }
-    
-    // In a real app:
-    // ImagePicker.launchImageLibrary({
-    //   mediaType: 'photo',
-    //   includeBase64: false,
-    //   maxHeight: 1200,
-    //   maxWidth: 1200,
-    // }, (response) => {
-    //   if (!response.didCancel && !response.error) {
-    //     if (type === 'front') setFrontRCImage(response);
-    //     else setBackRCImage(response);
-    //   }
-    // });
   };
   
   const handleSubmit = () => {

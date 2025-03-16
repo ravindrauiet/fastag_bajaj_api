@@ -22,6 +22,7 @@ import UserDetailsScreen from '../components/UserDetailsScreen';
 import OtpVerificationScreen from '../components/OtpVerificationScreen';
 import AddOnsScreen from '../components/AddOnsScreen';
 import ConfirmPaymentScreen from '../components/ConfirmPaymentScreen';
+import VehicleKYCScreen from '../components/VehicleKYCScreen';
 
 // Create stack navigator for the main app flow
 const Stack = createStackNavigator();
@@ -46,6 +47,7 @@ const HomeStack = () => {
       <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} />
       <Stack.Screen name="AddOns" component={AddOnsScreen} />
       <Stack.Screen name="ConfirmPayment" component={ConfirmPaymentScreen} />
+      <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
     </Stack.Navigator>
   );
 };
@@ -62,6 +64,7 @@ const NETCStack = () => {
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
+      <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
     </Stack.Navigator>
   );
 };
@@ -75,6 +78,7 @@ const InventoryStack = () => {
       <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
       <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
+      <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
     </Stack.Navigator>
   );
 };
@@ -200,6 +204,12 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('ValidateCustomer')}
         >
           Validate Customer
+        </Text>
+        <Text 
+          style={styles.drawerItem}
+          onPress={() => props.navigation.navigate('VehicleKYCScreen')}
+        >
+          Vehicle KYC Screen 
         </Text>
       </View>
     </View>

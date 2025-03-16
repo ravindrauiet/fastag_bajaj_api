@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DropDownPicker from 'react-native-dropdown-picker';
+import * as ImagePicker from 'expo-image-picker';
 
 const VehicleDetailsScreen = ({ route, navigation }) => {
   // Animation values
@@ -99,23 +100,54 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
   };
   
   // Handle image upload
-  const handleUploadImage = (source) => {
-    // In a real app, this would use image-picker
-    // For now, we'll use dummy data
-    
-    // We use a demo image for this example
-    if (source === 'camera') {
-      // Simulate camera capture
-      Alert.alert('Camera', 'Camera would open here to capture the RC image');
-      setRcImageUri('https://example.com/sample-rc.jpg');
-    } else {
-      // Simulate gallery selection
-      Alert.alert('Gallery', 'Gallery would open here to select the RC image');
-      setRcImageUri('https://example.com/sample-rc-from-gallery.jpg');
+  const handleUploadImage = async (source) => {
+    try {
+      if (source === 'camera') {
+        // Request camera permissions
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        
+        if (status !== 'granted') {
+          Alert.alert('Permission denied', 'We need camera permission to take photos');
+          return;
+        }
+
+        // Launch camera
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          setRcImageUri(result.assets[0].uri);
+        }
+      } else {
+        // Request media library permissions
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        if (status !== 'granted') {
+          Alert.alert('Permission denied', 'We need gallery permission to select images');
+          return;
+        }
+
+        // Launch image picker
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          setRcImageUri(result.assets[0].uri);
+        }
+      }
+      
+      // Close the modal
+      setShowImageOptions(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to process image: ' + error.message);
+      setShowImageOptions(false);
     }
-    
-    // Close the modal
-    setShowImageOptions(false);
   };
   
   // Handle proceed to next screen

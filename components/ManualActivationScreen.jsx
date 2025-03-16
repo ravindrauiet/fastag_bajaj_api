@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
-const ManualActivationScreen = ({ route }) => {
+const ManualActivationScreen = ({ navigation, route }) => {
   const [fastagId, setFastagId] = useState('');
 
   useEffect(() => {
@@ -12,7 +12,13 @@ const ManualActivationScreen = ({ route }) => {
   }, [route.params?.scannedData]);
 
   const handleActivate = () => {
-    alert(`FASTag ID: ${fastagId}`);
+    if (!fastagId.trim()) {
+      alert('Please enter a valid FASTag ID');
+      return;
+    }
+    
+    // Navigate to VehicleKYC screen with the fastag ID
+    navigation.navigate('VehicleKYCScreen', { fastagId });
   };
 
   return (
