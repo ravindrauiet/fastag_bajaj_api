@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -13,11 +13,15 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { NotificationContext } from '../contexts/NotificationContext';
 
 const FasTagReplacementScreen = ({ navigation }) => {
   // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
+  
+  // Access notification context
+  const { addNotification } = useContext(NotificationContext);
   
   // Form state
   const [mobileNo, setMobileNo] = useState('');
@@ -205,6 +209,14 @@ const FasTagReplacementScreen = ({ navigation }) => {
       Alert.alert('Validation Error', 'Please correct the errors in the form.');
       return;
     }
+    
+    // If validation passes, add this code before the Alert:
+    addNotification({
+      id: Date.now(),
+      message: 'FasTag replacement request submitted',
+      time: 'Just now',
+      read: false
+    });
     
     // Prepare API request payload
     const payload = {

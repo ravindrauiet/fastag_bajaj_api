@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { NotificationContext } from '../contexts/NotificationContext';
 
 // Import all screens
 import HomeScreen from '../components/HomeScreen';
@@ -23,6 +24,8 @@ import OtpVerificationScreen from '../components/OtpVerificationScreen';
 import AddOnsScreen from '../components/AddOnsScreen';
 import ConfirmPaymentScreen from '../components/ConfirmPaymentScreen';
 import VehicleKYCScreen from '../components/VehicleKYCScreen';
+import VrnUpdateScreen from '../components/VrnUpdateScreen';
+import FasTagRekycScreen from '../components/FasTagRekycScreen';
 
 // Create stack navigator for the main app flow
 const Stack = createStackNavigator();
@@ -31,7 +34,15 @@ const Drawer = createDrawerNavigator();
 // Home Stack
 const HomeStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      screenOptions={{ headerShown: false }}
+      screenListeners={({ navigation }) => ({
+        state: (e) => {
+          // You can implement screen completion tracking here
+          // This would trigger when screens change in the stack
+        },
+      })}
+    >
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
       <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
@@ -39,6 +50,10 @@ const HomeStack = () => {
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
+      <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
+      <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
+      <Stack.Screen name="VrnUpdate" component={VrnUpdateScreen} />
+      <Stack.Screen name="FasTagRekyc" component={FasTagRekycScreen} />
       
       {/* Add FASTag Flow Screens */}
       <Stack.Screen name="EnterDetails" component={EnterDetailsScreen} />
@@ -61,6 +76,8 @@ const NETCStack = () => {
       <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
       <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
+      <Stack.Screen name="FasTagRekyc" component={FasTagRekycScreen} />
+      <Stack.Screen name="VrnUpdate" component={VrnUpdateScreen} />
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
@@ -103,20 +120,131 @@ const FourDotMenuIcon = ({ onPress }) => (
 );
 
 // Custom notification bell component
-const NotificationBell = () => (
-  <TouchableOpacity style={{ padding: 8 }}>
-    <View style={{
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: '#F5F5F5',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <Text style={{ fontSize: 16 }}>🔔</Text>
+const NotificationBell = () => {
+  const { 
+    notifications, 
+    markAsRead, 
+    markAllAsRead, 
+    getUnreadCount 
+  } = useContext(NotificationContext);
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  const unreadCount = getUnreadCount();
+  
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  return (
+    <View>
+      <TouchableOpacity 
+        style={{ padding: 8 }}
+        onPress={toggleNotifications}
+      >
+        <View style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: '#F5F5F5',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <Text style={{ fontSize: 16 }}>🔔</Text>
+          {unreadCount > 0 && (
+            <View style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              backgroundColor: '#FF0000',
+              width: 16,
+              height: 16,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
+                {unreadCount}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+      
+      <Modal
+        transparent={true}
+        visible={showNotifications}
+        animationType="fade"
+        onRequestClose={() => setShowNotifications(false)}
+      >
+        <TouchableOpacity 
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.1)',
+          }}
+          activeOpacity={1}
+          onPress={() => setShowNotifications(false)}
+        >
+          <View style={{
+            position: 'absolute',
+            top: 80,
+            right: 10,
+            width: 250,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,
+          }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: '#F0F0F0',
+            }}>
+              <Text style={{ fontWeight: 'bold' }}>Notifications</Text>
+              {unreadCount > 0 && (
+                <TouchableOpacity onPress={markAllAsRead}>
+                  <Text style={{ color: '#0066CC', fontSize: 12 }}>Mark all as read</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {notifications.length > 0 ? (
+              <ScrollView style={{ maxHeight: 300 }}>
+                {notifications.map(notification => (
+                  <TouchableOpacity 
+                    key={notification.id}
+                    style={{
+                      padding: 12,
+                      backgroundColor: notification.read ? '#FFFFFF' : '#F0F8FF',
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#F0F0F0',
+                    }}
+                    onPress={() => {
+                      markAsRead(notification.id);
+                      // Don't close the modal when marking a notification as read
+                    }}
+                  >
+                    <Text style={{ fontSize: 14 }}>{notification.message}</Text>
+                    <Text style={{ fontSize: 12, color: '#999999', marginTop: 4 }}>{notification.time}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={{ padding: 16, alignItems: 'center' }}>
+                <Text style={{ color: '#999999' }}>No notifications</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
-  </TouchableOpacity>
-);
+  );
+};
 
 // Custom logo component
 const LogoTitle = () => (
@@ -192,6 +320,18 @@ const CustomDrawerContent = (props) => {
           onPress={() => props.navigation.navigate('FasTagReplacement')}
         >
           FasTag Replacement
+        </Text>
+        <Text 
+          style={styles.drawerItem}
+          onPress={() => props.navigation.navigate('VrnUpdate')}
+        >
+          VRN Update
+        </Text>
+        <Text 
+          style={styles.drawerItem}
+          onPress={() => props.navigation.navigate('FasTagRekyc')}
+        >
+          FasTag Re-KYC Upload
         </Text>
         <Text 
           style={styles.drawerItem}

@@ -1,7 +1,32 @@
-import React from 'react';
+import React, { useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView } from 'react-native';
+import { NotificationContext } from '../contexts/NotificationContext';
 
 const HomeScreen = ({ navigation }) => {
+  // Access the notification context
+  const { addScreenCompletionNotification } = useContext(NotificationContext);
+  
+  // Add a navigation listener to track screen changes
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // When the HomeScreen comes into focus, we can do something here
+      console.log('HomeScreen focused');
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
+  
+  // Add navigation enhancers to track screen completion
+  const navigateWithNotification = (screenName, params) => {
+    // Navigate to the screen
+    navigation.navigate(screenName, params);
+    
+    // Add a slight delay to make the notification appear after navigation
+    setTimeout(() => {
+      addScreenCompletionNotification(screenName);
+    }, 300);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -30,7 +55,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <TouchableOpacity 
               style={styles.inventoryButton}
-              onPress={() => navigation.navigate('FastagInventoryScreen')}
+              onPress={() => navigateWithNotification('FastagInventoryScreen')}
             >
               <Text style={styles.inventoryText}>Inventory</Text>
               <Text style={styles.inventoryIcon}>→</Text>
@@ -58,7 +83,7 @@ const HomeScreen = ({ navigation }) => {
             
             <TouchableOpacity 
               style={styles.serviceItem}
-              onPress={() => navigation.navigate('FasTagReplacementScreen')}
+              onPress={() => navigateWithNotification('FasTagReplacementScreen')}
             >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>▶</Text>
@@ -68,7 +93,7 @@ const HomeScreen = ({ navigation }) => {
             
             <TouchableOpacity 
               style={styles.serviceItem}
-              onPress={() => navigation.navigate('EnterDetails')}
+              onPress={() => navigateWithNotification('EnterDetails')}
             >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>➕</Text>
@@ -91,7 +116,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.servicesGrid}>
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigation.navigate('NETCFastagScreen')}
+              onPress={() => navigateWithNotification('NETCFastagScreen')}
             >
               <View style={styles.serviceCardIconContainer}>
                 <Text style={styles.serviceCardIcon}>📋</Text>
@@ -116,7 +141,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.fabContainer}>
         <TouchableOpacity 
           style={styles.fab}
-          onPress={() => navigation.navigate('BarcodeScanner')}
+          onPress={() => navigateWithNotification('BarcodeScanner')}
         >
           <Text style={styles.fabIcon}>▶</Text>
         </TouchableOpacity>
