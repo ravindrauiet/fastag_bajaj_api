@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
 // Import all screens
 import HomeScreen from '../components/HomeScreen';
@@ -65,32 +65,80 @@ const InventoryStack = () => {
   );
 };
 
+// Custom 4-dot menu icon component
+const FourDotMenuIcon = ({ onPress }) => (
+  <TouchableOpacity onPress={onPress} style={{ padding: 8 }}>
+    <View style={{
+      width: 24,
+      height: 24,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      alignContent: 'space-between',
+    }}>
+      <View style={dotStyle} />
+      <View style={dotStyle} />
+      <View style={dotStyle} />
+      <View style={dotStyle} />
+    </View>
+  </TouchableOpacity>
+);
+
+// Custom notification bell component
+const NotificationBell = () => (
+  <TouchableOpacity style={{ padding: 8 }}>
+    <View style={{
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: '#F5F5F5',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <Text style={{ fontSize: 16 }}>🔔</Text>
+    </View>
+  </TouchableOpacity>
+);
+
+// Custom logo component
+const LogoTitle = () => (
+  <Image
+    style={{ height: 40, width: 160 }}
+    source={{ uri: 'https://via.placeholder.com/200x50' }} // Replace with actual logo
+    resizeMode="contain"
+  />
+);
+
 // Custom drawer content component
 const CustomDrawerContent = (props) => {
   return (
     <View style={styles.drawerContainer}>
       <View style={styles.drawerHeader}>
-        <Text style={styles.drawerTitle}>FASTag App</Text>
+        <Text style={styles.drawerTitle}>TMsquare</Text>
+        <Text style={styles.drawerSubtitle}>GLOBAL Solutions</Text>
       </View>
       <View style={styles.drawerItems}>
         <Text 
-          style={styles.drawerItem}
+          style={[styles.drawerItem, props.state.index === 0 ? styles.activeDrawerItem : null]}
           onPress={() => props.navigation.navigate('Home')}
         >
           Home
         </Text>
         <Text 
-          style={styles.drawerItem}
+          style={[styles.drawerItem, props.state.index === 1 ? styles.activeDrawerItem : null]}
           onPress={() => props.navigation.navigate('NETC')}
         >
           NETC Fastag
         </Text>
         <Text 
-          style={styles.drawerItem}
+          style={[styles.drawerItem, props.state.index === 2 ? styles.activeDrawerItem : null]}
           onPress={() => props.navigation.navigate('Inventory')}
         >
           Fastag Inventory
         </Text>
+        
+        <Text style={styles.drawerSectionTitle}>Services</Text>
+        
         <Text 
           style={styles.drawerItem}
           onPress={() => props.navigation.navigate('BarcodeScanner')}
@@ -151,30 +199,39 @@ const AppNavigator = () => {
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         initialRouteName="Home"
-        screenOptions={{
+        screenOptions={({ navigation }) => ({
           headerShown: true,
           drawerStyle: {
             width: '70%',
           },
-        }}
+          // Apply custom header to all screens by default
+          headerTitle: props => <LogoTitle {...props} />,
+          headerLeft: () => <FourDotMenuIcon onPress={() => navigation.openDrawer()} />,
+          headerRight: () => <NotificationBell />,
+          headerStyle: {
+            backgroundColor: '#FFFFFF',
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 1,
+            borderBottomColor: '#F0F0F0',
+          },
+          headerTintColor: '#333333',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        })}
       >
         <Drawer.Screen 
           name="Home" 
           component={HomeStack} 
-          options={{ 
-            title: 'Home',
-            headerTitle: 'FASTag',
-          }} 
         />
         <Drawer.Screen 
           name="NETC" 
           component={NETCStack} 
-          options={{ title: 'NETC Fastag' }} 
         />
         <Drawer.Screen 
           name="Inventory" 
           component={InventoryStack} 
-          options={{ title: 'Fastag Inventory' }} 
         />
       </Drawer.Navigator>
     </NavigationContainer>
@@ -188,7 +245,7 @@ const styles = StyleSheet.create({
   },
   drawerHeader: {
     height: 150,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#333333',
     justifyContent: 'flex-end',
     padding: 16,
   },
@@ -197,15 +254,37 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  drawerSubtitle: {
+    color: '#00ACC1',
+    fontSize: 16,
+  },
   drawerItems: {
     flex: 1,
     padding: 16,
   },
+  drawerSectionTitle: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 20,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+  },
   drawerItem: {
-    fontSize: 18,
+    fontSize: 16,
     marginVertical: 12,
     color: '#333',
   },
+  activeDrawerItem: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
 });
+
+const dotStyle = {
+  width: 10,
+  height: 10,
+  backgroundColor: '#2D3A4A',
+  borderRadius: 2,
+};
 
 export default AppNavigator;

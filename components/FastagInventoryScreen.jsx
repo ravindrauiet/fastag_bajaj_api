@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 
 // Dummy data for inventory
 const dummyInventory = [
@@ -33,109 +33,163 @@ const FastagInventoryScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <Text style={styles.title}>FASTag Inventory</Text>
         <Text style={styles.subtitle}>Total: {dummyInventory.length} tags</Text>
       </View>
-      
+
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{dummyInventory.filter(item => item.status === 'Active').length}</Text>
+          <Text style={styles.statLabel}>Active</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{dummyInventory.filter(item => item.status === 'Inactive').length}</Text>
+          <Text style={styles.statLabel}>Inactive</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{dummyInventory.filter(item => item.status === 'Pending').length}</Text>
+          <Text style={styles.statLabel}>Pending</Text>
+        </View>
+      </View>
+
+      <View style={styles.contentContainer}>
+        <Text style={styles.sectionTitle}>All Tags</Text>
+        <FlatList
+          data={dummyInventory}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+
+      {/* Floating Action Button */}
       <TouchableOpacity 
-        style={styles.scanButton}
+        style={styles.fab}
         onPress={() => navigation.navigate('BarcodeScanner')}
       >
-        <Text style={styles.scanButtonText}>Scan New Tag</Text>
+        <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-      
-      <FlatList
-        data={dummyInventory}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
-      />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#333333',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    color: '#666666',
   },
-  scanButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    margin: 16,
-    borderRadius: 8,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  statCard: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
+    padding: 16,
+    width: '30%',
     alignItems: 'center',
   },
-  scanButtonText: {
-    color: '#fff',
+  statValue: {
+    fontSize: 20,
     fontWeight: 'bold',
-    fontSize: 16,
+    color: '#333333',
+    marginBottom: 4,
   },
-  list: {
+  statLabel: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  contentContainer: {
+    flex: 1,
     padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#333333',
   },
   item: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
   tagId: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333333',
   },
   status: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   activeStatus: {
-    backgroundColor: '#e6f7e6',
-    color: '#2e7d32',
+    backgroundColor: '#E8F5E9',
+    color: '#388E3C',
   },
   inactiveStatus: {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
+    backgroundColor: '#FFEBEE',
+    color: '#D32F2F',
   },
   pendingStatus: {
-    backgroundColor: '#fff8e1',
-    color: '#f57f17',
+    backgroundColor: '#FFF8E1',
+    color: '#FFA000',
   },
   customerName: {
     fontSize: 14,
+    color: '#666666',
     marginBottom: 4,
   },
   activationDate: {
     fontSize: 14,
-    color: '#666',
+    color: '#666666',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: 24,
   },
 });
 
