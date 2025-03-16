@@ -16,6 +16,12 @@ import FasTagRegistrationScreen from '../components/FasTagRegistrationScreen';
 import FasTagReplacementScreen from '../components/FasTagReplacementScreen';
 import ValidateOtpScreen from '../components/ValidateOtpScreen';
 import ValidateCustomerScreen from '../components/ValidateCustomerScreen';
+import EnterDetailsScreen from '../components/EnterDetailsScreen';
+import VehicleDetailsScreen from '../components/VehicleDetailsScreen';
+import UserDetailsScreen from '../components/UserDetailsScreen';
+import OtpVerificationScreen from '../components/OtpVerificationScreen';
+import AddOnsScreen from '../components/AddOnsScreen';
+import ConfirmPaymentScreen from '../components/ConfirmPaymentScreen';
 
 // Create stack navigator for the main app flow
 const Stack = createStackNavigator();
@@ -32,6 +38,14 @@ const HomeStack = () => {
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
+      
+      {/* Add FASTag Flow Screens */}
+      <Stack.Screen name="EnterDetails" component={EnterDetailsScreen} />
+      <Stack.Screen name="VehicleDetails" component={VehicleDetailsScreen} />
+      <Stack.Screen name="UserDetails" component={UserDetailsScreen} />
+      <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} />
+      <Stack.Screen name="AddOns" component={AddOnsScreen} />
+      <Stack.Screen name="ConfirmPayment" component={ConfirmPaymentScreen} />
     </Stack.Navigator>
   );
 };

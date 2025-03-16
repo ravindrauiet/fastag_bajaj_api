@@ -1,19 +1,48 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  StatusBar,
+  ActivityIndicator
+} from 'react-native';
+// Temporarily commenting out barcode scanner imports to avoid native module error
+// import { Camera } from 'expo-camera';
+// import { BarCodeScanner } from 'expo-barcode-scanner';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const BarcodeScannerScreen = ({ navigation }) => {
+  // Simplified component without barcode scanning functionality
+  const [loading, setLoading] = useState(false);
+  
+  // Replace entire component with a temporary UI
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Barcode Scanner</Text>
-      <Text style={styles.subtitle}>Camera functionality temporarily disabled for testing</Text>
-      
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => navigation.navigate('ManualActivation')}
-      >
-        <Text style={styles.buttonText}>Enter Code Manually</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.errorContainer}>
+        <Icon name="barcode-scan" size={60} color="#A52A2A" />
+        <Text style={styles.errorTitle}>Barcode Scanner Temporarily Unavailable</Text>
+        <Text style={styles.errorMessage}>
+          The barcode scanner functionality has been temporarily disabled due to a native module issue.
+          Please use the manual entry option instead.
+        </Text>
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={() => navigation.navigate('ManualActivation')}
+        >
+          <Text style={styles.buttonText}>Enter Code Manually</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.button, {marginTop: 12, backgroundColor: '#555555'}]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -23,30 +52,46 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f8f8',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  subtitle: {
+  permissionText: {
     fontSize: 16,
-    marginBottom: 32,
+    marginTop: 16,
+    color: '#555555',
     textAlign: 'center',
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    width: '80%',
+  errorContainer: {
     alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    color: '#333333',
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#666666',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  button: {
+    backgroundColor: '#A52A2A',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-  },
+  }
 });
 
 export default BarcodeScannerScreen;

@@ -66,6 +66,16 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.serviceText}>FasTag{'\n'}Replacement</Text>
             </TouchableOpacity>
             
+            <TouchableOpacity 
+              style={styles.serviceItem}
+              onPress={() => navigation.navigate('EnterDetails')}
+            >
+              <View style={styles.serviceIconContainer}>
+                <Text style={styles.serviceIcon}>➕</Text>
+              </View>
+              <Text style={styles.serviceText}>Add{'\n'}FasTag</Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity style={styles.serviceItem}>
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>💰</Text>
@@ -215,10 +225,12 @@ const styles = StyleSheet.create({
   frequentlyUsedGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   serviceItem: {
     alignItems: 'center',
-    width: '23%',
+    width: '19%',
+    marginBottom: 16,
   },
   serviceIconContainer: {
     width: 64,
