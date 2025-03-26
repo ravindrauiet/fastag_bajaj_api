@@ -4,7 +4,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 
 const HomeScreen = ({ navigation }) => {
   // Access the notification context
-  const { addScreenCompletionNotification } = useContext(NotificationContext);
+  const { addScreenCompletionNotification, addNotification } = useContext(NotificationContext);
   
   // Add a navigation listener to track screen changes
   useEffect(() => {
@@ -25,6 +25,20 @@ const HomeScreen = ({ navigation }) => {
     setTimeout(() => {
       addScreenCompletionNotification(screenName);
     }, 300);
+  };
+
+  // Start FasTag registration flow
+  const startFasTagRegistration = () => {
+    // Navigate to the ValidateCustomerScreen to start the registration process
+    navigateWithNotification('ValidateCustomer');
+    
+    // Add notification about starting the process
+    addNotification({
+      id: Date.now(),
+      message: 'Starting FasTag registration process',
+      time: 'Just now',
+      read: false
+    });
   };
 
   return (
@@ -93,7 +107,7 @@ const HomeScreen = ({ navigation }) => {
             
             <TouchableOpacity 
               style={styles.serviceItem}
-              onPress={() => navigateWithNotification('EnterDetails')}
+              onPress={startFasTagRegistration}
             >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>➕</Text>
@@ -124,11 +138,24 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.serviceCardText}>NETC FasTag</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.serviceCard}>
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => navigateWithNotification('VrnUpdateScreen')}
+            >
               <View style={styles.serviceCardIconContainer}>
-                <Text style={styles.serviceCardIcon}>📄</Text>
+                <Text style={styles.serviceCardIcon}>🚗</Text>
               </View>
-              <Text style={styles.serviceCardText}>RC Details</Text>
+              <Text style={styles.serviceCardText}>VRN Update</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => navigateWithNotification('FasTagRekycScreen')}
+            >
+              <View style={styles.serviceCardIconContainer}>
+                <Text style={styles.serviceCardIcon}>📷</Text>
+              </View>
+              <Text style={styles.serviceCardText}>Re-KYC</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -278,6 +305,7 @@ const styles = StyleSheet.create({
   // Services Grid
   servicesGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'flex-start',
   },
   serviceCard: {
@@ -286,6 +314,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginRight: 16,
+    marginBottom: 16,
   },
   serviceCardIconContainer: {
     width: 48,

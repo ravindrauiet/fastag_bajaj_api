@@ -1,212 +1,222 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  SafeAreaView, 
-  StatusBar, 
-  Animated,
-  Modal,
-  Platform,
-  FlatList
+import React, { useState, useContext } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
+import { NotificationContext } from '../contexts/NotificationContext';
+import bajajApi from '../api/bajajApi';
 
-const UserDetailsScreen = ({ route, navigation }) => {
-  const { vehicleDetails } = route.params || {};
+const UserDetailsScreen = ({ navigation, route }) => {
+  // Get params from previous screen
+  const {
+    requestId,
+    sessionId,
+    mobileNo,
+    vehicleNo,
+    chassisNo,
+    engineNo
+  } = route.params;
+
+  // Form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dob, setDob] = useState('');
+  const [documentType, setDocumentType] = useState('PAN'); // PAN, DL, VID, PASS
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
   
-  // Animation values
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [slideAnim] = useState(new Animated.Value(30));
-  
-  // Date picker modal
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [showDateInput, setShowDateInput] = useState(false);
-  const [dateInput, setDateInput] = useState('');
-  
-  // User details state
-  const [userDetails, setUserDetails] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    dob: '',
-    pan: '',
-    aadhaar: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: ''
-  });
-  
-  // Validation errors
+  // UI state
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   
-  // Start animations when component mounts
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
-  
-  // Field validation
-  const validateField = (field, value) => {
-    let error = '';
+  // Access notification context
+  const { addNotification } = useContext(NotificationContext);
+
+  // Format date input (dd-mm-yyyy)
+  const formatDateInput = (text, setter) => {
+    // Remove any non-digit or non-hyphen characters
+    text = text.replace(/[^\d-]/g, '');
     
-    switch (field) {
-      case 'email':
-        if (value && !/\S+@\S+\.\S+/.test(value)) {
-          error = 'Invalid email format';
-        }
-        break;
-      case 'pan':
-        if (value && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value)) {
-          error = 'Invalid PAN format (e.g., ABCDE1234F)';
-        }
-        break;
-      case 'aadhaar':
-        if (value && !/^\d{12}$/.test(value)) {
-          error = 'Aadhaar should be 12 digits';
-        }
-        break;
-      case 'pincode':
-        if (value && !/^\d{6}$/.test(value)) {
-          error = 'Pincode should be 6 digits';
-        }
-        break;
-      case 'dob':
-        // Simple date validation (improve in a real app)
-        if (value && !/^\d{2}-\d{2}-\d{4}$/.test(value)) {
-          error = 'Use DD-MM-YYYY format';
-        }
-        break;
+    // Auto-add hyphens
+    if (text.length === 2 && !text.includes('-')) {
+      text = text + '-';
+    } else if (text.length === 5 && text.charAt(4) !== '-') {
+      text = text.slice(0, 5) + '-' + text.slice(5);
     }
     
-    setErrors(prev => ({
-      ...prev,
-      [field]: error
-    }));
-    
-    return !error;
-  };
-  
-  // Update form fields
-  const handleInputChange = (field, value) => {
-    setUserDetails(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    validateField(field, value);
-  };
-  
-  // Date picking functionality
-  const showDatePicker = () => {
-    setDatePickerVisible(true);
-    setShowDateInput(false);
-  };
-  
-  const toggleDateInput = () => {
-    setDatePickerVisible(true);
-    setShowDateInput(true);
-    setDateInput(userDetails.dob || '');
-  };
-  
-  const handleDateSelect = (date) => {
-    // Format: DD-MM-YYYY
-    const formattedDate = date; // In a real app, format the selected date
-    
-    setUserDetails(prev => ({
-      ...prev,
-      dob: formattedDate
-    }));
-    
-    setDatePickerVisible(false);
-    validateField('dob', formattedDate);
-  };
-  
-  const handleDateInputChange = (text) => {
-    setDateInput(text);
-  };
-  
-  const submitDateInput = () => {
-    if (!/^\d{2}-\d{2}-\d{4}$/.test(dateInput)) {
-      alert('Please use DD-MM-YYYY format');
-      return;
+    // Ensure we don't exceed the max length (10 chars for dd-mm-yyyy)
+    if (text.length <= 10) {
+      setter(text);
     }
-    
-    setUserDetails(prev => ({
-      ...prev,
-      dob: dateInput
-    }));
-    
-    setDatePickerVisible(false);
-    validateField('dob', dateInput);
   };
-  
-  // Generate calendar dates (simplified for demo)
-  const generateDates = () => {
-    // Just showing some sample dates for the demo
-    return [
-      '21-11-1990',
-      '21-11-1991',
-      '21-11-1992',
-      '21-11-1993',
-      '21-11-1994',
-      '21-11-1995',
-      '21-11-1996',
-      '21-11-1997',
-      '21-11-1998',
-      '21-11-1999',
-      '21-11-2000'
-    ];
-  };
-  
-  // Submit function
-  const handleProceed = () => {
-    // Validate all required fields
-    const requiredFields = ['firstName', 'lastName', 'email', 'dob', 'pan', 'aadhaar'];
+
+  // Validate form fields
+  const validateForm = () => {
     let isValid = true;
     const newErrors = {};
     
-    requiredFields.forEach(field => {
-      if (!userDetails[field]) {
-        newErrors[field] = 'This field is required';
-        isValid = false;
-      } else {
-        isValid = validateField(field, userDetails[field]) && isValid;
+    // First name validation
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+      isValid = false;
+    }
+    
+    // Last name validation
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+      isValid = false;
+    }
+    
+    // Date of birth validation
+    if (!dob.trim()) {
+      newErrors.dob = 'Date of birth is required';
+      isValid = false;
+    } else if (!/^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+      newErrors.dob = 'Date of birth must be in DD-MM-YYYY format';
+      isValid = false;
+    }
+    
+    // Document number validation
+    if (!documentNumber.trim()) {
+      newErrors.documentNumber = 'Document number is required';
+      isValid = false;
+    } else {
+      // Validate based on document type
+      switch (documentType) {
+        case 'PAN':
+          if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(documentNumber)) {
+            newErrors.documentNumber = 'Enter a valid PAN number';
+            isValid = false;
+          }
+          break;
+        case 'DL':
+          if (documentNumber.length < 9) {
+            newErrors.documentNumber = 'Enter a valid Driving License number';
+            isValid = false;
+          }
+          
+          // Expiry date validation for DL
+          if (!expiryDate.trim()) {
+            newErrors.expiryDate = 'Expiry date is required for Driving License';
+            isValid = false;
+          } else if (!/^\d{2}-\d{2}-\d{4}$/.test(expiryDate)) {
+            newErrors.expiryDate = 'Expiry date must be in DD-MM-YYYY format';
+            isValid = false;
+          }
+          break;
+        case 'VID':
+          if (documentNumber.length < 10) {
+            newErrors.documentNumber = 'Enter a valid Voter ID';
+            isValid = false;
+          }
+          break;
+        case 'PASS':
+          if (documentNumber.length < 8) {
+            newErrors.documentNumber = 'Enter a valid Passport number';
+            isValid = false;
+          }
+          
+          // Expiry date validation for Passport
+          if (!expiryDate.trim()) {
+            newErrors.expiryDate = 'Expiry date is required for Passport';
+            isValid = false;
+          } else if (!/^\d{2}-\d{2}-\d{4}$/.test(expiryDate)) {
+            newErrors.expiryDate = 'Expiry date must be in DD-MM-YYYY format';
+            isValid = false;
+          }
+          break;
       }
-    });
+    }
     
     setErrors(newErrors);
-    
-    if (isValid) {
-      // Navigate to OTP verification
-      navigation.navigate('OtpVerification', {
-        vehicleDetails,
-        userDetails
-      });
-    } else {
-      // Scroll to the first error (in a real app)
-      alert('Please fill in all required fields correctly');
+    return isValid;
+  };
+
+  // Handle document type selection
+  const handleDocTypeSelect = (type) => {
+    setDocumentType(type);
+    // Clear expiry date when switching from/to document types that don't need it
+    if (type !== 'DL' && type !== 'PASS') {
+      setExpiryDate('');
     }
   };
-  
+
+  // Handle registration submission
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Prepare user data
+      const userData = {
+        firstName: firstName,
+        lastName: lastName,
+        mobileNo: mobileNo,
+        dob: dob,
+        documentType: documentType,
+        documentNumber: documentNumber,
+        expiryDate: (documentType === 'DL' || documentType === 'PASS') ? expiryDate : null,
+        requestId: requestId,
+        sessionId: sessionId
+      };
+      
+      // Call API to register user
+      const response = await bajajApi.registerUser(userData);
+      
+      console.log('Register User Response:', response);
+      
+      if (response && response.response && response.response.status === 'success') {
+        // Add notification
+        addNotification({
+          id: Date.now(),
+          message: 'User registered successfully',
+          time: 'Just now',
+          read: false
+        });
+        
+        // Navigate to FasTag registration
+        navigation.navigate('FasTagRegistration', {
+          requestId: requestId,
+          sessionId: sessionId,
+          mobileNo: mobileNo,
+          vehicleNo: vehicleNo,
+          chassisNo: chassisNo,
+          engineNo: engineNo,
+          customerId: response.response.customerId || '',
+          walletId: response.response.walletId || ''
+        });
+      } else {
+        const errorMsg = response?.response?.errorDesc || 'Failed to register user';
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      console.error('User Registration Error:', error);
+      Alert.alert(
+        'Registration Error',
+        `Failed to register user: ${error.message}`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Custom header */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
@@ -215,29 +225,27 @@ const UserDetailsScreen = ({ route, navigation }) => {
         <View style={{ width: 40 }} />
       </View>
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View 
-          style={[
-            styles.formContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.title}>Personal Information</Text>
-          <Text style={styles.subtitle}>Please provide your personal details</Text>
-          
+      <ScrollView style={styles.content}>
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>Enter User Details</Text>
+          <Text style={styles.infoText}>
+            Please provide the following details to create a new wallet for FasTag.
+          </Text>
+        </View>
+        
+        <View style={styles.formContainer}>
           {/* First Name */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>First Name<Text style={styles.required}>*</Text></Text>
             <TextInput
               style={[styles.input, errors.firstName ? styles.inputError : null]}
-              placeholder="Enter your first name"
-              value={userDetails.firstName}
-              onChangeText={(text) => handleInputChange('firstName', text)}
+              placeholder="Enter first name"
+              value={firstName}
+              onChangeText={setFirstName}
             />
-            {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
+            {errors.firstName ? (
+              <Text style={styles.errorText}>{errors.firstName}</Text>
+            ) : null}
           </View>
           
           {/* Last Name */}
@@ -245,232 +253,132 @@ const UserDetailsScreen = ({ route, navigation }) => {
             <Text style={styles.label}>Last Name<Text style={styles.required}>*</Text></Text>
             <TextInput
               style={[styles.input, errors.lastName ? styles.inputError : null]}
-              placeholder="Enter your last name"
-              value={userDetails.lastName}
-              onChangeText={(text) => handleInputChange('lastName', text)}
+              placeholder="Enter last name"
+              value={lastName}
+              onChangeText={setLastName}
             />
-            {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
+            {errors.lastName ? (
+              <Text style={styles.errorText}>{errors.lastName}</Text>
+            ) : null}
+          </View>
+          
+          {/* Mobile Number (display only) */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Mobile Number</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: '#F5F5F5' }]}
+              value={mobileNo}
+              editable={false}
+            />
           </View>
           
           {/* Date of Birth */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Date of Birth<Text style={styles.required}>*</Text></Text>
-            <View style={styles.dateInputContainer}>
-              <TouchableOpacity 
-                style={[styles.dateDisplay, errors.dob ? styles.inputError : null]}
-                onPress={showDatePicker}
+            <TextInput
+              style={[styles.input, errors.dob ? styles.inputError : null]}
+              placeholder="DD-MM-YYYY"
+              value={dob}
+              onChangeText={(text) => formatDateInput(text, setDob)}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+            {errors.dob ? (
+              <Text style={styles.errorText}>{errors.dob}</Text>
+            ) : null}
+          </View>
+          
+          {/* Document Type Selection */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>ID Document Type<Text style={styles.required}>*</Text></Text>
+            <View style={styles.docTypeContainer}>
+              <TouchableOpacity
+                style={[styles.docTypeButton, documentType === 'PAN' ? styles.selectedDocType : null]}
+                onPress={() => handleDocTypeSelect('PAN')}
               >
-                <Text style={userDetails.dob ? styles.dateText : styles.placeholderText}>
-                  {userDetails.dob || 'DD-MM-YYYY'}
+                <Text style={[styles.docTypeText, documentType === 'PAN' ? styles.selectedDocTypeText : null]}>
+                  PAN Card
                 </Text>
               </TouchableOpacity>
               
-              <TouchableOpacity 
-                style={styles.calendarButton}
-                onPress={toggleDateInput}
+              <TouchableOpacity
+                style={[styles.docTypeButton, documentType === 'DL' ? styles.selectedDocType : null]}
+                onPress={() => handleDocTypeSelect('DL')}
               >
-                <Text style={styles.calendarButtonText}>✏️</Text>
+                <Text style={[styles.docTypeText, documentType === 'DL' ? styles.selectedDocTypeText : null]}>
+                  Driving License
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.docTypeButton, documentType === 'VID' ? styles.selectedDocType : null]}
+                onPress={() => handleDocTypeSelect('VID')}
+              >
+                <Text style={[styles.docTypeText, documentType === 'VID' ? styles.selectedDocTypeText : null]}>
+                  Voter ID
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.docTypeButton, documentType === 'PASS' ? styles.selectedDocType : null]}
+                onPress={() => handleDocTypeSelect('PASS')}
+              >
+                <Text style={[styles.docTypeText, documentType === 'PASS' ? styles.selectedDocTypeText : null]}>
+                  Passport
+                </Text>
               </TouchableOpacity>
             </View>
-            {errors.dob ? <Text style={styles.errorText}>{errors.dob}</Text> : null}
           </View>
           
-          {/* PAN Card */}
+          {/* Document Number */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PAN Card Number<Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Document Number<Text style={styles.required}>*</Text></Text>
             <TextInput
-              style={[styles.input, errors.pan ? styles.inputError : null]}
-              placeholder="Enter your PAN (e.g., ABCDE1234F)"
-              value={userDetails.pan}
-              onChangeText={(text) => handleInputChange('pan', text.toUpperCase())}
-              autoCapitalize="characters"
-              maxLength={10}
+              style={[styles.input, errors.documentNumber ? styles.inputError : null]}
+              placeholder={`Enter ${documentType === 'PAN' ? 'PAN' : 
+                documentType === 'DL' ? 'Driving License' : 
+                documentType === 'VID' ? 'Voter ID' : 'Passport'} number`}
+              value={documentNumber}
+              onChangeText={(text) => setDocumentNumber(documentType === 'PAN' ? text.toUpperCase() : text)}
+              autoCapitalize={documentType === 'PAN' ? 'characters' : 'none'}
             />
-            {errors.pan ? <Text style={styles.errorText}>{errors.pan}</Text> : null}
+            {errors.documentNumber ? (
+              <Text style={styles.errorText}>{errors.documentNumber}</Text>
+            ) : null}
           </View>
           
-          {/* Aadhaar */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Aadhaar Number<Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={[styles.input, errors.aadhaar ? styles.inputError : null]}
-              placeholder="Enter your 12-digit Aadhaar"
-              value={userDetails.aadhaar}
-              onChangeText={(text) => handleInputChange('aadhaar', text)}
-              keyboardType="number-pad"
-              maxLength={12}
-            />
-            {errors.aadhaar ? <Text style={styles.errorText}>{errors.aadhaar}</Text> : null}
-          </View>
-          
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email<Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={[styles.input, errors.email ? styles.inputError : null]}
-              placeholder="Enter your email address"
-              value={userDetails.email}
-              onChangeText={(text) => handleInputChange('email', text)}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-          </View>
-          
-          {/* Address */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter your address"
-              value={userDetails.address}
-              onChangeText={(text) => handleInputChange('address', text)}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-          
-          {/* City, State, Pincode in a row */}
-          <View style={styles.rowInputs}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>City</Text>
+          {/* Expiry Date (only for DL and Passport) */}
+          {(documentType === 'DL' || documentType === 'PASS') && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Document Expiry Date<Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={styles.input}
-                placeholder="City"
-                value={userDetails.city}
-                onChangeText={(text) => handleInputChange('city', text)}
+                style={[styles.input, errors.expiryDate ? styles.inputError : null]}
+                placeholder="DD-MM-YYYY"
+                value={expiryDate}
+                onChangeText={(text) => formatDateInput(text, setExpiryDate)}
+                keyboardType="numeric"
+                maxLength={10}
               />
+              {errors.expiryDate ? (
+                <Text style={styles.errorText}>{errors.expiryDate}</Text>
+              ) : null}
             </View>
-            
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>State</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="State"
-                value={userDetails.state}
-                onChangeText={(text) => handleInputChange('state', text)}
-              />
-            </View>
-            
-            <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Pincode</Text>
-              <TextInput
-                style={[styles.input, errors.pincode ? styles.inputError : null]}
-                placeholder="Pincode"
-                value={userDetails.pincode}
-                onChangeText={(text) => handleInputChange('pincode', text)}
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-              {errors.pincode ? <Text style={styles.errorText}>{errors.pincode}</Text> : null}
-            </View>
-          </View>
-          
-          {/* Vehicle Information Summary */}
-          <View style={styles.summaryContainer}>
-            <Text style={styles.summaryTitle}>Vehicle Information</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Vehicle No:</Text>
-              <Text style={styles.summaryValue}>{vehicleDetails?.vehicleNo}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Make:</Text>
-              <Text style={styles.summaryValue}>{vehicleDetails?.makeModel.split(' ')[0]}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Vehicle Class:</Text>
-              <Text style={styles.summaryValue}>{vehicleDetails?.vehicleClass}</Text>
-            </View>
-          </View>
-        </Animated.View>
-        
-        {/* Verify OTP Button */}
-        <TouchableOpacity 
-          style={styles.proceedButton} 
-          onPress={handleProceed}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.proceedButtonText}>Verify OTP</Text>
-        </TouchableOpacity>
-        
-        <View style={{ height: 20 }} />
-      </ScrollView>
-      
-      {/* Enhanced Date Picker Modal */}
-      <Modal
-        transparent={true}
-        visible={datePickerVisible}
-        animationType="slide"
-        onRequestClose={() => setDatePickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{showDateInput ? 'Enter Date' : 'Select Date'}</Text>
-              <TouchableOpacity onPress={() => setDatePickerVisible(false)}>
-                <Text style={styles.modalClose}>×</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {showDateInput ? (
-              <View style={styles.dateInputModalContainer}>
-                <Text style={styles.dateInputLabel}>Enter date in DD-MM-YYYY format</Text>
-                <TextInput
-                  style={styles.dateInputField}
-                  value={dateInput}
-                  onChangeText={handleDateInputChange}
-                  placeholder="DD-MM-YYYY"
-                  maxLength={10}
-                  keyboardType="number-pad"
-                />
-                <View style={styles.dateInputButtonsContainer}>
-                  <TouchableOpacity 
-                    style={styles.calendarOption}
-                    onPress={() => setShowDateInput(false)}
-                  >
-                    <Text style={styles.calendarOptionText}>Use Calendar</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.submitDateButton}
-                    onPress={submitDateInput}
-                  >
-                    <Text style={styles.submitDateText}>Submit</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <View>
-                <View style={styles.calendarContainer}>
-                  {/* This would be a proper calendar in a real app */}
-                  <Text style={styles.calendarTitle}>Calendar (Sample Dates)</Text>
-                  
-                  <FlatList
-                    data={generateDates()}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity 
-                        style={styles.dateOption}
-                        onPress={() => handleDateSelect(item)}
-                      >
-                        <Text style={styles.dateOptionText}>{item}</Text>
-                      </TouchableOpacity>
-                    )}
-                    keyExtractor={(item) => item}
-                    style={styles.datesList}
-                  />
-                </View>
-                
-                <TouchableOpacity 
-                  style={styles.manualEntryButton}
-                  onPress={() => setShowDateInput(true)}
-                >
-                  <Text style={styles.manualEntryText}>Enter Date Manually</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+          )}
         </View>
-      </Modal>
+        
+        {/* Submit Button */}
+        <TouchableOpacity 
+          style={[styles.submitButton, loading && styles.disabledButton]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>Register</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -504,11 +412,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  infoCard: {
+    backgroundColor: '#333333',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  infoTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  infoText: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    lineHeight: 20,
+  },
   formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
+    backgroundColor: '#F9F9F9',
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
@@ -517,17 +440,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 16,
-  },
   inputGroup: {
     marginBottom: 16,
   },
@@ -535,7 +447,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333333',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   required: {
     color: '#FF0000',
@@ -545,7 +457,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DDDDDD',
-    borderRadius: 4,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
   },
@@ -557,197 +469,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  dateInputContainer: {
+  docTypeContainer: {
     flexDirection: 'row',
-  },
-  dateDisplay: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 4,
-    padding: 12,
-    fontSize: 16,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  calendarButton: {
-    backgroundColor: '#EEEEEE',
-    padding: 12,
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 50,
-  },
-  calendarButtonText: {
-    fontSize: 16,
-  },
-  dateText: {
-    fontSize: 16,
-    color: '#333333',
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: '#999999',
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  rowInputs: {
-    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  summaryContainer: {
-    marginTop: 24,
-    backgroundColor: '#F9F9F9',
-    padding: 16,
+  docTypeButton: {
+    width: '48%',
+    backgroundColor: '#F0F0F0',
+    padding: 12,
     borderRadius: 8,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 12,
-  },
-  summaryRow: {
-    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#666666',
-    width: 100,
+  selectedDocType: {
+    backgroundColor: '#333333',
   },
-  summaryValue: {
-    fontSize: 14,
+  docTypeText: {
     color: '#333333',
     fontWeight: '500',
-    flex: 1,
   },
-  proceedButton: {
+  selectedDocTypeText: {
+    color: '#FFFFFF',
+  },
+  submitButton: {
     backgroundColor: '#333333',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  proceedButtonText: {
+  disabledButton: {
+    backgroundColor: '#999999',
+  },
+  submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  modalClose: {
-    fontSize: 24,
-    color: '#666666',
-    padding: 4,
-  },
-  // Calendar styles
-  calendarContainer: {
-    marginBottom: 16,
-  },
-  calendarTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  datesList: {
-    maxHeight: 300,
-  },
-  dateOption: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  dateOptionText: {
-    fontSize: 16,
-    color: '#333333',
-    textAlign: 'center',
-  },
-  manualEntryButton: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  manualEntryText: {
-    fontSize: 14,
-    color: '#333333',
-    fontWeight: 'bold',
-  },
-  // Date input styles
-  dateInputModalContainer: {
-    padding: 8,
-  },
-  dateInputLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 8,
-  },
-  dateInputField: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 4,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  dateInputButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  calendarOption: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    padding: 12,
-    flex: 1,
-    marginRight: 8,
-    alignItems: 'center',
-  },
-  calendarOptionText: {
-    fontSize: 14,
-    color: '#333333',
-  },
-  submitDateButton: {
-    backgroundColor: '#333333',
-    borderRadius: 8,
-    padding: 12,
-    flex: 1,
-    marginLeft: 8,
-    alignItems: 'center',
-  },
-  submitDateText: {
-    fontSize: 14,
-    color: '#FFFFFF',
     fontWeight: 'bold',
   },
 });

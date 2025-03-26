@@ -10,10 +10,14 @@ import {
   StatusBar,
   Alert,
   Animated,
-  Image
+  Image,
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import bajajApi from '../api/bajajApi';
 
 const FasTagRekycScreen = ({ navigation }) => {
   // Animation values
@@ -21,26 +25,28 @@ const FasTagRekycScreen = ({ navigation }) => {
   const [slideAnim] = useState(new Animated.Value(30));
   
   // Form state
-  const [requestId] = useState(Date.now().toString());
-  const [sessionId] = useState(Date.now().toString());
-  const [channel] = useState("APP");
-  const [agentId] = useState("70003");
   const [vrn, setVrn] = useState('');
   const [mobileNo, setMobileNo] = useState('');
   const [serialNo, setSerialNo] = useState('');
   
-  // Images
-  const [tagAffixImage, setTagAffixImage] = useState(null);
-  const [vehicleSideImage, setVehicleSideImage] = useState(null);
-  const [vehicleFrontImage, setVehicleFrontImage] = useState(null);
-  const [rcFrontImage, setRcFrontImage] = useState(null);
-  const [rcBackImage, setRcBackImage] = useState(null);
+  // Images with base64 data
+  const [images, setImages] = useState({
+    TAGAFFIX: null,
+    VEHICLESIDE: null,
+    VEHICLEFRONT: null, 
+    RCFRONT: null,
+    RCBACK: null
+  });
   
   // Validation errors
   const [errors, setErrors] = useState({});
   
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
+  
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({});
   
   // Animation effect on component mount
   useEffect(() => {
@@ -59,27 +65,16 @@ const FasTagRekycScreen = ({ navigation }) => {
     
     // Request camera and media library permissions
     (async () => {
-      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-      const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (!cameraPermission.granted || !mediaLibraryPermission.granted) {
-        Alert.alert('Permission Required', 'Camera and media library permissions are required to upload documents.');
+      if (Platform.OS !== 'web') {
+        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+        const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        if (!cameraPermission.granted || !mediaLibraryPermission.granted) {
+          Alert.alert('Permission Required', 'Camera and media library permissions are required to upload documents.');
+        }
       }
     })();
   }, []);
-  
-  // Format current date and time
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
-  };
   
   // Pick image from media library
   const pickImage = async (imageType) => {
@@ -120,202 +115,208 @@ const FasTagRekycScreen = ({ navigation }) => {
   
   // Update image based on type
   const updateImage = (imageType, imageData) => {
-    switch (imageType) {
-      case 'TAGAFFIX':
-        setTagAffixImage(imageData);
-        setErrors(prev => ({ ...prev, tagAffixImage: '' }));
-        break;
-      case 'VEHICLESIDE':
-        setVehicleSideImage(imageData);
-        setErrors(prev => ({ ...prev, vehicleSideImage: '' }));
-        break;
-      case 'VEHICLEFRONT':
-        setVehicleFrontImage(imageData);
-        setErrors(prev => ({ ...prev, vehicleFrontImage: '' }));
-        break;
-      case 'RCFRONT':
-        setRcFrontImage(imageData);
-        setErrors(prev => ({ ...prev, rcFrontImage: '' }));
-        break;
-      case 'RCBACK':
-        setRcBackImage(imageData);
-        setErrors(prev => ({ ...prev, rcBackImage: '' }));
-        break;
-    }
+    setImages(prevImages => ({
+      ...prevImages,
+      [imageType]: {
+        uri: imageData.uri,
+        base64: imageData.base64
+      }
+    }));
+    
+    // Clear error for this image type
+    setErrors(prev => ({ 
+      ...prev, 
+      [imageType]: '' 
+    }));
   };
   
   // Remove image
   const removeImage = (imageType) => {
-    switch (imageType) {
-      case 'TAGAFFIX':
-        setTagAffixImage(null);
-        setErrors(prev => ({ ...prev, tagAffixImage: 'Tag affix image is required' }));
-        break;
-      case 'VEHICLESIDE':
-        setVehicleSideImage(null);
-        setErrors(prev => ({ ...prev, vehicleSideImage: 'Vehicle side image is required' }));
-        break;
-      case 'VEHICLEFRONT':
-        setVehicleFrontImage(null);
-        setErrors(prev => ({ ...prev, vehicleFrontImage: 'Vehicle front image is required' }));
-        break;
-      case 'RCFRONT':
-        setRcFrontImage(null);
-        setErrors(prev => ({ ...prev, rcFrontImage: 'RC front image is required' }));
-        break;
-      case 'RCBACK':
-        setRcBackImage(null);
-        setErrors(prev => ({ ...prev, rcBackImage: 'RC back image is required' }));
-        break;
-    }
+    setImages(prevImages => ({
+      ...prevImages,
+      [imageType]: null
+    }));
+    
+    // Set error for this image type
+    setErrors(prev => ({ 
+      ...prev, 
+      [imageType]: `${getImageTypeLabel(imageType)} image is required` 
+    }));
   };
   
   // Basic validation
-  const validateField = (field, value) => {
-    let error = '';
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
     
-    switch (field) {
-      case 'vrn':
-        if (!value) {
-          error = 'Vehicle number is required';
-        } else if (!/^[A-Z0-9]{5,10}$/.test(value)) {
-          error = 'Enter a valid vehicle number';
-        }
-        break;
-        
-      case 'mobileNo':
-        if (!value) {
-          error = 'Mobile number is required';
-        } else if (!/^[0-9]{10}$/.test(value)) {
-          error = 'Mobile number must be 10 digits';
-        }
-        break;
-        
-      case 'serialNo':
-        if (!value) {
-          error = 'Serial number is required';
-        }
-        break;
-        
-      case 'tagAffixImage':
-        if (!value) {
-          error = 'Tag affix image is required';
-        }
-        break;
-        
-      case 'vehicleSideImage':
-        if (!value) {
-          error = 'Vehicle side image is required';
-        }
-        break;
-        
-      case 'vehicleFrontImage':
-        if (!value) {
-          error = 'Vehicle front image is required';
-        }
-        break;
-        
-      case 'rcFrontImage':
-        if (!value) {
-          error = 'RC front image is required';
-        }
-        break;
-        
-      case 'rcBackImage':
-        if (!value) {
-          error = 'RC back image is required';
-        }
-        break;
+    // Validate VRN
+    if (!vrn.trim()) {
+      newErrors.vrn = 'Vehicle number is required';
+      isValid = false;
+    } else if (!/^[A-Z0-9]{5,10}$/.test(vrn)) {
+      newErrors.vrn = 'Enter a valid vehicle number';
+      isValid = false;
     }
     
-    setErrors(prev => ({
-      ...prev,
-      [field]: error
-    }));
+    // Validate mobile number
+    if (!mobileNo.trim()) {
+      newErrors.mobileNo = 'Mobile number is required';
+      isValid = false;
+    } else if (!/^[0-9]{10}$/.test(mobileNo)) {
+      newErrors.mobileNo = 'Mobile number must be 10 digits';
+      isValid = false;
+    }
     
-    return !error;
+    // Validate serial number
+    if (!serialNo.trim()) {
+      newErrors.serialNo = 'Serial number is required';
+      isValid = false;
+    }
+    
+    // Validate all images
+    Object.keys(images).forEach(imageType => {
+      if (!images[imageType]) {
+        newErrors[imageType] = `${getImageTypeLabel(imageType)} image is required`;
+        isValid = false;
+      }
+    });
+    
+    setErrors(newErrors);
+    return isValid;
   };
   
   // Handle form submission
-  const handleSubmit = () => {
-    // Validate all required fields
-    const validVrn = validateField('vrn', vrn);
-    const validMobile = validateField('mobileNo', mobileNo);
-    const validSerial = validateField('serialNo', serialNo);
-    const validTagAffix = validateField('tagAffixImage', tagAffixImage);
-    const validVehicleSide = validateField('vehicleSideImage', vehicleSideImage);
-    const validVehicleFront = validateField('vehicleFrontImage', vehicleFrontImage);
-    const validRcFront = validateField('rcFrontImage', rcFrontImage);
-    const validRcBack = validateField('rcBackImage', rcBackImage);
-    
-    if (!(validVrn && validMobile && validSerial && validTagAffix && validVehicleSide && 
-          validVehicleFront && validRcFront && validRcBack)) {
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       Alert.alert('Validation Error', 'Please correct the errors in the form.');
       return;
     }
     
-    // Create array of images to be uploaded
-    const imagesToUpload = [
-      { type: 'TAGAFFIX', image: tagAffixImage },
-      { type: 'VEHICLESIDE', image: vehicleSideImage },
-      { type: 'VEHICLEFRONT', image: vehicleFrontImage },
-      { type: 'RCFRONT', image: rcFrontImage },
-      { type: 'RCBACK', image: rcBackImage }
-    ];
+    setLoading(true);
     
-    // Log each image upload (in a real app, these would be API calls)
-    imagesToUpload.forEach(img => {
-      const payload = {
-        regDetails: {
-          requestId,
-          sessionId,
-          channel,
-          agentId,
-          reqDateTime: getCurrentDateTime()
-        },
-        documentDetails: {
-          vrn,
-          mobileNo,
-          serialNo,
-          imageType: img.type,
-          image: img.image.base64 ? img.image.base64.substring(0, 20) + '...' : '...',
-          sessionId: null,
-          udf1: null,
-          udf2: null,
-          udf3: null,
-          udf4: null,
-          udf5: null
-        }
-      };
+    try {
+      // Upload each image
+      const imageTypes = Object.keys(images);
+      let uploadSuccessCount = 0;
       
-      console.log(`Uploading ${img.type} image:`, payload);
-    });
+      for (const imageType of imageTypes) {
+        try {
+          const response = await bajajApi.uploadReKycImage(
+            vrn,
+            mobileNo,
+            serialNo,
+            imageType,
+            images[imageType].base64
+          );
+          
+          if (response && response.response && response.response.status === 'success') {
+            console.log(`Successfully uploaded ${imageType}`);
+            uploadSuccessCount++;
+            
+            setUploadProgress(prev => ({
+              ...prev,
+              [imageType]: 'success'
+            }));
+          } else {
+            console.error(`Failed to upload ${imageType}:`, response);
+            setUploadProgress(prev => ({
+              ...prev,
+              [imageType]: 'failed'
+            }));
+          }
+        } catch (error) {
+          console.error(`Error uploading ${imageType}:`, error);
+          setUploadProgress(prev => ({
+            ...prev,
+            [imageType]: 'failed'
+          }));
+        }
+      }
+      
+      // Check if all uploads were successful
+      if (uploadSuccessCount === imageTypes.length) {
+        // Check status of uploads
+        try {
+          const statusResponse = await bajajApi.checkReKycImageStatus(
+            vrn,
+            mobileNo,
+            serialNo
+          );
+          
+          console.log('Status check response:', statusResponse);
+          
+          // Add a notification
+          addNotification({
+            id: Date.now(),
+            message: 'FasTag Re-KYC images uploaded successfully',
+            time: 'Just now',
+            read: false
+          });
+          
+          Alert.alert(
+            'Success',
+            'All images have been uploaded successfully for FasTag Re-KYC!',
+            [{ text: 'OK', onPress: () => navigation.goBack() }]
+          );
+        } catch (statusError) {
+          console.error('Error checking status:', statusError);
+          Alert.alert(
+            'Success with Warning',
+            'Images uploaded but status check failed. Your Re-KYC might still be processing.'
+          );
+        }
+      } else {
+        Alert.alert(
+          'Partial Upload',
+          `Uploaded ${uploadSuccessCount} out of ${imageTypes.length} images. Please try again for the failed ones.`
+        );
+      }
+    } catch (error) {
+      console.error('Error during submission:', error);
+      Alert.alert('Submission Error', `An error occurred during submission: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Get human-readable label for image types
+  const getImageTypeLabel = (imageType) => {
+    const labels = {
+      RCFRONT: 'RC Front',
+      RCBACK: 'RC Back',
+      VEHICLEFRONT: 'Vehicle Front',
+      VEHICLESIDE: 'Vehicle Side',
+      TAGAFFIX: 'Tag Affixed on Vehicle',
+    };
+    return labels[imageType] || imageType;
+  };
+  
+  // Render progress indicator
+  const renderProgressIndicator = (imageType) => {
+    const status = uploadProgress[imageType];
     
-    // Add a notification
-    addNotification({
-      id: Date.now(),
-      message: 'FasTag Re-KYC images uploaded successfully',
-      time: 'Just now',
-      read: false
-    });
+    if (status === true) {
+      return <ActivityIndicator size="small" color="#0066CC" />;
+    } else if (status === 'success') {
+      return <AntDesign name="checkcircle" size={18} color="green" />;
+    } else if (status === 'failed') {
+      return <AntDesign name="closecircle" size={18} color="red" />;
+    }
     
-    // In a real app, we would call the API here for each image
-    // For the demo, we'll simulate a successful response
-    Alert.alert(
-      'Success',
-      'All FasTag Re-KYC images have been uploaded successfully!',
-      [
-        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-      ]
-    );
+    return null;
   };
   
   // Render image section with upload options
-  const renderImageSection = (title, imageType, image, setImage) => {
-    const errorKey = imageType.toLowerCase().replace(/^/, '') + 'Image';
+  const renderImageSection = (imageType) => {
+    const title = getImageTypeLabel(imageType);
+    const image = images[imageType];
+    
     return (
-      <View style={styles.imageSection}>
-        <Text style={styles.label}>{title}<Text style={styles.required}>*</Text></Text>
+      <View style={styles.imageSection} key={imageType}>
+        <View style={styles.imageSectionHeader}>
+          <Text style={styles.label}>{title}<Text style={styles.required}>*</Text></Text>
+          {renderProgressIndicator(imageType)}
+        </View>
         
         <View style={styles.imageContainer}>
           {image ? (
@@ -351,8 +352,8 @@ const FasTagRekycScreen = ({ navigation }) => {
           </View>
         </View>
         
-        {errors[errorKey] ? (
-          <Text style={styles.errorText}>{errors[errorKey]}</Text>
+        {errors[imageType] ? (
+          <Text style={styles.errorText}>{errors[imageType]}</Text>
         ) : null}
       </View>
     );
@@ -397,7 +398,6 @@ const FasTagRekycScreen = ({ navigation }) => {
                 onChangeText={(text) => {
                   const upperText = text.toUpperCase();
                   setVrn(upperText);
-                  validateField('vrn', upperText);
                 }}
                 autoCapitalize="characters"
               />
@@ -413,10 +413,7 @@ const FasTagRekycScreen = ({ navigation }) => {
                 style={[styles.input, errors.mobileNo ? styles.inputError : null]}
                 placeholder="Enter 10 digit mobile number"
                 value={mobileNo}
-                onChangeText={(text) => {
-                  setMobileNo(text);
-                  validateField('mobileNo', text);
-                }}
+                onChangeText={setMobileNo}
                 keyboardType="phone-pad"
                 maxLength={10}
               />
@@ -430,12 +427,9 @@ const FasTagRekycScreen = ({ navigation }) => {
               <Text style={styles.label}>Serial Number<Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={[styles.input, errors.serialNo ? styles.inputError : null]}
-                placeholder="Enter serial number"
+                placeholder="Enter serial number (e.g., 608268-001-0056151)"
                 value={serialNo}
-                onChangeText={(text) => {
-                  setSerialNo(text);
-                  validateField('serialNo', text);
-                }}
+                onChangeText={setSerialNo}
               />
               {errors.serialNo ? (
                 <Text style={styles.errorText}>{errors.serialNo}</Text>
@@ -446,19 +440,20 @@ const FasTagRekycScreen = ({ navigation }) => {
           <View style={styles.imagesContainer}>
             <Text style={styles.sectionTitle}>Required Images</Text>
             
-            {renderImageSection('Tag Affix (FasTag on vehicle)', 'TAGAFFIX', tagAffixImage, setTagAffixImage)}
-            {renderImageSection('Vehicle Side View', 'VEHICLESIDE', vehicleSideImage, setVehicleSideImage)}
-            {renderImageSection('Vehicle Front View', 'VEHICLEFRONT', vehicleFrontImage, setVehicleFrontImage)}
-            {renderImageSection('RC Front Side', 'RCFRONT', rcFrontImage, setRcFrontImage)}
-            {renderImageSection('RC Back Side', 'RCBACK', rcBackImage, setRcBackImage)}
+            {Object.keys(images).map(imageType => renderImageSection(imageType))}
           </View>
           
           {/* Submit Button */}
           <TouchableOpacity 
-            style={styles.submitButton}
+            style={[styles.submitButton, loading && styles.disabledButton]}
             onPress={handleSubmit}
+            disabled={loading}
           >
-            <Text style={styles.submitButtonText}>Upload All Images</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Upload All Images</Text>
+            )}
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -571,6 +566,12 @@ const styles = StyleSheet.create({
   imageSection: {
     marginBottom: 20,
   },
+  imageSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   imageContainer: {
     marginBottom: 8,
   },
@@ -633,6 +634,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 24,
+  },
+  disabledButton: {
+    backgroundColor: '#a0a0a0',
   },
   submitButtonText: {
     color: '#FFFFFF',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -9,8 +9,11 @@ import {
   SafeAreaView, 
   StatusBar,
   Alert,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
+import { NotificationContext } from '../contexts/NotificationContext';
+import bajajApi from '../api/bajajApi';
 
 const VrnUpdateScreen = ({ navigation }) => {
   // Animation values
@@ -18,19 +21,21 @@ const VrnUpdateScreen = ({ navigation }) => {
   const [slideAnim] = useState(new Animated.Value(30));
   
   // Form state
-  const [requestId] = useState(Date.now().toString());
-  const [channel] = useState("APP");
-  const [agentId] = useState("");
   const [vehicleNo, setVehicleNo] = useState('');
   const [chassisNo, setChassisNo] = useState('');
   const [engineNo, setEngineNo] = useState('');
   const [mobileNo, setMobileNo] = useState('');
   const [serialNo, setSerialNo] = useState('');
   const [tid, setTid] = useState('');
-  const [udf1, setUdf1] = useState('');
+  
+  // UI state
+  const [loading, setLoading] = useState(false);
   
   // Validation errors
   const [errors, setErrors] = useState({});
+  
+  // Access notification context
+  const { addNotification } = useContext(NotificationContext);
   
   // Animation effect on component mount
   useEffect(() => {
@@ -48,104 +53,115 @@ const VrnUpdateScreen = ({ navigation }) => {
     ]).start();
   }, []);
   
-  // Format current date and time
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
+  // Validate form
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
     
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.000`;
-  };
-  
-  // Basic validation
-  const validateField = (field, value) => {
-    let error = '';
-    
-    switch (field) {
-      case 'vehicleNo':
-        if (!value) {
-          error = 'Vehicle number is required';
-        } else if (!/^[A-Z0-9]{5,10}$/.test(value)) {
-          error = 'Enter a valid vehicle number';
-        }
-        break;
-        
-      case 'chassisNo':
-        if (!value) {
-          error = 'Chassis number is required';
-        }
-        break;
-        
-      case 'mobileNo':
-        if (!value) {
-          error = 'Mobile number is required';
-        } else if (!/^[0-9]{10}$/.test(value)) {
-          error = 'Mobile number must be 10 digits';
-        }
-        break;
-        
-      case 'serialNo':
-        if (!value) {
-          error = 'Serial number is required';
-        }
-        break;
+    // Validate vehicle number
+    if (!vehicleNo.trim()) {
+      newErrors.vehicleNo = 'Vehicle number is required';
+      isValid = false;
+    } else if (!/^[A-Z0-9]{5,10}$/.test(vehicleNo)) {
+      newErrors.vehicleNo = 'Enter a valid vehicle number';
+      isValid = false;
     }
     
-    setErrors(prev => ({
-      ...prev,
-      [field]: error
-    }));
+    // Validate chassis number
+    if (!chassisNo.trim()) {
+      newErrors.chassisNo = 'Chassis number is required';
+      isValid = false;
+    }
     
-    return !error;
+    // Validate mobile number
+    if (!mobileNo.trim()) {
+      newErrors.mobileNo = 'Mobile number is required';
+      isValid = false;
+    } else if (!/^[0-9]{10}$/.test(mobileNo)) {
+      newErrors.mobileNo = 'Mobile number must be 10 digits';
+      isValid = false;
+    }
+    
+    // Validate serial number
+    if (!serialNo.trim()) {
+      newErrors.serialNo = 'Serial number is required';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
   
   // Handle form submission
-  const handleSubmit = () => {
-    // Validate all required fields
-    const validVehicle = validateField('vehicleNo', vehicleNo);
-    const validChassis = validateField('chassisNo', chassisNo);
-    const validMobile = validateField('mobileNo', mobileNo);
-    const validSerial = validateField('serialNo', serialNo);
-    
-    if (!(validVehicle && validChassis && validMobile && validSerial)) {
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       Alert.alert('Validation Error', 'Please correct the errors in the form.');
       return;
     }
     
-    // Prepare API request payload
-    const payload = {
-      regDetails: {
-        requestId,
-        channel,
-        agentId,
-        reqDateTime: getCurrentDateTime()
-      },
-      vrnUpdateReq: {
+    setLoading(true);
+    
+    try {
+      // Call Bajaj API to update VRN
+      const response = await bajajApi.updateVrn(
         vehicleNo,
         chassisNo,
-        engineNo,
+        engineNo || '', // Optional
         mobileNo,
         serialNo,
-        tid,
-        udf1
+        tid || '' // Optional
+      );
+      
+      console.log('VRN Update Response:', response);
+      
+      if (response && response.response && response.response.status === 'success') {
+        // Add notification
+        addNotification({
+          id: Date.now(),
+          message: `Vehicle Registration Number ${vehicleNo} updated successfully`,
+          time: 'Just now',
+          read: false
+        });
+        
+        Alert.alert(
+          'Success',
+          'Vehicle Registration Number updated successfully!',
+          [
+            { 
+              text: 'Upload Documents', 
+              onPress: () => navigateToDocUpload() 
+            },
+            { 
+              text: 'Done', 
+              onPress: () => navigation.goBack(),
+              style: 'cancel'
+            }
+          ]
+        );
+      } else {
+        const errorMsg = response?.response?.errorDesc || 'Failed to update VRN';
+        throw new Error(errorMsg);
       }
-    };
-    
-    console.log('VRN Update Request:', payload);
-    
-    // In a real app, we would call the API here
-    // For the demo, we'll simulate a successful response
-    Alert.alert(
-      'Success',
-      'Vehicle Registration Number updated successfully!',
-      [
-        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-      ]
-    );
+    } catch (error) {
+      console.error('VRN Update Error:', error);
+      Alert.alert(
+        'Update Failed',
+        `Failed to update Vehicle Registration Number: ${error.message}`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Inside the VrnUpdateScreen component, add a navigateToDocUpload function
+  const navigateToDocUpload = () => {
+    navigation.navigate('VrnUpdateDoc', {
+      vehicleNo,
+      chassisNo,
+      engineNo,
+      mobileNo,
+      serialNo
+    });
   };
   
   return (
@@ -187,7 +203,6 @@ const VrnUpdateScreen = ({ navigation }) => {
                 onChangeText={(text) => {
                   const upperText = text.toUpperCase();
                   setVehicleNo(upperText);
-                  validateField('vehicleNo', upperText);
                 }}
                 autoCapitalize="characters"
               />
@@ -206,7 +221,6 @@ const VrnUpdateScreen = ({ navigation }) => {
                 onChangeText={(text) => {
                   const upperText = text.toUpperCase();
                   setChassisNo(upperText);
-                  validateField('chassisNo', upperText);
                 }}
                 autoCapitalize="characters"
               />
@@ -220,9 +234,9 @@ const VrnUpdateScreen = ({ navigation }) => {
               <Text style={styles.label}>Engine Number</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter engine number"
+                placeholder="Enter engine number (optional)"
                 value={engineNo}
-                onChangeText={setEngineNo}
+                onChangeText={(text) => setEngineNo(text.toUpperCase())}
                 autoCapitalize="characters"
               />
             </View>
@@ -234,10 +248,7 @@ const VrnUpdateScreen = ({ navigation }) => {
                 style={[styles.input, errors.mobileNo ? styles.inputError : null]}
                 placeholder="Enter 10 digit mobile number"
                 value={mobileNo}
-                onChangeText={(text) => {
-                  setMobileNo(text);
-                  validateField('mobileNo', text);
-                }}
+                onChangeText={setMobileNo}
                 keyboardType="phone-pad"
                 maxLength={10}
               />
@@ -251,12 +262,9 @@ const VrnUpdateScreen = ({ navigation }) => {
               <Text style={styles.label}>Serial Number<Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={[styles.input, errors.serialNo ? styles.inputError : null]}
-                placeholder="Enter serial number"
+                placeholder="Enter FasTag serial number"
                 value={serialNo}
-                onChangeText={(text) => {
-                  setSerialNo(text);
-                  validateField('serialNo', text);
-                }}
+                onChangeText={setSerialNo}
               />
               {errors.serialNo ? (
                 <Text style={styles.errorText}>{errors.serialNo}</Text>
@@ -265,33 +273,35 @@ const VrnUpdateScreen = ({ navigation }) => {
             
             {/* TID */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>TID</Text>
+              <Text style={styles.label}>TID (Optional)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter TID (optional)"
+                placeholder="Enter TID if available"
                 value={tid}
                 onChangeText={setTid}
               />
             </View>
-            
-            {/* UDF1 */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Additional Info</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter additional information (optional)"
-                value={udf1}
-                onChangeText={setUdf1}
-              />
-            </View>
           </View>
+          
+          {/* Document Upload Button */}
+          <TouchableOpacity 
+            style={styles.docUploadButton}
+            onPress={navigateToDocUpload}
+          >
+            <Text style={styles.docUploadButtonText}>Upload RC Documents</Text>
+          </TouchableOpacity>
           
           {/* Submit Button */}
           <TouchableOpacity 
-            style={styles.submitButton}
+            style={[styles.submitButton, loading && styles.disabledButton]}
             onPress={handleSubmit}
+            disabled={loading}
           >
-            <Text style={styles.submitButtonText}>Update VRN</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>Update VRN</Text>
+            )}
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -391,8 +401,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  disabledButton: {
+    backgroundColor: '#999999',
+  },
   submitButtonText: {
     color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  docUploadButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  docUploadButtonText: {
+    color: '#333333',
     fontSize: 16,
     fontWeight: 'bold',
   },

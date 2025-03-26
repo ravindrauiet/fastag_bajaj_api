@@ -1,9 +1,9 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal } from 'react-native';
-import { NotificationContext } from '../contexts/NotificationContext';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback } from 'react-native';
+import { NotificationContext, NotificationProvider } from '../contexts/NotificationContext';
 
 // Import all screens
 import HomeScreen from '../components/HomeScreen';
@@ -26,6 +26,7 @@ import ConfirmPaymentScreen from '../components/ConfirmPaymentScreen';
 import VehicleKYCScreen from '../components/VehicleKYCScreen';
 import VrnUpdateScreen from '../components/VrnUpdateScreen';
 import FasTagRekycScreen from '../components/FasTagRekycScreen';
+import VrnUpdateDocScreen from '../components/VrnUpdateDocScreen';
 
 // Create stack navigator for the main app flow
 const Stack = createStackNavigator();
@@ -63,6 +64,7 @@ const HomeStack = () => {
       <Stack.Screen name="AddOns" component={AddOnsScreen} />
       <Stack.Screen name="ConfirmPayment" component={ConfirmPaymentScreen} />
       <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
+      <Stack.Screen name="VrnUpdateDoc" component={VrnUpdateDocScreen} />
     </Stack.Navigator>
   );
 };
@@ -119,128 +121,93 @@ const FourDotMenuIcon = ({ onPress }) => (
   </TouchableOpacity>
 );
 
-// Custom notification bell component
+// Notification Bell component with dropdown
 const NotificationBell = () => {
-  const { 
-    notifications, 
-    markAsRead, 
-    markAllAsRead, 
-    getUnreadCount 
-  } = useContext(NotificationContext);
+  const { notifications, markAsRead, clearNotification } = React.useContext(NotificationContext);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   
-  const [showNotifications, setShowNotifications] = useState(false);
-  const unreadCount = getUnreadCount();
+  // Calculate unread notifications
+  useEffect(() => {
+    const count = notifications.filter(n => !n.read).length;
+    setUnreadCount(count);
+  }, [notifications]);
   
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
   };
-
+  
+  const handleNotificationPress = (id) => {
+    markAsRead(id);
+  };
+  
   return (
-    <View>
-      <TouchableOpacity 
-        style={{ padding: 8 }}
-        onPress={toggleNotifications}
-      >
-        <View style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: '#F5F5F5',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-          <Text style={{ fontSize: 16 }}>🔔</Text>
-          {unreadCount > 0 && (
-            <View style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              backgroundColor: '#FF0000',
-              width: 16,
-              height: 16,
-              borderRadius: 8,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>
-                {unreadCount}
-              </Text>
-            </View>
-          )}
-        </View>
+    <View style={styles.bellContainer}>
+      <TouchableOpacity onPress={toggleDropdown} style={styles.bellButton}>
+        <Text style={styles.bellIcon}>🔔</Text>
+        {unreadCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{unreadCount}</Text>
+          </View>
+        )}
       </TouchableOpacity>
       
       <Modal
         transparent={true}
-        visible={showNotifications}
+        visible={showDropdown}
         animationType="fade"
-        onRequestClose={() => setShowNotifications(false)}
+        onRequestClose={() => setShowDropdown(false)}
       >
-        <TouchableOpacity 
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.1)',
-          }}
-          activeOpacity={1}
-          onPress={() => setShowNotifications(false)}
-        >
-          <View style={{
-            position: 'absolute',
-            top: 80,
-            right: 10,
-            width: 250,
-            backgroundColor: '#FFFFFF',
-            borderRadius: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 5,
-          }}>
-            <View style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 12,
-              borderBottomWidth: 1,
-              borderBottomColor: '#F0F0F0',
-            }}>
-              <Text style={{ fontWeight: 'bold' }}>Notifications</Text>
-              {unreadCount > 0 && (
-                <TouchableOpacity onPress={markAllAsRead}>
-                  <Text style={{ color: '#0066CC', fontSize: 12 }}>Mark all as read</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            {notifications.length > 0 ? (
-              <ScrollView style={{ maxHeight: 300 }}>
-                {notifications.map(notification => (
-                  <TouchableOpacity 
-                    key={notification.id}
-                    style={{
-                      padding: 12,
-                      backgroundColor: notification.read ? '#FFFFFF' : '#F0F8FF',
-                      borderBottomWidth: 1,
-                      borderBottomColor: '#F0F0F0',
-                    }}
-                    onPress={() => {
-                      markAsRead(notification.id);
-                      // Don't close the modal when marking a notification as read
-                    }}
-                  >
-                    <Text style={{ fontSize: 14 }}>{notification.message}</Text>
-                    <Text style={{ fontSize: 12, color: '#999999', marginTop: 4 }}>{notification.time}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            ) : (
-              <View style={{ padding: 16, alignItems: 'center' }}>
-                <Text style={{ color: '#999999' }}>No notifications</Text>
-              </View>
+        <TouchableWithoutFeedback onPress={() => setShowDropdown(false)}>
+          <View style={styles.modalOverlay} />
+        </TouchableWithoutFeedback>
+        
+        <View style={styles.notificationPanel}>
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>Notifications</Text>
+            {notifications.length > 0 && (
+              <TouchableOpacity onPress={() => {
+                notifications.forEach(n => markAsRead(n.id));
+                setShowDropdown(false);
+              }}>
+                <Text style={styles.markAllRead}>Mark all as read</Text>
+              </TouchableOpacity>
             )}
           </View>
-        </TouchableOpacity>
+          
+          {notifications.length === 0 ? (
+            <View style={styles.emptyNotifications}>
+              <Text style={styles.emptyText}>No notifications</Text>
+            </View>
+          ) : (
+            <View style={styles.notificationList}>
+              {notifications.map(notification => (
+                <TouchableOpacity 
+                  key={notification.id} 
+                  style={[
+                    styles.notificationItem,
+                    !notification.read ? styles.unreadNotification : null
+                  ]}
+                  onPress={() => handleNotificationPress(notification.id)}
+                >
+                  <View style={styles.notificationContent}>
+                    <Text style={styles.notificationMessage}>{notification.message}</Text>
+                    <Text style={styles.notificationTime}>{notification.time}</Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      clearNotification(notification.id);
+                    }}
+                  >
+                    <Text style={styles.deleteIcon}>×</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       </Modal>
     </View>
   );
@@ -359,46 +326,48 @@ const CustomDrawerContent = (props) => {
 // Main drawer navigator
 const AppNavigator = () => {
   return (
-    <NavigationContainer>
-      <Drawer.Navigator
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
-        initialRouteName="Home"
-        screenOptions={({ navigation }) => ({
-          headerShown: true,
-          drawerStyle: {
-            width: '70%',
-          },
-          // Apply custom header to all screens by default
-          headerTitle: props => <LogoTitle {...props} />,
-          headerLeft: () => <FourDotMenuIcon onPress={() => navigation.openDrawer()} />,
-          headerRight: () => <NotificationBell />,
-          headerStyle: {
-            backgroundColor: '#FFFFFF',
-            elevation: 0,
-            shadowOpacity: 0,
-            borderBottomWidth: 1,
-            borderBottomColor: '#F0F0F0',
-          },
-          headerTintColor: '#333333',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        })}
-      >
-        <Drawer.Screen 
-          name="Home" 
-          component={HomeStack} 
-        />
-        <Drawer.Screen 
-          name="NETC" 
-          component={NETCStack} 
-        />
-        <Drawer.Screen 
-          name="Inventory" 
-          component={InventoryStack} 
-        />
-      </Drawer.Navigator>
-    </NavigationContainer>
+    <NotificationProvider>
+      <NavigationContainer>
+        <Drawer.Navigator
+          drawerContent={(props) => <CustomDrawerContent {...props} />}
+          initialRouteName="Home"
+          screenOptions={({ navigation }) => ({
+            headerShown: true,
+            drawerStyle: {
+              width: '70%',
+            },
+            // Apply custom header to all screens by default
+            headerTitle: props => <LogoTitle {...props} />,
+            headerLeft: () => <FourDotMenuIcon onPress={() => navigation.openDrawer()} />,
+            headerRight: () => <NotificationBell />,
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+              elevation: 0,
+              shadowOpacity: 0,
+              borderBottomWidth: 1,
+              borderBottomColor: '#F0F0F0',
+            },
+            headerTintColor: '#333333',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          })}
+        >
+          <Drawer.Screen 
+            name="Home" 
+            component={HomeStack} 
+          />
+          <Drawer.Screen 
+            name="NETC" 
+            component={NETCStack} 
+          />
+          <Drawer.Screen 
+            name="Inventory" 
+            component={InventoryStack} 
+          />
+        </Drawer.Navigator>
+      </NavigationContainer>
+    </NotificationProvider>
   );
 };
 
@@ -441,6 +410,111 @@ const styles = StyleSheet.create({
   activeDrawerItem: {
     color: '#000',
     fontWeight: 'bold',
+  },
+  bellContainer: {
+    marginRight: 15,
+  },
+  bellButton: {
+    padding: 5,
+  },
+  bellIcon: {
+    fontSize: 24,
+  },
+  badge: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  notificationPanel: {
+    position: 'absolute',
+    top: 80,
+    right: 10,
+    width: 300,
+    maxHeight: 400,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  notificationTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  markAllRead: {
+    color: '#007AFF',
+    fontSize: 12,
+  },
+  emptyNotifications: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#666',
+  },
+  notificationList: {
+    maxHeight: 300,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  unreadNotification: {
+    backgroundColor: '#f0f8ff',
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 12,
+    color: '#666',
+  },
+  deleteButton: {
+    marginLeft: 10,
+    padding: 5,
+  },
+  deleteIcon: {
+    fontSize: 18,
+    color: '#999',
   },
 });
 
