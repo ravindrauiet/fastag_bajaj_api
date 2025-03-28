@@ -3,11 +3,11 @@ import axios from 'axios';
 
 // Constants for API integration
 const BASE_URL = 'https://pay-api-uat.bajajfinserv.in/'; // UAT URL
-const PROD_URL = 'https://pay-pgapi.bajajfinserv.in/'; // Production URL (for future use)
-const ENCRYPTION_KEY = '05BFFF9D7FA7CB250065445219A12A8F'; // UAT Encryption Key
-const API_SUBSCRIPTION_KEY = 'c9b61bb787054f5f89e83a0437cb0842'; // UAT Subscription Key
-const CHANNEL = 'CBPL'; // Replace with your channel
-const AGENT_ID = '70003'; // Replace with your agent ID
+const PROD_URL = 'https://pay-pgapi.bajajfinserv.in/'; // Production URL
+const ENCRYPTION_KEY = 'dmdkgehajqc87net3lzgcirsgao2yy8f'; // Production Encryption Key
+const API_SUBSCRIPTION_KEY = 'b9f873ec7376470dad2609d2d200f621'; // Production Subscription Key
+const CHANNEL = 'CBPL'; // Channel
+const AGENT_ID = '70003'; // Agent ID
 
 // Utility functions for encryption and decryption
 const generateIv = (keyString) => {
@@ -105,26 +105,30 @@ const bajajApi = {
         validateCustReq: {
           requestId,
           mobileNo,
-          reqDateTime,
-          channel: CHANNEL,
-          agentId: AGENT_ID,
+          vehicleNo: vehicleNo || "",
+          chassisNo: chassisNo || "",
+          engineNo: engineNo || "",
           reqType,
           resend,
-          isChassis
+          channel: CHANNEL,
+          agentId: AGENT_ID,
+          isChassis,
+          reqDateTime,
+          udf1: "",
+          udf2: "",
+          udf3: "",
+          udf4: "",
+          udf5: ""
         }
       };
-
-      if (vehicleNo) requestData.validateCustReq.vehicleNo = vehicleNo;
-      if (chassisNo) requestData.validateCustReq.chassisNo = chassisNo;
-      if (engineNo) requestData.validateCustReq.engineNo = engineNo;
 
       const encryptedData = encrypt(JSON.stringify(requestData));
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/sendOtp`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
@@ -183,8 +187,8 @@ const bajajApi = {
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
@@ -231,7 +235,12 @@ const bajajApi = {
           lastName,
           mobileNo,
           dob, // Format: DD-MM-YYYY
-          doc: documentDetails // Array of document objects like: [{docType: "1", docNo: "ABCPD1234D"}, ...]
+          doc: documentDetails, // Array of document objects like: [{docType: "1", docNo: "ABCPD1234D"}, ...]
+          udf1: "",
+          udf2: "",
+          udf3: "",
+          udf4: "",
+          udf5: ""
         }
       };
 
@@ -240,8 +249,8 @@ const bajajApi = {
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
@@ -254,6 +263,54 @@ const bajajApi = {
     } catch (error) {
       console.error('Create Wallet API Error:', error);
       throw new Error(error.response?.data?.message || 'Failed to create wallet');
+    }
+  },
+  
+  // Register User function - maps to createWallet
+  registerUser: async (userData) => {
+    try {
+      // Map user data to the format expected by createWallet
+      const { firstName, lastName, mobileNo, dob, documentType, documentNumber, expiryDate } = userData;
+      
+      // Convert document type to the format expected by the API
+      let docTypeCode;
+      switch (documentType) {
+        case 'PAN':
+          docTypeCode = "1";
+          break;
+        case 'DL':
+          docTypeCode = "2";
+          break;
+        case 'VID':
+          docTypeCode = "3";
+          break;
+        case 'PASS':
+          docTypeCode = "4";
+          break;
+        default:
+          docTypeCode = "1";
+      }
+      
+      // Prepare document details
+      const documentDetails = [];
+      
+      // Create the document object
+      const docObj = {
+        docType: docTypeCode,
+        docNo: documentNumber
+      };
+      
+      // Add expiry date if present (required for DL and Passport)
+      if (expiryDate && (documentType === 'DL' || documentType === 'PASS')) {
+        docObj.expiryDate = expiryDate;
+      }
+      
+      documentDetails.push(docObj);
+      
+      return await bajajApi.createWallet(firstName, lastName, mobileNo, dob, documentDetails);
+    } catch (error) {
+      console.error('Register User API Error:', error);
+      throw error;
     }
   },
 
@@ -360,8 +417,8 @@ const bajajApi = {
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/uploadDocument`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
@@ -402,8 +459,8 @@ const bajajApi = {
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
@@ -420,24 +477,39 @@ const bajajApi = {
   },
 
   // 7. FasTag Replacement
-  replaceFastag: async (replacementDetails) => {
+  replaceFastag: async (walletId, vehicleNo, debitAmt, reason, reasonDesc = '', serialNo, chassisNo, engineNo, isNationalPermit, permitExpiryDate, stateOfRegistration, vehicleDescriptor) => {
     try {
       const requestId = generateRequestId();
       const sessionId = requestId;
       const reqDateTime = getCurrentDateTime();
-
-      // Make sure required fields are present
-      const tagReplaceReq = {
-        ...replacementDetails,
-        requestId,
-        sessionId,
-        channel: CHANNEL,
-        agentId: AGENT_ID,
-        reqDateTime
-      };
+      const mobileNo = ''; // This should be provided if needed
 
       const requestData = {
-        tagReplaceReq
+        tagReplaceReq: {
+          mobileNo,
+          walletId,
+          vehicleNo,
+          channel: CHANNEL,
+          agentId: AGENT_ID,
+          reqDateTime,
+          debitAmt,
+          requestId,
+          sessionId,
+          serialNo,
+          reason,
+          reasonDesc,
+          chassisNo,
+          engineNo,
+          isNationalPermit,
+          permitExpiryDate,
+          stateOfRegistration,
+          vehicleDescriptor,
+          udf1: "",
+          udf2: "",
+          udf3: "",
+          udf4: "",
+          udf5: ""
+        }
       };
 
       const encryptedData = encrypt(JSON.stringify(requestData));
@@ -445,8 +517,8 @@ const bajajApi = {
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/replaceFastag`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
