@@ -302,9 +302,9 @@ const CustomDrawerContent = (props) => {
         </Text>
         <Text 
           style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('ValidateOtp')}
+          onPress={() => props.navigation.navigate('ValidateCustomer')}
         >
-          Validate OTP
+          OTP Verification
         </Text>
         <Text 
           style={styles.drawerItem}

@@ -69,16 +69,32 @@ const ValidateCustomerScreen = ({ navigation }) => {
     setLoading(true);
     
     try {
+      console.log('Sending OTP with parameters:');
+      console.log('Mobile:', mobileNo);
+      console.log('Vehicle:', vehicleNo);
+      console.log('Chassis:', chassisNo);
+      console.log('Engine:', engineNo);
+      console.log('Req Type:', reqType);
+      
       const response = await bajajApi.validateCustomerAndSendOtp(
         mobileNo,
         vehicleNo.trim() ? vehicleNo : null,
         chassisNo.trim() ? chassisNo : null,
-        engineNo.trim() ? engineNo : null
+        engineNo.trim() ? engineNo : null,
+        reqType
       );
       
-      console.log('Send OTP Response:', response);
+      console.log('Send OTP Response:', JSON.stringify(response, null, 2));
       
       if (response && response.response && response.response.status === 'success') {
+        // Extract and log key parameters from response
+        const requestId = response.validateCustResp?.requestId;
+        const sessionId = response.validateCustResp?.sessionId;
+        
+        console.log('Successfully extracted parameters for OTP verification:');
+        console.log('RequestId:', requestId);
+        console.log('SessionId:', sessionId);
+        
         // Add notification
         addNotification({
           id: Date.now(),

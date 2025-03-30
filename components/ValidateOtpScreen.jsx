@@ -81,7 +81,25 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         engineNo
       );
       
+      console.log('Resend OTP Response:', JSON.stringify(response, null, 2));
+      
       if (response && response.response && response.response.status === 'success') {
+        // Extract the NEW requestId and sessionId from the response
+        const newRequestId = response.validateCustResp?.requestId;
+        const newSessionId = response.validateCustResp?.sessionId;
+        
+        console.log('New RequestId:', newRequestId);
+        console.log('New SessionId:', newSessionId);
+        
+        // Verify we have the new values before updating
+        if (!newRequestId || !newSessionId) {
+          throw new Error('Missing requestId or sessionId in OTP response');
+        }
+        
+        // Update the route params with the new values
+        route.params.requestId = newRequestId;
+        route.params.sessionId = newSessionId;
+        
         addNotification({
           id: Date.now(),
           message: `OTP resent to ${mobileNo}`,
@@ -89,18 +107,15 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           read: false
         });
         
-        // Update requestId and sessionId if they've changed
-        if (response.validateCustResp.requestId !== requestId) {
-          route.params.requestId = response.validateCustResp.requestId;
-        }
-        if (response.validateCustResp.sessionId !== sessionId) {
-          route.params.sessionId = response.validateCustResp.sessionId;
-        }
-        
-        // Reset timer
+        // Reset timer and OTP fields
         setTimer(30);
         setCanResend(false);
         setOtp(['', '', '', '', '', '']);
+        
+        // Focus the first OTP input
+        if (otpInputs.current && otpInputs.current[0]) {
+          otpInputs.current[0].focus();
+        }
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to resend OTP';
         throw new Error(errorMsg);
@@ -129,14 +144,28 @@ const ValidateOtpScreen = ({ navigation, route }) => {
     setLoading(true);
     
     try {
+      // Enhanced logging for the parameters being sent to the API
+      console.log('===== OTP VERIFICATION DETAILS =====');
+      console.log('OTP string entered by user:', otpString);
+      console.log('RequestId from sendOtp response:', route.params.requestId);
+      console.log('SessionId from sendOtp response:', route.params.sessionId);
+      
+      // According to the API documentation:
+      // validateOtpReq: {
+      //   otp: "123456",        <- The 6-digit OTP entered by user
+      //   requestId: "...",     <- From the sendOtp response
+      //   sessionId: "...",     <- From the sendOtp response
+      //   channel: "...",
+      //   agentId: "...",
+      //   reqDateTime: "..."
+      // }
       const response = await bajajApi.verifyOtp(
-        route.params.requestId,
-        route.params.sessionId,
-        mobileNo,
-        otpString
+        otpString,                 // The 6-digit OTP entered by the user
+        route.params.requestId,    // The requestId from sendOtp response
+        route.params.sessionId     // The sessionId from sendOtp response
       );
       
-      console.log('Verify OTP Response:', response);
+      console.log('Verify OTP Full Response:', JSON.stringify(response, null, 2));
       
       if (response && response.response && response.response.status === 'success') {
         addNotification({
@@ -187,10 +216,11 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         }
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to verify OTP';
-        throw new Error(errorMsg);
+        throw new Error(errorMsg || response?.response?.msg || 'OTP verification failed');
       }
     } catch (error) {
-      console.error('Verify OTP Error:', error);
+      console.error('=== OTP VERIFICATION ERROR ===');
+      console.error(error);
       Alert.alert(
         'Error',
         `Failed to verify OTP: ${error.message}`,
@@ -237,6 +267,16 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               autoFocus={index === 0}
             />
           ))}
+        </View>
+        
+        {/* Debug Info */}
+        <View style={styles.debugSection}>
+          <Text style={styles.debugTitle}>Debug Info (will be hidden in production)</Text>
+          <Text style={styles.debugText}>RequestId: {route.params.requestId}</Text>
+          <Text style={styles.debugText}>SessionId: {route.params.sessionId}</Text>
+          <Text style={styles.debugText}>Mobile: {mobileNo}</Text>
+          <Text style={styles.debugText}>Vehicle: {vehicleNo || 'N/A'}</Text>
+          <Text style={styles.debugText}>Current OTP: {otp.join('')}</Text>
         </View>
         
         {/* Timer & Resend */}
@@ -359,6 +399,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  debugSection: {
+    backgroundColor: '#333333',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 32,
+  },
+  debugTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  debugText: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 

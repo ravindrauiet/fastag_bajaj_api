@@ -112,17 +112,7 @@ const bajajApi = {
   sendOtp: async (mobileNo, vehicleNo = null, chassisNo = null, engineNo = null, reqType = 'REG', resend = 0, isChassis = 0) => {
     try {
       const requestId = generateRequestId();
-      // Get current date in the correct format - make sure we use current year, not 2025
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
-      
-      const reqDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+      const reqDateTime = getCurrentDateTime();
 
       const requestData = {
         validateCustReq: {
@@ -145,13 +135,15 @@ const bajajApi = {
         }
       };
 
-      // Log the request data before encryption
-      console.log('Send OTP Request:', JSON.stringify(requestData, null, 2));
+      // Console log the original request data
+      console.log('=== SEND OTP REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
 
       const encryptedData = encrypt(JSON.stringify(requestData));
 
-      // Log the encrypted data being sent
-      console.log('Send OTP Encrypted Request:', encryptedData);
+      // Console log the encrypted request
+      console.log('=== SEND OTP ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/sendOtp`, encryptedData, {
         headers: {
@@ -161,29 +153,61 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== SEND OTP ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
-        // Log the encrypted response
-        console.log('Send OTP Encrypted Response:', response.data);
-        
         const decryptedResponse = decrypt(response.data);
-        console.log('Send OTP Decrypted Response:', decryptedResponse);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== SEND OTP DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== SEND OTP PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
     } catch (error) {
-      console.error('Send OTP API Error:', error);
+      console.error('=== SEND OTP API ERROR ===');
+      console.error(error);
       throw new Error(error.response?.data?.message || 'Failed to send OTP');
     }
   },
 
-  // Alias for backward compatibility
-  validateCustomerAndSendOtp: async (mobileNo, vehicleNo = null, chassisNo = null, engineNo = null) => {
+  // Alias for send OTP - used by ValidateCustomerScreen
+  validateCustomerAndSendOtp: async (mobileNo, vehicleNo, chassisNo, engineNo, reqType = 'REG', resend = 0, isChassis = 0) => {
     try {
-      const api = bajajApi;
-      return await api.sendOtp(mobileNo, vehicleNo, chassisNo, engineNo);
+      // Call the sendOtp function
+      const response = await bajajApi.sendOtp(
+        mobileNo,
+        vehicleNo,
+        chassisNo,
+        engineNo,
+        reqType,
+        resend,
+        isChassis
+      );
+      
+      // Log the full response to help with debugging
+      console.log('Send OTP Full Response:', JSON.stringify(response, null, 2));
+      
+      // Extract and log the key fields needed for OTP verification
+      if (response && response.response && response.response.status === 'success') {
+        const requestId = response.validateCustResp?.requestId;
+        const sessionId = response.validateCustResp?.sessionId;
+        
+        console.log('Successfully extracted requestId:', requestId);
+        console.log('Successfully extracted sessionId:', sessionId);
+      }
+      
+      return response;
     } catch (error) {
-      console.error('Validation API Error:', error);
+      console.error('ValidateCustomer and SendOtp Error:', error);
       throw error;
     }
   },
@@ -204,29 +228,28 @@ const bajajApi = {
     try {
       const reqDateTime = getCurrentDateTime();
 
+      // The parameters should match according to documentation:
+      // requestId and sessionId should be from the sendOtp response (not switched)
       const requestData = {
         validateOtpReq: {
-          otp,
-          requestId,
-          sessionId,
+          otp, // This should be the actual OTP received by user (e.g., "123456")
+          requestId, // This should be the requestId received in sendOtp response
+          sessionId, // This should be the sessionId received in sendOtp response
           channel: CHANNEL,
           agentId: AGENT_ID,
-          reqDateTime,
-          udf1: "PK1",
-          udf2: "value2",
-          udf3: "value3",
-          udf4: "value4",
-          udf5: "value5"
+          reqDateTime
         }
       };
       
-      // Log the request data before encryption
-      console.log('Validate OTP Request:', JSON.stringify(requestData, null, 2));
+      // Console log the original request data
+      console.log('=== VALIDATE OTP REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
 
       const encryptedData = encrypt(JSON.stringify(requestData));
       
-      // Log the encrypted data being sent
-      console.log('Validate OTP Encrypted Request:', encryptedData);
+      // Console log the encrypted request
+      console.log('=== VALIDATE OTP ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
         headers: {
@@ -236,29 +259,94 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== VALIDATE OTP ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
-        // Log the encrypted response
-        console.log('Validate OTP Encrypted Response:', response.data);
-        
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== VALIDATE OTP DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== VALIDATE OTP PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
     } catch (error) {
-      console.error('Validate OTP API Error:', error);
+      console.error('=== VALIDATE OTP API ERROR ===');
+      console.error(error);
       throw new Error(error.response?.data?.message || 'Failed to validate OTP');
     }
   },
 
-  // Alias for backward compatibility
+  // Validate OTP (renamed from verifyOtp to match your usage in ValidateOtpScreen)
   verifyOtp: async (otp, requestId, sessionId) => {
     try {
-      const api = bajajApi;
-      return await api.validateOtp(otp, requestId, sessionId);
+      // Debug logs
+      console.log('Verifying OTP with parameters:');
+      console.log('OTP:', otp); // This should be the actual OTP like "123456"
+      console.log('RequestId:', requestId);
+      console.log('SessionId:', sessionId);
+      
+      const reqDateTime = getCurrentDateTime();
+
+      const requestData = {
+        validateOtpReq: {
+          otp, // The OTP entered by the user (e.g., "123456")
+          requestId, // RequestId from sendOtp response
+          sessionId, // SessionId from sendOtp response
+          channel: CHANNEL,
+          agentId: AGENT_ID,
+          reqDateTime
+        }
+      };
+      
+      // Console log the original request data
+      console.log('=== VALIDATE OTP REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
+      const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== VALIDATE OTP ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
+
+      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
+        }
+      });
+
+      // Console log the encrypted response
+      console.log('=== VALIDATE OTP ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
+      if (response.data) {
+        const decryptedResponse = decrypt(response.data);
+        
+        // Console log the decrypted response
+        console.log('=== VALIDATE OTP DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== VALIDATE OTP PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
+      }
+
+      return response.data;
     } catch (error) {
-      console.error('OTP Verification API Error:', error);
-      throw error;
+      console.error('Verify OTP Error:', error);
+      throw new Error(error.response?.data?.message || 'Failed to verify OTP');
     }
   },
 
@@ -291,13 +379,15 @@ const bajajApi = {
         }
       };
       
-      // Log the request data before encryption
-      console.log('Create Wallet Request:', JSON.stringify(requestData, null, 2));
+      // Console log the original request data
+      console.log('=== CREATE WALLET REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
 
       const encryptedData = encrypt(JSON.stringify(requestData));
       
-      // Log the encrypted data being sent
-      console.log('Create Wallet Encrypted Request:', encryptedData);
+      // Console log the encrypted request
+      console.log('=== CREATE WALLET ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
         headers: {
@@ -307,12 +397,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== CREATE WALLET ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
-        // Log the encrypted response
-        console.log('Create Wallet Encrypted Response:', response.data);
-        
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== CREATE WALLET DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== CREATE WALLET PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -387,19 +487,40 @@ const bajajApi = {
         }
       };
 
+      // Console log the original request data
+      console.log('=== GET VEHICLE MAKE REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== GET VEHICLE MAKE ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/vehicleMakerList`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== GET VEHICLE MAKE ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== GET VEHICLE MAKE DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== GET VEHICLE MAKE PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -427,19 +548,40 @@ const bajajApi = {
         }
       };
 
+      // Console log the original request data
+      console.log('=== GET VEHICLE MODEL REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== GET VEHICLE MODEL ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/vehicleModelList`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
-          'channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== GET VEHICLE MODEL ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== GET VEHICLE MODEL DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== GET VEHICLE MODEL PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -468,7 +610,19 @@ const bajajApi = {
         }
       };
 
+      // Console log the original request data (shorten image data for clarity)
+      const loggableRequest = { ...requestData };
+      if (loggableRequest.documentDetails.image) {
+        loggableRequest.documentDetails.image = loggableRequest.documentDetails.image.substring(0, 50) + '... (truncated)';
+      }
+      console.log('=== UPLOAD DOCUMENT REQUEST ===');
+      console.log(JSON.stringify(loggableRequest, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request (shortened)
+      console.log('=== UPLOAD DOCUMENT ENCRYPTED REQUEST ===');
+      console.log(encryptedData.substring(0, 100) + '... (truncated)');
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/uploadDocument`, encryptedData, {
         headers: {
@@ -478,9 +632,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== UPLOAD DOCUMENT ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== UPLOAD DOCUMENT DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== UPLOAD DOCUMENT PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -510,7 +677,15 @@ const bajajApi = {
         fasTagDetails
       };
 
+      // Console log the original request data
+      console.log('=== REGISTER FASTAG REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== REGISTER FASTAG ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
         headers: {
@@ -520,9 +695,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== REGISTER FASTAG ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== REGISTER FASTAG DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== REGISTER FASTAG PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -560,15 +748,23 @@ const bajajApi = {
           permitExpiryDate,
           stateOfRegistration,
           vehicleDescriptor,
-          udf1: "",
-          udf2: "",
-          udf3: "",
-          udf4: "",
-          udf5: ""
+          udf1: "PK1",
+          udf2: "value2",
+          udf3: "value3",
+          udf4: "value4",
+          udf5: "value5"
         }
       };
 
+      // Console log the original request data
+      console.log('=== REPLACE FASTAG REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== REPLACE FASTAG ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/replaceFastag`, encryptedData, {
         headers: {
@@ -578,9 +774,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== REPLACE FASTAG ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== REPLACE FASTAG DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== REPLACE FASTAG PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -603,7 +812,15 @@ const bajajApi = {
         reqDateTime
       };
 
+      // Console log the original request data
+      console.log('=== GENERATE TOKEN REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== GENERATE TOKEN ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftVasService/v1/tokenGeneration`, encryptedData, {
         headers: {
@@ -612,9 +829,21 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== GENERATE TOKEN ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
+        
+        // Console log the decrypted response
+        console.log('=== GENERATE TOKEN DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
         const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== GENERATE TOKEN PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
         return parsedResponse.tokenResp.token;
       }
 
@@ -644,14 +873,25 @@ const bajajApi = {
           engineNo,
           mobileNo,
           serialNo,
-          tid
+          tid,
+          udf1: "PK1"
         }
       };
 
-      const encryptedData = encrypt(JSON.stringify(requestData));
+      // Console log the original request data
+      console.log('=== UPDATE VRN REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
       
       // Generate token first - avoid circular reference
       const token = await generateTokenInternally();
+      console.log('=== UPDATE VRN USING TOKEN ===');
+      console.log(token.substring(0, 50) + '... (truncated)');
+
+      const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== UPDATE VRN ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftVasService/v1/vrnUpdate`, encryptedData, {
         headers: {
@@ -661,9 +901,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== UPDATE VRN ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== UPDATE VRN DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== UPDATE VRN PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -694,10 +947,27 @@ const bajajApi = {
         mobileNo
       };
 
-      const encryptedData = encrypt(JSON.stringify(requestData));
+      // Console log the original request data (shorten image data for clarity)
+      const loggableRequest = { ...requestData };
+      if (loggableRequest.documentDetails.rcImageFront) {
+        loggableRequest.documentDetails.rcImageFront = loggableRequest.documentDetails.rcImageFront.substring(0, 50) + '... (truncated)';
+      }
+      if (loggableRequest.documentDetails.rcImageBack) {
+        loggableRequest.documentDetails.rcImageBack = loggableRequest.documentDetails.rcImageBack.substring(0, 50) + '... (truncated)';
+      }
+      console.log('=== UPDATE VRN DOCUMENT REQUEST ===');
+      console.log(JSON.stringify(loggableRequest, null, 2));
       
       // Generate token first
       const token = await generateTokenInternally();
+      console.log('=== UPDATE VRN DOCUMENT USING TOKEN ===');
+      console.log(token.substring(0, 50) + '... (truncated)');
+
+      const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request (shortened)
+      console.log('=== UPDATE VRN DOCUMENT ENCRYPTED REQUEST ===');
+      console.log(encryptedData.substring(0, 100) + '... (truncated)');
 
       const response = await axios.post(`${BASE_URL}/ftVasService/v1/vrnUpdateDoc`, encryptedData, {
         headers: {
@@ -707,9 +977,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== UPDATE VRN DOCUMENT ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== UPDATE VRN DOCUMENT DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== UPDATE VRN DOCUMENT PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -739,14 +1022,34 @@ const bajajApi = {
           mobileNo,
           serialNo,
           imageType, // Must be one of: RCFRONT, RCBACK, VEHICLEFRONT, VEHICLESIDE, TAGAFFIX
-          image      // Base64 encoded image
+          image,     // Base64 encoded image
+          sessionId: null,
+          udf1: null,
+          udf2: null,
+          udf3: null,
+          udf4: null,
+          udf5: null
         }
       };
 
-      const encryptedData = encrypt(JSON.stringify(requestData));
+      // Console log the original request data (shorten image data for clarity)
+      const loggableRequest = JSON.parse(JSON.stringify(requestData));
+      if (loggableRequest.documentDetails.image) {
+        loggableRequest.documentDetails.image = loggableRequest.documentDetails.image.substring(0, 50) + '... (truncated)';
+      }
+      console.log('=== UPLOAD RE-KYV IMAGE REQUEST ===');
+      console.log(JSON.stringify(loggableRequest, null, 2));
       
       // Generate token first
       const token = await generateTokenInternally();
+      console.log('=== UPLOAD RE-KYV IMAGE USING TOKEN ===');
+      console.log(token.substring(0, 50) + '... (truncated)');
+
+      const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request (shortened)
+      console.log('=== UPLOAD RE-KYV IMAGE ENCRYPTED REQUEST ===');
+      console.log(encryptedData.substring(0, 100) + '... (truncated)');
 
       const response = await axios.post(`${BASE_URL}/ftVasService/v1/uploadKYVImages`, encryptedData, {
         headers: {
@@ -756,9 +1059,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== UPLOAD RE-KYV IMAGE ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== UPLOAD RE-KYV IMAGE DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== UPLOAD RE-KYV IMAGE PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
@@ -785,13 +1101,28 @@ const bajajApi = {
         },
         vrn,
         mobileNo,
-        serialNo
+        serialNo,
+        udf1: null,
+        udf2: null,
+        udf3: null,
+        udf4: null,
+        udf5: null
       };
 
-      const encryptedData = encrypt(JSON.stringify(requestData));
+      // Console log the original request data
+      console.log('=== CHECK STATUS KYV IMAGES REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
       
       // Generate token first
       const token = await generateTokenInternally();
+      console.log('=== CHECK STATUS KYV IMAGES USING TOKEN ===');
+      console.log(token.substring(0, 50) + '... (truncated)');
+
+      const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Console log the encrypted request
+      console.log('=== CHECK STATUS KYV IMAGES ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftVasService/v1/checkStatusKYVImages`, encryptedData, {
         headers: {
@@ -801,9 +1132,22 @@ const bajajApi = {
         }
       });
 
+      // Console log the encrypted response
+      console.log('=== CHECK STATUS KYV IMAGES ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
-        return JSON.parse(decryptedResponse);
+        
+        // Console log the decrypted response
+        console.log('=== CHECK STATUS KYV IMAGES DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== CHECK STATUS KYV IMAGES PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
       }
 
       return response.data;
