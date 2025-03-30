@@ -49,13 +49,26 @@ const decrypt = (encrypted) => {
 // Helper function to get current date time in required format
 const getCurrentDateTime = () => {
   const now = new Date();
-  return now.toISOString().slice(0, 19).replace('T', ' ') + '.' + now.getMilliseconds().toString().padStart(3, '0');
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
 };
 
 // Helper function to generate request ID
 const generateRequestId = () => {
-  const timestamp = new Date().getTime();
-  return `REQ_${timestamp}`;
+  // Create a random string of 12 characters (alphanumeric)
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 16; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 };
 
 // Internal token generation to avoid circular reference
@@ -99,7 +112,17 @@ const bajajApi = {
   sendOtp: async (mobileNo, vehicleNo = null, chassisNo = null, engineNo = null, reqType = 'REG', resend = 0, isChassis = 0) => {
     try {
       const requestId = generateRequestId();
-      const reqDateTime = getCurrentDateTime();
+      // Get current date in the correct format - make sure we use current year, not 2025
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+      
+      const reqDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
 
       const requestData = {
         validateCustReq: {
@@ -114,15 +137,21 @@ const bajajApi = {
           agentId: AGENT_ID,
           isChassis,
           reqDateTime,
-          udf1: "",
-          udf2: "",
-          udf3: "",
-          udf4: "",
-          udf5: ""
+          udf1: "PK1",
+          udf2: "value2",
+          udf3: "value3",
+          udf4: "value4",
+          udf5: "value5"
         }
       };
 
+      // Log the request data before encryption
+      console.log('Send OTP Request:', JSON.stringify(requestData, null, 2));
+
       const encryptedData = encrypt(JSON.stringify(requestData));
+
+      // Log the encrypted data being sent
+      console.log('Send OTP Encrypted Request:', encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/sendOtp`, encryptedData, {
         headers: {
@@ -133,7 +162,11 @@ const bajajApi = {
       });
 
       if (response.data) {
+        // Log the encrypted response
+        console.log('Send OTP Encrypted Response:', response.data);
+        
         const decryptedResponse = decrypt(response.data);
+        console.log('Send OTP Decrypted Response:', decryptedResponse);
         return JSON.parse(decryptedResponse);
       }
 
@@ -178,11 +211,22 @@ const bajajApi = {
           sessionId,
           channel: CHANNEL,
           agentId: AGENT_ID,
-          reqDateTime
+          reqDateTime,
+          udf1: "PK1",
+          udf2: "value2",
+          udf3: "value3",
+          udf4: "value4",
+          udf5: "value5"
         }
       };
+      
+      // Log the request data before encryption
+      console.log('Validate OTP Request:', JSON.stringify(requestData, null, 2));
 
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Log the encrypted data being sent
+      console.log('Validate OTP Encrypted Request:', encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
         headers: {
@@ -193,6 +237,9 @@ const bajajApi = {
       });
 
       if (response.data) {
+        // Log the encrypted response
+        console.log('Validate OTP Encrypted Response:', response.data);
+        
         const decryptedResponse = decrypt(response.data);
         return JSON.parse(decryptedResponse);
       }
@@ -236,15 +283,21 @@ const bajajApi = {
           mobileNo,
           dob, // Format: DD-MM-YYYY
           doc: documentDetails, // Array of document objects like: [{docType: "1", docNo: "ABCPD1234D"}, ...]
-          udf1: "",
-          udf2: "",
-          udf3: "",
-          udf4: "",
-          udf5: ""
+          udf1: "PK1",
+          udf2: "value2",
+          udf3: "value3",
+          udf4: "value4",
+          udf5: "value5"
         }
       };
+      
+      // Log the request data before encryption
+      console.log('Create Wallet Request:', JSON.stringify(requestData, null, 2));
 
       const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      // Log the encrypted data being sent
+      console.log('Create Wallet Encrypted Request:', encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
         headers: {
@@ -255,6 +308,9 @@ const bajajApi = {
       });
 
       if (response.data) {
+        // Log the encrypted response
+        console.log('Create Wallet Encrypted Response:', response.data);
+        
         const decryptedResponse = decrypt(response.data);
         return JSON.parse(decryptedResponse);
       }
