@@ -159,73 +159,140 @@ const ValidateOtpScreen = ({ navigation, route }) => {
       //   agentId: "...",
       //   reqDateTime: "..."
       // }
-      const response = await bajajApi.verifyOtp(
+      
+      // Set timeout for the API call - 15 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout - please try again')), 15000);
+      });
+      
+      // Actual API call
+      const apiCallPromise = bajajApi.verifyOtp(
         otpString,                 // The 6-digit OTP entered by the user
         route.params.requestId,    // The requestId from sendOtp response
         route.params.sessionId     // The sessionId from sendOtp response
       );
       
+      // Race between timeout and API call
+      const response = await Promise.race([apiCallPromise, timeoutPromise]);
+      
       console.log('Verify OTP Full Response:', JSON.stringify(response, null, 2));
       
-      if (response && response.response && response.response.status === 'success') {
+      // Check the response code
+      if (response && response.response) {
+        // Add notification regardless of success/failure
         addNotification({
           id: Date.now(),
-          message: 'OTP verification successful',
+          message: response.response.status === 'success' ? 'OTP verification successful' : response.response.msg,
           time: 'Just now',
           read: false
         });
         
-        // Navigate to the appropriate screen based on response data
-        if (reqType === 'REG') {
-          // For registration, check if customer already exists
-          if (response.response.isExisting === 'Y') {
-            // Existing customer - go to FasTag registration
-            navigation.navigate('FasTagRegistration', {
+        // Handle based on response code
+        if (response.response.status === 'success' && response.response.code === '00') {
+          // Success - OTP validated and wallet exists
+          console.log('OTP validation successful with code 00');
+          
+          // Navigate based on request type
+          if (reqType === 'REG') {
+            // For registration - navigate to DocumentUploadScreen
+            navigation.navigate('DocumentUploadScreen', {
               requestId: route.params.requestId,
               sessionId: route.params.sessionId,
               mobileNo,
               vehicleNo,
               chassisNo,
               engineNo,
-              customerId: response.response.customerId || '',
-              walletId: response.response.walletId || ''
+              customerId: response.validateOtpResp?.custDetails?.customerId || '',
+              walletId: response.validateOtpResp?.custDetails?.walletId || ''
             });
-          } else {
-            // New customer - go to user details screen
-            navigation.navigate('UserDetails', {
+          } else if (reqType === 'REP') {
+            // For replacement, go to FasTag replacement screen
+            navigation.navigate('FasTagReplacement', {
               requestId: route.params.requestId,
               sessionId: route.params.sessionId,
               mobileNo,
               vehicleNo,
               chassisNo,
-              engineNo
+              engineNo,
+              customerId: response.validateOtpResp?.custDetails?.customerId || '',
+              walletId: response.validateOtpResp?.custDetails?.walletId || ''
             });
           }
-        } else if (reqType === 'REP') {
-          // For replacement, go to FasTag replacement screen
-          navigation.navigate('FasTagReplacement', {
+        } else if (response.response.status === 'failed' && response.response.code === '11') {
+          // Failed with code 11 - Need to create wallet
+          console.log(`OTP verification failed with code 11: ${response.response.errorDesc || 'Unknown error'}`);
+          console.log('Error code:', response.response.errorCode);
+          
+          // Common wallet creation issues that should redirect to CreateWallet:
+          // - A034: Unable to fetch customer wallet details
+          // - A028: Invalid session, please try again
+          
+          // Record error details for debugging
+          const errorCode = response.response.errorCode || '';
+          const errorDesc = response.response.errorDesc || 'Unknown error';
+          
+          console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
+          
+          // Navigate to CreateWalletScreen to create a new wallet
+          // Important: Keep passing the original requestId and sessionId from the OTP verification
+          navigation.navigate('CreateWallet', {
             requestId: route.params.requestId,
             sessionId: route.params.sessionId,
             mobileNo,
             vehicleNo,
             chassisNo,
             engineNo,
-            customerId: response.response.customerId || '',
-            walletId: response.response.walletId || ''
+            reqType
           });
+          
+          // Add notification about what happened
+          addNotification({
+            id: Date.now(),
+            message: `Creating new wallet: ${errorDesc}`,
+            time: 'Just now',
+            read: false
+          });
+        } else {
+          // Other errors
+          const errorMsg = response.response.errorDesc || response.response.msg || 'OTP verification failed';
+          throw new Error(errorMsg);
         }
       } else {
-        const errorMsg = response?.response?.errorDesc || 'Failed to verify OTP';
-        throw new Error(errorMsg || response?.response?.msg || 'OTP verification failed');
+        throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('=== OTP VERIFICATION ERROR ===');
       console.error(error);
-      Alert.alert(
-        'Error',
-        `Failed to verify OTP: ${error.message}`,
-        [{ text: 'OK' }]
-      );
+      
+      // Check if it's a network error or timeout
+      const isNetworkError = error.message.includes('Network Error') || 
+                             error.message.includes('timeout') ||
+                             error.message.includes('ECONNABORTED');
+      
+      if (isNetworkError) {
+        Alert.alert(
+          'Connection Error',
+          'Unable to connect to the server. Please check your internet connection and try again.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Retry', 
+              onPress: () => {
+                // Wait a moment before retrying
+                setTimeout(() => {
+                  handleVerifyOtp();
+                }, 1000);
+              } 
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          `Failed to verify OTP: ${error.message}`,
+          [{ text: 'OK' }]
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -255,7 +322,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         {/* OTP Input */}
         <View style={styles.otpContainer}>
           {[0, 1, 2, 3, 4, 5].map((index) => (
-            <TextInput
+      <TextInput
               key={index}
               ref={(input) => (otpInputs.current[index] = input)}
               style={styles.otpInput}
@@ -305,7 +372,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
             <Text style={styles.verifyButtonText}>Verify OTP</Text>
           )}
         </TouchableOpacity>
-      </View>
+    </View>
     </SafeAreaView>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -9,16 +9,47 @@ import {
   StatusBar,
   ScrollView,
   Animated,
-  Alert
+  Alert,
+  ActivityIndicator,
+  Modal
 } from 'react-native';
-import { createWallet } from '../api.js';
+import bajajApi from '../api/bajajApi';
+import { NotificationContext } from '../contexts/NotificationContext';
 
-const CreateWalletScreen = ({ navigation }) => {
+const CreateWalletScreen = ({ navigation, route }) => {
+  // Get parameters from route
+  const { 
+    requestId,
+    sessionId,
+    mobileNo: routeMobileNo,
+    vehicleNo,
+    chassisNo,
+    engineNo,
+    reqType
+  } = route.params || {};
+
+  // Form state
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [mobileNo, setMobileNo] = useState('');
+  const [mobileNo, setMobileNo] = useState(routeMobileNo || '');
   const [dob, setDob] = useState('');
+  const [documentType, setDocumentType] = useState('PAN');
+  const [showDocumentPicker, setShowDocumentPicker] = useState(false);
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  
+  // Document types
+  const documentTypes = [
+    { label: 'PAN Card', value: 'PAN', code: '1' },
+    { label: 'Driving License', value: 'DL', code: '2' },
+    { label: 'Voter ID', value: 'VID', code: '3' },
+    { label: 'Passport', value: 'PASS', code: '4' }
+  ];
+  
+  // Context
+  const { addNotification } = useContext(NotificationContext);
   
   // Animation states
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -41,19 +72,21 @@ const CreateWalletScreen = ({ navigation }) => {
   }, []);
 
   // Handle date input with auto-formatting
-  const handleDateChange = (text) => {
+  const handleDateChange = (text, setter) => {
     // Allow only numbers and hyphens
     const formattedText = text.replace(/[^0-9\-]/g, '');
     
-    // Auto-add hyphens after day and month
+    // Auto-add hyphens after day and month for DOB format (DD-MM-YYYY)
     let formatted = formattedText;
-    if (formattedText.length === 2 && !formattedText.includes('-') && dob.length === 1) {
+    const previousValue = setter === setDob ? dob : expiryDate;
+    
+    if (formattedText.length === 2 && !formattedText.includes('-') && previousValue.length === 1) {
       formatted = formattedText + '-';
-    } else if (formattedText.length === 5 && formattedText.charAt(2) === '-' && !formattedText.includes('-', 3) && dob.length === 4) {
+    } else if (formattedText.length === 5 && formattedText.charAt(2) === '-' && !formattedText.includes('-', 3) && previousValue.length === 4) {
       formatted = formattedText + '-';
     }
     
-    setDob(formatted);
+    setter(formatted);
   };
   
   const validateField = (field, value) => {
@@ -85,6 +118,97 @@ const CreateWalletScreen = ({ navigation }) => {
           error = 'Date of birth is required';
         } else if (!/^\d{2}-\d{2}-\d{4}$/.test(value)) {
           error = 'Date must be in DD-MM-YYYY format';
+        } else {
+          // Additional date validation
+          const [day, month, year] = value.split('-').map(num => parseInt(num, 10));
+          
+          // Check if date parts are valid numbers
+          if (isNaN(day) || isNaN(month) || isNaN(year)) {
+            error = 'Invalid date format';
+          } else if (day < 1 || day > 31) {
+            error = 'Day must be between 1 and 31';
+          } else if (month < 1 || month > 12) {
+            error = 'Month must be between 1 and 12';
+          } else if (year < 1900 || year > new Date().getFullYear()) {
+            error = `Year must be between 1900 and ${new Date().getFullYear()}`;
+          } else {
+            // Check for valid day-month combinations
+            const daysInMonth = new Date(year, month, 0).getDate();
+            if (day > daysInMonth) {
+              error = `Invalid date: ${month} has only ${daysInMonth} days`;
+            }
+            
+            // Check if user is at least 18 years old
+            const birthDate = new Date(year, month - 1, day);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (age < 18 || (age === 18 && (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())))) {
+              error = 'You must be at least 18 years old';
+            }
+          }
+        }
+        break;
+        
+      case 'documentNumber':
+        if (!value) {
+          error = 'Document number is required';
+        } else {
+          // Validate based on document type
+          switch (documentType) {
+            case 'PAN':
+              if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase())) {
+                error = 'Invalid PAN format (e.g., ABCDE1234F)';
+              }
+              break;
+            case 'DL':
+              if (value.length < 8) {
+                error = 'Invalid Driving License number';
+              }
+              break;
+            case 'VID':
+              if (!/^\d{10,16}$/.test(value)) {
+                error = 'Invalid Voter ID format';
+              }
+              break;
+            case 'PASS':
+              if (!/^[A-Z0-9]{8,12}$/.test(value.toUpperCase())) {
+                error = 'Invalid Passport number format';
+              }
+              break;
+          }
+        }
+        break;
+        
+      case 'expiryDate':
+        if ((documentType === 'DL' || documentType === 'PASS') && !value) {
+          error = 'Expiry date is required for this document type';
+        } else if (value && !/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+          error = 'Date must be in DD-MM-YYYY format';
+        } else if (value) {
+          // Additional expiry date validation
+          const [day, month, year] = value.split('-').map(num => parseInt(num, 10));
+          
+          // Check if date parts are valid numbers
+          if (isNaN(day) || isNaN(month) || isNaN(year)) {
+            error = 'Invalid date format';
+          } else if (day < 1 || day > 31) {
+            error = 'Day must be between 1 and 31';
+          } else if (month < 1 || month > 12) {
+            error = 'Month must be between 1 and 12';
+          } else if (year < new Date().getFullYear()) {
+            error = 'Expiry date cannot be in the past';
+          } else if (year === new Date().getFullYear() && 
+                    (month < new Date().getMonth() + 1 || 
+                    (month === new Date().getMonth() + 1 && day < new Date().getDate()))) {
+            error = 'Expiry date cannot be in the past';
+          } else {
+            // Check for valid day-month combinations
+            const daysInMonth = new Date(year, month, 0).getDate();
+            if (day > daysInMonth) {
+              error = `Invalid date: ${month} has only ${daysInMonth} days`;
+            }
+          }
         }
         break;
     }
@@ -103,27 +227,94 @@ const CreateWalletScreen = ({ navigation }) => {
     const validLastName = validateField('lastName', lastName);
     const validMobile = validateField('mobileNo', mobileNo);
     const validDob = validateField('dob', dob);
+    const validDocumentNumber = validateField('documentNumber', documentNumber);
+    const validExpiryDate = validateField('expiryDate', expiryDate);
     
-    if (!(validName && validLastName && validMobile && validDob)) {
+    if (!(validName && validLastName && validMobile && validDob && validDocumentNumber && validExpiryDate)) {
       Alert.alert('Validation Error', 'Please correct the errors in the form.');
       return;
     }
     
+    setLoading(true);
+    
     try {
-      // In a real app, this would call the API
-      // const response = await createWallet({ name, lastName, mobileNo, dob });
+      // Prepare user data according to API requirements
+      const userData = {
+        firstName: name,
+        lastName: lastName,
+        mobileNo: mobileNo,
+        dob: dob,  // Ensure format is DD-MM-YYYY
+        documentType: documentType,
+        documentNumber: documentNumber,
+        expiryDate: (documentType === 'DL' || documentType === 'PASS') ? expiryDate : null,
+        // Pass the original requestId and sessionId from OTP verification
+        requestId: requestId,
+        sessionId: sessionId
+      };
       
-      // For demo purposes, just show success alert
-      Alert.alert(
-        'Success',
-        'Wallet Created Successfully!',
-        [
-          { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-        ]
-      );
+      console.log('Creating wallet with data:', JSON.stringify(userData, null, 2));
+      console.log('Using original requestId:', requestId);
+      console.log('Using original sessionId:', sessionId);
+      
+      // Call the API through bajajApi service
+      const response = await bajajApi.registerUser(userData);
+      
+      console.log('Create Wallet Response:', JSON.stringify(response, null, 2));
+      
+      if (response && response.response && response.response.status === 'success') {
+        // Add notification
+        addNotification({
+          id: Date.now(),
+          message: 'Wallet created successfully!',
+          time: 'Just now',
+          read: false
+        });
+        
+        // Get wallet ID and other details from the response
+        const walletId = response.custDetails?.walletId || '';
+        
+        // According to the documentation, after successful wallet creation, 
+        // we need to upload all required documents before FasTag registration
+        if (vehicleNo && engineNo) {
+          // Navigate to Document Upload Screen, passing all necessary parameters
+          navigation.navigate('DocumentUploadScreen', {
+            requestId: requestId,
+            sessionId: sessionId,
+            mobileNo: mobileNo,
+            vehicleNo: vehicleNo,
+            chassisNo: chassisNo,
+            engineNo: engineNo,
+            customerId: response.custDetails?.customerId || '',
+            walletId: walletId,
+            name: name,
+            lastName: lastName
+          });
+        } else {
+          // If no vehicle details, go to home screen
+          navigation.navigate('HomeScreen', { walletId: walletId });
+        }
+      } else {
+        const errorMsg = response?.response?.errorDesc || 'Failed to create wallet';
+        throw new Error(errorMsg);
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to create wallet. Please try again.');
+      console.error('Create Wallet Error:', error);
+      Alert.alert(
+        'Error',
+        `Failed to create wallet: ${error.message}`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Determine if expiry date field should be shown based on document type
+  const showExpiryDate = documentType === 'DL' || documentType === 'PASS';
+  
+  // Get current selected document type label
+  const getDocumentTypeLabel = () => {
+    return documentTypes.find(doc => doc.value === documentType)?.label || 'Select Document Type';
   };
 
   return (
@@ -155,8 +346,7 @@ const CreateWalletScreen = ({ navigation }) => {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>Create Your FasTag Wallet</Text>
             <Text style={styles.infoText}>
-              Set up your digital wallet to easily recharge and manage your FasTag.
-              Your wallet details will be securely stored for future transactions.
+              Please provide the following details to create your Bajaj FasTag Wallet. All fields marked with * are required.
             </Text>
           </View>
           
@@ -211,6 +401,7 @@ const CreateWalletScreen = ({ navigation }) => {
                 keyboardType="phone-pad"
                 maxLength={10}
                 placeholderTextColor="#999999"
+                editable={!routeMobileNo} // Make read-only if passed from route
               />
               {errors.mobileNo ? (
                 <Text style={styles.errorText}>{errors.mobileNo}</Text>
@@ -219,12 +410,12 @@ const CreateWalletScreen = ({ navigation }) => {
             
             {/* Date of Birth - Text input instead of date picker */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Date of Birth<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.label}>Date of Birth (DD-MM-YYYY)<Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={[styles.input, errors.dob ? styles.inputError : null]}
                 placeholder="DD-MM-YYYY"
                 value={dob}
-                onChangeText={handleDateChange}
+                onChangeText={(text) => handleDateChange(text, setDob)}
                 keyboardType="numeric"
                 maxLength={10}
                 placeholderTextColor="#999999"
@@ -233,15 +424,122 @@ const CreateWalletScreen = ({ navigation }) => {
                 <Text style={styles.errorText}>{errors.dob}</Text>
               ) : null}
             </View>
+            
+            {/* Document Type - Custom Dropdown */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>ID Document Type<Text style={styles.required}>*</Text></Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowDocumentPicker(true)}
+              >
+                <Text style={styles.dropdownButtonText}>{getDocumentTypeLabel()}</Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
+              
+              {/* Document Type Picker Modal */}
+              <Modal
+                visible={showDocumentPicker}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowDocumentPicker(false)}
+              >
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  activeOpacity={1}
+                  onPress={() => setShowDocumentPicker(false)}
+                >
+                  <View style={styles.modalContent}>
+                    <View style={styles.pickerHeader}>
+                      <Text style={styles.pickerTitle}>Select Document Type</Text>
+                      <TouchableOpacity onPress={() => setShowDocumentPicker(false)}>
+                        <Text style={styles.pickerCloseButton}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                    
+                    <View style={styles.pickerOptions}>
+                      {documentTypes.map((doc) => (
+                        <TouchableOpacity
+                          key={doc.value}
+                          style={[
+                            styles.pickerOption, 
+                            documentType === doc.value && styles.pickerOptionSelected
+                          ]}
+                          onPress={() => {
+                            setDocumentType(doc.value);
+                            setShowDocumentPicker(false);
+                            // Reset expiry date if changing away from DL or PASS
+                            if (doc.value !== 'DL' && doc.value !== 'PASS') {
+                              setExpiryDate('');
+                            }
+                          }}
+                        >
+                          <Text 
+                            style={[
+                              styles.pickerOptionText,
+                              documentType === doc.value && styles.pickerOptionTextSelected
+                            ]}
+                          >
+                            {doc.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
+            </View>
+            
+            {/* Document Number */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Document Number<Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={[styles.input, errors.documentNumber ? styles.inputError : null]}
+                placeholder={`Enter your ${getDocumentTypeLabel()} number`}
+                value={documentNumber}
+                onChangeText={(text) => {
+                  setDocumentNumber(text);
+                  validateField('documentNumber', text);
+                }}
+                placeholderTextColor="#999999"
+                autoCapitalize={documentType === 'PAN' || documentType === 'PASS' ? 'characters' : 'none'}
+              />
+              {errors.documentNumber ? (
+                <Text style={styles.errorText}>{errors.documentNumber}</Text>
+              ) : null}
+            </View>
+            
+            {/* Document Expiry Date - Only for DL and Passport */}
+            {showExpiryDate && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Document Expiry Date (DD-MM-YYYY)<Text style={styles.required}>*</Text></Text>
+                <TextInput
+                  style={[styles.input, errors.expiryDate ? styles.inputError : null]}
+                  placeholder="DD-MM-YYYY"
+                  value={expiryDate}
+                  onChangeText={(text) => handleDateChange(text, setExpiryDate)}
+                  keyboardType="numeric"
+                  maxLength={10}
+                  placeholderTextColor="#999999"
+                />
+                {errors.expiryDate ? (
+                  <Text style={styles.errorText}>{errors.expiryDate}</Text>
+                ) : null}
+              </View>
+            )}
           </View>
           
           {/* Create Wallet Button */}
           <TouchableOpacity 
-            style={styles.button}
+            style={[styles.button, loading && styles.disabledButton]}
             onPress={handleCreateWallet}
             activeOpacity={0.8}
+            disabled={loading}
           >
-            <Text style={styles.buttonText}>Create Wallet</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Create Wallet</Text>
+            )}
           </TouchableOpacity>
           
           <View style={styles.noticeContainer}>
@@ -344,12 +642,82 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
+  dropdownButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  dropdownArrow: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  pickerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  pickerCloseButton: {
+    fontSize: 18,
+    color: '#666666',
+    padding: 4,
+  },
+  pickerOptions: {
+    paddingVertical: 8,
+  },
+  pickerOption: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  pickerOptionSelected: {
+    backgroundColor: '#F0F7FF',
+  },
+  pickerOptionText: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  pickerOptionTextSelected: {
+    color: '#0066CC',
+    fontWeight: 'bold',
+  },
   button: {
     backgroundColor: '#333333',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     marginBottom: 24,
+  },
+  disabledButton: {
+    backgroundColor: '#999999',
   },
   buttonText: {
     color: '#FFFFFF',

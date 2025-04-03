@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -10,33 +10,66 @@ import {
   StatusBar,
   Alert,
   Animated,
-  Image
+  Image,
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { NotificationContext } from '../contexts/NotificationContext';
+import bajajApi from '../api/bajajApi';
 
-const DocumentUploadScreen = ({ navigation }) => {
+const DocumentUploadScreen = ({ navigation, route }) => {
   // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
   
-  // Form state
-  const [requestId] = useState(Date.now().toString());
-  const [sessionId] = useState(Date.now().toString());
-  const [imageType, setImageType] = useState('');
-  const [openImageType, setOpenImageType] = useState(false);
-  const [imageTypeItems] = useState([
-    {label: 'ID Proof', value: 'ID_PROOF'},
-    {label: 'Address Proof', value: 'ADDRESS_PROOF'},
-    {label: 'Vehicle RC', value: 'VEHICLE_RC'},
-    {label: 'Vehicle Photo', value: 'VEHICLE_PHOTO'},
-    {label: 'Other', value: 'OTHER'}
-  ]);
+  // Get route parameters from wallet creation
+  const { 
+    requestId, 
+    sessionId, 
+    mobileNo, 
+    vehicleNo, 
+    chassisNo, 
+    engineNo, 
+    customerId, 
+    walletId, 
+    name,
+    lastName
+  } = route.params || {};
   
-  const [description, setDescription] = useState('');
-  const [image, setImage] = useState(null);
+  // Images with base64 data - all 5 are mandatory per documentation
+  const [images, setImages] = useState({
+    RCFRONT: null,          // Front side of Registration Certificate
+    RCBACK: null,           // Back side of Registration Certificate
+    VEHICLEFRONT: null,     // Front view of the vehicle
+    VEHICLESIDE: null,      // Side view of the vehicle
+    TAGAFFIX: null          // Image of FasTag affixed on the vehicle
+  });
   
-  // Error state
-  const [errors, setErrors] = useState({});
+  // Track which documents have been successfully uploaded
+  const [uploadedDocs, setUploadedDocs] = useState({
+    RCFRONT: false,
+    RCBACK: false,
+    VEHICLEFRONT: false,
+    VEHICLESIDE: false,
+    TAGAFFIX: false
+  });
+  
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [currentUploadType, setCurrentUploadType] = useState(null);
+  
+  // Access notification context
+  const { addNotification } = useContext(NotificationContext);
+  
+  // Document type descriptions for better UX
+  const documentDescriptions = {
+    RCFRONT: "Registration Certificate (Front)",
+    RCBACK: "Registration Certificate (Back)",
+    VEHICLEFRONT: "Vehicle Front View",
+    VEHICLESIDE: "Vehicle Side View",
+    TAGAFFIX: "FasTag Affixed on Windshield"
+  };
   
   // Animation effect on component mount
   useEffect(() => {
@@ -55,17 +88,19 @@ const DocumentUploadScreen = ({ navigation }) => {
     
     // Request camera and media library permissions
     (async () => {
-      const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-      const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (!cameraPermission.granted || !mediaLibraryPermission.granted) {
-        Alert.alert('Permission Required', 'Camera and media library permissions are required to upload documents.');
+      if (Platform.OS !== 'web') {
+        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+        const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        if (!cameraPermission.granted || !mediaLibraryPermission.granted) {
+          Alert.alert('Permission Required', 'Camera and media library permissions are required to upload documents.');
+        }
       }
     })();
   }, []);
   
   // Pick image from media library
-  const pickImage = async () => {
+  const pickImage = async (imageType) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -76,9 +111,7 @@ const DocumentUploadScreen = ({ navigation }) => {
       });
       
       if (!result.canceled) {
-        setImage(result.assets[0]);
-        // Clear error when image is selected
-        setErrors(prev => ({ ...prev, image: '' }));
+        updateImage(imageType, result.assets[0]);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick image from gallery');
@@ -86,7 +119,7 @@ const DocumentUploadScreen = ({ navigation }) => {
   };
   
   // Take photo with camera
-  const takePhoto = async () => {
+  const takePhoto = async (imageType) => {
     try {
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
@@ -96,60 +129,242 @@ const DocumentUploadScreen = ({ navigation }) => {
       });
       
       if (!result.canceled) {
-        setImage(result.assets[0]);
-        // Clear error when image is taken
-        setErrors(prev => ({ ...prev, image: '' }));
+        updateImage(imageType, result.assets[0]);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to take photo');
     }
   };
   
-  // Basic validation
-  const validateField = (field, value) => {
-    let error = '';
-    
-    switch (field) {
-      case 'imageType':
-        if (!value) {
-          error = 'Document type is required';
-        }
-        break;
-        
-      case 'image':
-        if (!value) {
-          error = 'Document image is required';
-        }
-        break;
-    }
-    
-    setErrors(prev => ({
+  // Update image in state
+  const updateImage = (imageType, imageAsset) => {
+    setImages(prev => ({
       ...prev,
-      [field]: error
+      [imageType]: imageAsset
     }));
-    
-    return !error;
   };
   
-  // Handle form submission
-  const handleSubmit = () => {
-    // Validate required fields
-    const validImageType = validateField('imageType', imageType);
-    const validImage = validateField('image', image);
+  // Remove image from state
+  const removeImage = (imageType) => {
+    setImages(prev => ({
+      ...prev,
+      [imageType]: null
+    }));
     
-    if (!(validImageType && validImage)) {
-      Alert.alert('Validation Error', 'Please correct the errors in the form.');
+    // If the image was successfully uploaded, mark it as not uploaded
+    if (uploadedDocs[imageType]) {
+      setUploadedDocs(prev => ({
+        ...prev,
+        [imageType]: false
+      }));
+    }
+  };
+  
+  // Upload a single document to the API
+  const uploadDocument = async (imageType) => {
+    if (!images[imageType]) {
+      Alert.alert('Error', `Please select a ${documentDescriptions[imageType]} image first.`);
+      return false;
+    }
+    
+    setCurrentUploadType(imageType);
+    setLoading(true);
+    
+    try {
+      // Base64 data from the image (remove 'data:image/jpeg;base64,' if present)
+      const base64Data = images[imageType].base64;
+      
+      console.log(`Uploading ${imageType} document...`);
+      
+      // Call the API to upload the document
+      const response = await bajajApi.uploadDocument(
+        requestId, 
+        sessionId, 
+        imageType, 
+        base64Data
+      );
+      
+      console.log(`${imageType} upload response:`, JSON.stringify(response, null, 2));
+      
+      if (response && response.response && response.response.status === 'success') {
+        // Mark this document as successfully uploaded
+        setUploadedDocs(prev => ({
+          ...prev,
+          [imageType]: true
+        }));
+        
+        // Add notification
+        addNotification({
+          id: Date.now(),
+          message: `${documentDescriptions[imageType]} uploaded successfully!`,
+          time: 'Just now',
+          read: false
+        });
+        
+        return true;
+      } else {
+        const errorMsg = response?.response?.errorDesc || `Failed to upload ${documentDescriptions[imageType]}`;
+        throw new Error(errorMsg);
+      }
+    } catch (error) {
+      console.error(`Document Upload Error (${imageType}):`, error);
+      Alert.alert(
+        'Upload Error',
+        `Failed to upload ${documentDescriptions[imageType]}: ${error.message}`,
+        [{ text: 'OK' }]
+      );
+      return false;
+    } finally {
+      setLoading(false);
+      setCurrentUploadType(null);
+    }
+  };
+  
+  // Check if all mandatory documents have been uploaded
+  const allDocumentsUploaded = () => {
+    return Object.values(uploadedDocs).every(status => status === true);
+  };
+  
+  // Upload all documents in sequence
+  const uploadAllDocuments = async () => {
+    setLoading(true);
+    
+    // Check if any images are missing
+    const missingTypes = Object.keys(images).filter(type => !images[type]);
+    if (missingTypes.length > 0) {
+      Alert.alert(
+        'Missing Documents',
+        `Please select images for: ${missingTypes.map(type => documentDescriptions[type]).join(', ')}`,
+        [{ text: 'OK' }]
+      );
+      setLoading(false);
       return;
     }
     
-    // In a real app, we would upload the image and other details here
-    // For the demo, simulate a successful upload
-    Alert.alert(
-      'Success',
-      'Document uploaded successfully!',
-      [
-        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-      ]
+    // Upload each document in sequence
+    let allSuccess = true;
+    for (const imageType of Object.keys(images)) {
+      if (!uploadedDocs[imageType]) {
+        const success = await uploadDocument(imageType);
+        if (!success) {
+          allSuccess = false;
+          break;
+        }
+      }
+    }
+    
+    if (allSuccess && allDocumentsUploaded()) {
+      // All documents uploaded successfully
+      Alert.alert(
+        'Success',
+        'All required documents uploaded successfully!',
+        [
+          { 
+            text: 'Proceed to Registration', 
+            onPress: () => navigation.navigate('FasTagRegistration', {
+              requestId,
+              sessionId,
+              mobileNo,
+              vehicleNo,
+              chassisNo, 
+              engineNo,
+              customerId,
+              walletId,
+              name,
+              lastName
+            })
+          }
+        ]
+      );
+    }
+    
+    setLoading(false);
+  };
+  
+  // Proceed to FasTag registration only if all documents are uploaded
+  const proceedToRegistration = () => {
+    if (allDocumentsUploaded()) {
+      navigation.navigate('FasTagRegistration', {
+        requestId,
+        sessionId,
+        mobileNo,
+        vehicleNo, 
+        chassisNo,
+        engineNo,
+        customerId,
+        walletId,
+        name,
+        lastName
+      });
+    } else {
+      Alert.alert(
+        'Required Documents',
+        'Please upload all required documents before proceeding.'
+      );
+    }
+  };
+  
+  // Render document upload card
+  const renderDocumentCard = (imageType) => {
+    const isUploaded = uploadedDocs[imageType];
+    const isLoading = loading && currentUploadType === imageType;
+    
+    return (
+      <View style={styles.documentCard} key={imageType}>
+        <Text style={styles.documentTitle}>{documentDescriptions[imageType]}</Text>
+        
+        {images[imageType] ? (
+          <View style={styles.imagePreviewContainer}>
+            <Image 
+              source={{ uri: images[imageType].uri }} 
+              style={styles.imagePreview} 
+              resizeMode="cover"
+            />
+            
+            <View style={styles.imageControls}>
+              <TouchableOpacity 
+                style={[styles.imageButton, styles.removeButton]}
+                onPress={() => removeImage(imageType)}
+                disabled={loading}
+              >
+                <Text style={styles.imageButtonText}>Remove</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.imageButton, styles.uploadButton, isUploaded && styles.uploadedButton]}
+                onPress={() => uploadDocument(imageType)}
+                disabled={loading || isUploaded}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.imageButtonText}>
+                    {isUploaded ? 'Uploaded ✓' : 'Upload'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.imageActions}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.cameraButton]}
+              onPress={() => takePhoto(imageType)}
+              disabled={loading}
+            >
+              <Text style={styles.actionButtonText}>Take Photo</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.galleryButton]}
+              onPress={() => pickImage(imageType)}
+              disabled={loading}
+            >
+              <Text style={styles.actionButtonText}>Pick from Gallery</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     );
   };
   
@@ -162,7 +377,7 @@ const DocumentUploadScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Upload Document</Text>
+        <Text style={styles.headerTitle}>Upload Documents</Text>
         <View style={{ width: 40 }} />
       </View>
       
@@ -174,114 +389,59 @@ const DocumentUploadScreen = ({ navigation }) => {
           }]}
         >
           <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Document Upload</Text>
+            <Text style={styles.infoTitle}>FasTag Document Upload</Text>
             <Text style={styles.infoText}>
-              Upload documents required for FasTag registration or replacement.
-              You can take a photo or select an image from your gallery.
+              Upload all five mandatory documents required for FasTag registration.
+              All documents must be uploaded before proceeding to registration.
             </Text>
           </View>
           
-          <View style={styles.formContainer}>
-            {/* Document Type Dropdown */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Document Type<Text style={styles.required}>*</Text></Text>
-              <View style={[styles.dropdownContainer, errors.imageType ? styles.inputError : null]}>
-                <TouchableOpacity 
-                  style={styles.dropdown}
-                  onPress={() => setOpenImageType(!openImageType)}
-                >
-                  <Text style={imageType ? styles.dropdownText : styles.dropdownPlaceholder}>
-                    {imageType ? 
-                      imageTypeItems.find(item => item.value === imageType)?.label || 'Select document type' : 
-                      'Select document type'}
-                  </Text>
-                  <Text style={styles.dropdownArrow}>▼</Text>
-                </TouchableOpacity>
-                
-                {openImageType && (
-                  <View style={styles.dropdownList}>
-                    {imageTypeItems.map((item) => (
-                      <TouchableOpacity
-                        key={item.value}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setImageType(item.value);
-                          setOpenImageType(false);
-                          validateField('imageType', item.value);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>{item.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-              {errors.imageType ? (
-                <Text style={styles.errorText}>{errors.imageType}</Text>
-              ) : null}
-            </View>
-            
-            {/* Description */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter description (optional)"
-                value={description}
-                onChangeText={setDescription}
-                multiline={true}
-                numberOfLines={3}
+          {/* Progress Indicator */}
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>
+              Documents Uploaded: {Object.values(uploadedDocs).filter(Boolean).length} of 5
+            </Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${(Object.values(uploadedDocs).filter(Boolean).length / 5) * 100}%` }
+                ]} 
               />
-            </View>
-            
-            {/* Document Image */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Document Image<Text style={styles.required}>*</Text></Text>
-              
-              <View style={styles.imageContainer}>
-                {image ? (
-                  <View style={styles.previewContainer}>
-                    <Image source={{ uri: image.uri }} style={styles.imagePreview} />
-                    <TouchableOpacity 
-                      style={styles.removeImageButton}
-                      onPress={() => {
-                        setImage(null);
-                        setErrors(prev => ({ ...prev, image: 'Document image is required' }));
-                      }}
-                    >
-                      <Text style={styles.removeImageText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={styles.noImageContainer}>
-                    <Text style={styles.noImageText}>No image selected</Text>
-                  </View>
-                )}
-                
-                <View style={styles.imageActionButtons}>
-                  <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
-                    <Text style={styles.imageButtonText}>📷 Take Photo</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-                    <Text style={styles.imageButtonText}>🖼️ Choose from Gallery</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              
-              {errors.image ? (
-                <Text style={styles.errorText}>{errors.image}</Text>
-              ) : null}
             </View>
           </View>
           
-          {/* Submit Button */}
-          <TouchableOpacity 
-            style={styles.submitButton}
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitButtonText}>Upload Document</Text>
-          </TouchableOpacity>
+          {/* Document Cards */}
+          <View style={styles.documentsContainer}>
+            {Object.keys(images).map(imageType => renderDocumentCard(imageType))}
+          </View>
+          
+          {/* Action Buttons */}
+          <View style={styles.actionContainer}>
+            <TouchableOpacity 
+              style={[styles.button, styles.uploadAllButton, loading && styles.disabledButton]}
+              onPress={uploadAllDocuments}
+              disabled={loading}
+            >
+              {loading && !currentUploadType ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Upload All Documents</Text>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[
+                styles.button, 
+                styles.proceedButton, 
+                (!allDocumentsUploaded() || loading) && styles.disabledButton
+              ]}
+              onPress={proceedToRegistration}
+              disabled={!allDocumentsUploaded() || loading}
+            >
+              <Text style={styles.buttonText}>Proceed to Registration</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
@@ -333,7 +493,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  formContainer: {
+  progressContainer: {
+    marginBottom: 16,
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333333',
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#EEEEEE',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4CAF50',  // Green for success
+  },
+  documentsContainer: {
+    marginBottom: 16,
+  },
+  documentCard: {
     backgroundColor: '#F9F9F9',
     borderRadius: 16,
     padding: 16,
@@ -344,154 +526,93 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 8,
-  },
-  required: {
-    color: '#FF0000',
-    marginLeft: 4,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 8,
-    padding: 12,
+  documentTitle: {
     fontSize: 16,
-    textAlignVertical: 'top',
-    minHeight: 80,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333333',
   },
-  inputError: {
-    borderColor: '#FF0000',
-  },
-  errorText: {
-    color: '#FF0000',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  dropdownContainer: {
-    position: 'relative',
-    zIndex: 1000,
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-  },
-  dropdown: {
+  imageActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+  },
+  actionButton: {
+    flex: 1,
     padding: 12,
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#333333',
-  },
-  dropdownPlaceholder: {
-    fontSize: 16,
-    color: '#999999',
-  },
-  dropdownArrow: {
-    fontSize: 12,
-    color: '#333333',
-  },
-  dropdownList: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    zIndex: 1001,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: '#333333',
-  },
-  imageContainer: {
-    marginBottom: 8,
-  },
-  noImageContainer: {
-    backgroundColor: '#F0F0F0',
     borderRadius: 8,
-    height: 200,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
   },
-  noImageText: {
-    color: '#999999',
-    fontSize: 16,
+  cameraButton: {
+    backgroundColor: '#0277BD',
+    marginRight: 8,
   },
-  previewContainer: {
-    position: 'relative',
-    marginBottom: 8,
+  galleryButton: {
+    backgroundColor: '#00796B',
+    marginLeft: 8,
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  imagePreviewContainer: {
+    width: '100%',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   imagePreview: {
     width: '100%',
     height: 200,
     borderRadius: 8,
   },
-  removeImageButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removeImageText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  imageActionButtons: {
+  imageControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 8,
   },
   imageButton: {
     flex: 1,
-    backgroundColor: '#E0E0E0',
+    padding: 10,
     borderRadius: 8,
-    padding: 12,
     alignItems: 'center',
-    margin: 4,
+    justifyContent: 'center',
+  },
+  removeButton: {
+    backgroundColor: '#F44336',
+    marginRight: 8,
+  },
+  uploadButton: {
+    backgroundColor: '#3F51B5',
+    marginLeft: 8,
+  },
+  uploadedButton: {
+    backgroundColor: '#4CAF50',
   },
   imageButtonText: {
-    color: '#333333',
+    color: '#FFFFFF',
     fontWeight: 'bold',
+    fontSize: 14,
   },
-  submitButton: {
-    backgroundColor: '#333333',
+  actionContainer: {
+    marginBottom: 24,
+  },
+  button: {
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
   },
-  submitButtonText: {
+  uploadAllButton: {
+    backgroundColor: '#3F51B5',
+  },
+  proceedButton: {
+    backgroundColor: '#4CAF50',
+  },
+  disabledButton: {
+    backgroundColor: '#BBBBBB',
+  },
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',

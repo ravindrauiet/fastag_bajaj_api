@@ -370,12 +370,7 @@ const bajajApi = {
           lastName,
           mobileNo,
           dob, // Format: DD-MM-YYYY
-          doc: documentDetails, // Array of document objects like: [{docType: "1", docNo: "ABCPD1234D"}, ...]
-          udf1: "PK1",
-          udf2: "value2",
-          udf3: "value3",
-          udf4: "value4",
-          udf5: "value5"
+          doc: documentDetails // Array of document objects like: [{docType: "1", docNo: "ABCPD1234D"}, ...]
         }
       };
       
@@ -426,7 +421,7 @@ const bajajApi = {
   registerUser: async (userData) => {
     try {
       // Map user data to the format expected by createWallet
-      const { firstName, lastName, mobileNo, dob, documentType, documentNumber, expiryDate } = userData;
+      const { firstName, lastName, mobileNo, dob, documentType, documentNumber, expiryDate, requestId: origRequestId, sessionId: origSessionId } = userData;
       
       // Convert document type to the format expected by the API
       let docTypeCode;
@@ -447,23 +442,107 @@ const bajajApi = {
           docTypeCode = "1";
       }
       
-      // Prepare document details
+      // Format date strings to ensure they're in DD-MM-YYYY format with proper zero-padding
+      const formatDateString = (dateStr) => {
+        if (!dateStr) return '';
+        
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        
+        // Zero-pad day and month if needed
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        const year = parts[2];
+        
+        return `${day}-${month}-${year}`;
+      };
+      
+      // Format the DOB
+      const formattedDob = formatDateString(dob);
+      console.log('DOB provided:', dob);
+      console.log('Formatted DOB for API:', formattedDob);
+      
+      // Prepare document details as an array according to API documentation
       const documentDetails = [];
       
       // Create the document object
       const docObj = {
         docType: docTypeCode,
-        docNo: documentNumber
+        docNo: documentType === 'PAN' ? documentNumber.toUpperCase() : documentNumber
       };
       
       // Add expiry date if present (required for DL and Passport)
-      if (expiryDate && (documentType === 'DL' || documentType === 'PASS')) {
-        docObj.expiryDate = expiryDate;
+      if ((documentType === 'DL' || documentType === 'PASS') && expiryDate) {
+        const formattedExpiryDate = formatDateString(expiryDate);
+        docObj.expiryDate = formattedExpiryDate;
+        console.log('Expiry date provided:', expiryDate);
+        console.log('Formatted expiry date for API:', formattedExpiryDate);
       }
       
+      // Add the document to the array
       documentDetails.push(docObj);
       
-      return await bajajApi.createWallet(firstName, lastName, mobileNo, dob, documentDetails);
+      // Use the original requestId and sessionId from the OTP verification if provided
+      // otherwise generate new ones
+      const requestId = origRequestId || generateRequestId();
+      const sessionId = origSessionId || requestId;
+      console.log('Using requestId:', requestId);
+      console.log('Using sessionId:', sessionId);
+      
+      const reqDateTime = getCurrentDateTime();
+      
+      // Create the exact structure needed by the API according to documentation
+      const requestData = {
+        reqWallet: {
+          requestId,
+          sessionId,
+          channel: CHANNEL,
+          agentId: AGENT_ID,
+          reqDateTime
+        },
+        custDetails: {
+          name: firstName,
+          lastName,
+          mobileNo,
+          dob: formattedDob,
+          doc: documentDetails // Array of document objects
+        }
+      };
+      
+      // Log the document details for debugging
+      console.log('=== FORMATTED WALLET REQUEST FOR API ===');
+      console.log(JSON.stringify(requestData, null, 2));
+      
+      // Send the properly formatted request to the API
+      const encryptedData = encrypt(JSON.stringify(requestData));
+      
+      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
+        }
+      });
+      
+      // Console log the encrypted response
+      console.log('=== CREATE WALLET ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
+      if (response.data) {
+        const decryptedResponse = decrypt(response.data);
+        
+        // Console log the decrypted response
+        console.log('=== CREATE WALLET DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== CREATE WALLET PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
+      }
+
+      return response.data;
     } catch (error) {
       console.error('Register User API Error:', error);
       throw error;
