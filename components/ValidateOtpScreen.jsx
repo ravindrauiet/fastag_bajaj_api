@@ -223,35 +223,41 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           console.log(`OTP verification failed with code 11: ${response.response.errorDesc || 'Unknown error'}`);
           console.log('Error code:', response.response.errorCode);
           
-          // Common wallet creation issues that should redirect to CreateWallet:
-          // - A034: Unable to fetch customer wallet details
-          // - A028: Invalid session, please try again
-          
           // Record error details for debugging
           const errorCode = response.response.errorCode || '';
           const errorDesc = response.response.errorDesc || 'Unknown error';
           
-          console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
+          // Only navigate to CreateWallet for specific errors that indicate wallet creation is needed
+          const walletCreationErrors = ['A031', 'A032', 'A034', 'A028'];
           
-          // Navigate to CreateWalletScreen to create a new wallet
-          // Important: Keep passing the original requestId and sessionId from the OTP verification
-          navigation.navigate('CreateWallet', {
-            requestId: route.params.requestId,
-            sessionId: route.params.sessionId,
-            mobileNo,
-            vehicleNo,
-            chassisNo,
-            engineNo,
-            reqType
-          });
-          
-          // Add notification about what happened
-          addNotification({
-            id: Date.now(),
-            message: `Creating new wallet: ${errorDesc}`,
-            time: 'Just now',
-            read: false
-          });
+          // Don't create wallet for A100 (NPCIFailure) or other unrelated errors
+          if (walletCreationErrors.includes(errorCode)) {
+            console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
+            
+            // Navigate to CreateWalletScreen to create a new wallet
+            // Important: Keep passing the original requestId and sessionId from the OTP verification
+            navigation.navigate('CreateWallet', {
+              requestId: route.params.requestId,
+              sessionId: route.params.sessionId,
+              mobileNo,
+              vehicleNo,
+              chassisNo,
+              engineNo,
+              reqType
+            });
+            
+            // Add notification about what happened
+            addNotification({
+              id: Date.now(),
+              message: `Creating new wallet: ${errorDesc}`,
+              time: 'Just now',
+              read: false
+            });
+          } else {
+            // For other errors that don't require wallet creation
+            console.log(`Not creating wallet for error: ${errorCode} - ${errorDesc}`);
+            throw new Error(`${errorDesc} (Code: ${errorCode})`);
+          }
         } else {
           // Other errors
           const errorMsg = response.response.errorDesc || response.response.msg || 'OTP verification failed';

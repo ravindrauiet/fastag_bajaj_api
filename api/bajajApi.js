@@ -482,12 +482,21 @@ const bajajApi = {
       // Add the document to the array
       documentDetails.push(docObj);
       
-      // Use the original requestId and sessionId from the OTP verification if provided
-      // otherwise generate new ones
-      const requestId = origRequestId || generateRequestId();
-      const sessionId = origSessionId || requestId;
-      console.log('Using requestId:', requestId);
-      console.log('Using sessionId:', sessionId);
+      // IMPORTANT: Always use the original requestId and sessionId from OTP verification
+      // Never generate new ones when coming from OTP verification flow
+      let requestId, sessionId;
+      
+      if (origRequestId && origSessionId) {
+        requestId = origRequestId;
+        sessionId = origSessionId;
+        console.log('Using original requestId from OTP verification:', requestId);
+        console.log('Using original sessionId from OTP verification:', sessionId);
+      } else {
+        requestId = generateRequestId();
+        sessionId = requestId;
+        console.log('No original IDs provided. Generated new requestId:', requestId);
+        console.log('Using sessionId:', sessionId);
+      }
       
       const reqDateTime = getCurrentDateTime();
       
