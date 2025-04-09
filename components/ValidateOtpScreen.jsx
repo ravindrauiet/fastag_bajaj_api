@@ -195,7 +195,8 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           // Navigate based on request type
           if (reqType === 'REG') {
             // For registration - navigate to DocumentUploadScreen
-            navigation.navigate('DocumentUploadScreen', {
+            navigation.navigate('DocumentUpload', {
+              // Basic details
               requestId: route.params.requestId,
               sessionId: route.params.sessionId,
               mobileNo,
@@ -203,7 +204,26 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               chassisNo,
               engineNo,
               customerId: response.validateOtpResp?.custDetails?.customerId || '',
-              walletId: response.validateOtpResp?.custDetails?.walletId || ''
+              walletId: response.validateOtpResp?.custDetails?.walletId || '',
+              
+              // Vehicle details from OTP response
+              vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
+              model: response.validateOtpResp?.vrnDetails?.model,
+              vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour,
+              type: response.validateOtpResp?.vrnDetails?.type,
+              rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus,
+              tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID,
+              npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID,
+              vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType,
+              rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount,
+              securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit,
+              tagCost: response.validateOtpResp?.vrnDetails?.tagCost,
+              vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor,
+              isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit,
+              permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate,
+              stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration,
+              commercial: response.validateOtpResp?.vrnDetails?.commercial,
+              npciStatus: response.validateOtpResp?.npciStatus
             });
           } else if (reqType === 'REP') {
             // For replacement, go to FasTag replacement screen

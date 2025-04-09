@@ -271,7 +271,26 @@ const DocumentUploadScreen = ({ navigation, route }) => {
               customerId,
               walletId,
               name,
-              lastName
+              lastName,
+              
+              // Vehicle details from OTP response
+              vehicleManuf: route.params.vehicleManuf,
+              model: route.params.model,
+              vehicleColour: route.params.vehicleColour,
+              type: route.params.type,
+              rtoStatus: route.params.rtoStatus,
+              tagVehicleClassID: route.params.tagVehicleClassID,
+              npciVehicleClassID: route.params.npciVehicleClassID,
+              vehicleType: route.params.vehicleType,
+              rechargeAmount: route.params.rechargeAmount,
+              securityDeposit: route.params.securityDeposit,
+              tagCost: route.params.tagCost,
+              vehicleDescriptor: route.params.vehicleDescriptor,
+              isNationalPermit: route.params.isNationalPermit,
+              permitExpiryDate: route.params.permitExpiryDate,
+              stateOfRegistration: route.params.stateOfRegistration,
+              commercial: route.params.commercial,
+              npciStatus: route.params.npciStatus
             })
           }
         ]
@@ -294,7 +313,26 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         customerId,
         walletId,
         name,
-        lastName
+        lastName,
+        
+        // Vehicle details from OTP response
+        vehicleManuf: route.params.vehicleManuf,
+        model: route.params.model,
+        vehicleColour: route.params.vehicleColour,
+        type: route.params.type,
+        rtoStatus: route.params.rtoStatus,
+        tagVehicleClassID: route.params.tagVehicleClassID,
+        npciVehicleClassID: route.params.npciVehicleClassID,
+        vehicleType: route.params.vehicleType,
+        rechargeAmount: route.params.rechargeAmount,
+        securityDeposit: route.params.securityDeposit,
+        tagCost: route.params.tagCost,
+        vehicleDescriptor: route.params.vehicleDescriptor,
+        isNationalPermit: route.params.isNationalPermit,
+        permitExpiryDate: route.params.permitExpiryDate,
+        stateOfRegistration: route.params.stateOfRegistration,
+        commercial: route.params.commercial,
+        npciStatus: route.params.npciStatus
       });
     } else {
       Alert.alert(
