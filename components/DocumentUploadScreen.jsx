@@ -12,11 +12,17 @@ import {
   Animated,
   Image,
   ActivityIndicator,
-  Platform
+  Platform,
+  Switch
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
+
+// Add the missing generateRequestId function
+const generateRequestId = () => {
+  return `REQ${Date.now()}${Math.floor(Math.random() * 1000)}`;
+};
 
 const DocumentUploadScreen = ({ navigation, route }) => {
   // Animation values
@@ -58,6 +64,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
   // UI state
   const [loading, setLoading] = useState(false);
   const [currentUploadType, setCurrentUploadType] = useState(null);
+  const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
@@ -178,10 +185,11 @@ const DocumentUploadScreen = ({ navigation, route }) => {
       
       // Call the API to upload the document
       const response = await bajajApi.uploadDocument(
-        requestId, 
-        sessionId, 
+        requestId || generateRequestId(),
+        sessionId || requestId || generateRequestId(),
         imageType, 
-        base64Data
+        base64Data,
+        isDevelopmentMode
       );
       
       console.log(`${imageType} upload response:`, JSON.stringify(response, null, 2));
@@ -260,38 +268,8 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         'All required documents uploaded successfully!',
         [
           { 
-            text: 'Proceed to Registration', 
-            onPress: () => navigation.navigate('FasTagRegistration', {
-              requestId,
-              sessionId,
-              mobileNo,
-              vehicleNo,
-              chassisNo, 
-              engineNo,
-              customerId,
-              walletId,
-              name,
-              lastName,
-              
-              // Vehicle details from OTP response
-              vehicleManuf: route.params.vehicleManuf,
-              model: route.params.model,
-              vehicleColour: route.params.vehicleColour,
-              type: route.params.type,
-              rtoStatus: route.params.rtoStatus,
-              tagVehicleClassID: route.params.tagVehicleClassID,
-              npciVehicleClassID: route.params.npciVehicleClassID,
-              vehicleType: route.params.vehicleType,
-              rechargeAmount: route.params.rechargeAmount,
-              securityDeposit: route.params.securityDeposit,
-              tagCost: route.params.tagCost,
-              vehicleDescriptor: route.params.vehicleDescriptor,
-              isNationalPermit: route.params.isNationalPermit,
-              permitExpiryDate: route.params.permitExpiryDate,
-              stateOfRegistration: route.params.stateOfRegistration,
-              commercial: route.params.commercial,
-              npciStatus: route.params.npciStatus
-            })
+            text: 'Continue', 
+            onPress: () => proceedToRegistration()
           }
         ]
       );
@@ -303,36 +281,63 @@ const DocumentUploadScreen = ({ navigation, route }) => {
   // Proceed to FasTag registration only if all documents are uploaded
   const proceedToRegistration = () => {
     if (allDocumentsUploaded()) {
-      navigation.navigate('FasTagRegistration', {
+      // Prepare data for next screen
+      const documentDetails = {
+        RCFRONT: uploadedDocs.RCFRONT,
+        RCBACK: uploadedDocs.RCBACK,
+        VEHICLEFRONT: uploadedDocs.VEHICLEFRONT,
+        VEHICLESIDE: uploadedDocs.VEHICLESIDE,
+        TAGAFFIX: uploadedDocs.TAGAFFIX
+      };
+      
+      // Get the OTP response
+      const otpResponse = route.params.otpResponse || {};
+      
+      // Extract VRN details
+      const vrnDetails = otpResponse.validateOtpResp?.vrnDetails || {};
+      
+      navigation.navigate('ManualActivation', {
+        // Basic details
         requestId,
         sessionId,
         mobileNo,
-        vehicleNo, 
-        chassisNo,
-        engineNo,
+        // Use the exact field names from the OTP response
+        vehicleNo: vrnDetails.vehicleNo || vehicleNo, 
+        chassisNo: vrnDetails.chassisNo || chassisNo,
+        engineNo: vrnDetails.engineNo || engineNo,
         customerId,
-        walletId,
-        name,
-        lastName,
+        walletId: otpResponse.validateOtpResp?.custDetails?.walletId || walletId || '',
+        name: otpResponse.validateOtpResp?.custDetails?.name || '',
+        lastName: '',
         
-        // Vehicle details from OTP response
-        vehicleManuf: route.params.vehicleManuf,
-        model: route.params.model,
-        vehicleColour: route.params.vehicleColour,
-        type: route.params.type,
-        rtoStatus: route.params.rtoStatus,
-        tagVehicleClassID: route.params.tagVehicleClassID,
-        npciVehicleClassID: route.params.npciVehicleClassID,
-        vehicleType: route.params.vehicleType,
-        rechargeAmount: route.params.rechargeAmount,
-        securityDeposit: route.params.securityDeposit,
-        tagCost: route.params.tagCost,
-        vehicleDescriptor: route.params.vehicleDescriptor,
-        isNationalPermit: route.params.isNationalPermit,
-        permitExpiryDate: route.params.permitExpiryDate,
-        stateOfRegistration: route.params.stateOfRegistration,
-        commercial: route.params.commercial,
-        npciStatus: route.params.npciStatus
+        // Vehicle details from OTP response with proper fallbacks
+        vehicleManuf: vrnDetails.vehicleManuf || '',
+        model: vrnDetails.model || '',
+        vehicleColour: vrnDetails.vehicleColour || '',
+        type: vrnDetails.type || '',
+        rtoStatus: vrnDetails.rtoStatus || 'ACTIVE',
+        tagVehicleClassID: vrnDetails.tagVehicleClassID || '4',
+        npciVehicleClassID: vrnDetails.npciVehicleClassID || '4',
+        vehicleType: vrnDetails.vehicleType || '',
+        rechargeAmount: vrnDetails.rechargeAmount || '0.00',
+        securityDeposit: vrnDetails.securityDeposit || '100.00',
+        tagCost: vrnDetails.tagCost || '100.00',
+        vehicleDescriptor: vrnDetails.vehicleDescriptor || 'DIESEL',
+        isNationalPermit: vrnDetails.isNationalPermit || '1',
+        permitExpiryDate: vrnDetails.permitExpiryDate || '31/12/2025',
+        stateOfRegistration: vrnDetails.stateOfRegistration || 'MH',
+        commercial: vrnDetails.commercial === false ? false : true,
+        npciStatus: otpResponse.validateOtpResp?.npciStatus || 'ACTIVE',
+        
+        // UDF fields from OTP response
+        udf1: otpResponse.validateOtpResp?.udf1 || '',
+        udf2: otpResponse.validateOtpResp?.udf2 || '',
+        udf3: otpResponse.validateOtpResp?.udf3 || '',
+        udf4: otpResponse.validateOtpResp?.udf4 || '',
+        udf5: otpResponse.validateOtpResp?.udf5 || '',
+        
+        // Document details
+        documentDetails
       });
     } else {
       Alert.alert(
@@ -406,9 +411,27 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     );
   };
   
+  // Add development mode toggle UI
+  const renderDevelopmentModeToggle = () => {
+    if (__DEV__) {
+      return (
+        <View style={styles.devModeContainer}>
+          <Text style={styles.devModeText}>Development Mode</Text>
+          <Switch
+            value={isDevelopmentMode}
+            onValueChange={setIsDevelopmentMode}
+            trackColor={{ false: '#767577', true: '#81b0ff' }}
+            thumbColor={isDevelopmentMode ? '#2196F3' : '#f4f3f4'}
+          />
+        </View>
+      );
+    }
+    return null;
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#1a237e" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -433,6 +456,8 @@ const DocumentUploadScreen = ({ navigation, route }) => {
               All documents must be uploaded before proceeding to registration.
             </Text>
           </View>
+          
+          {renderDevelopmentModeToggle()}
           
           {/* Progress Indicator */}
           <View style={styles.progressContainer}>
@@ -654,6 +679,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  devModeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  devModeText: {
+    marginRight: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -9,41 +9,69 @@ import {
   SafeAreaView, 
   StatusBar,
   Alert,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import bajajApi from '../api/bajajApi';
+import { NotificationContext } from '../contexts/NotificationContext';
 
-const FasTagRegistrationScreen = ({ navigation }) => {
+// Helper function to generate request ID
+const generateRequestId = () => {
+  return `REQ${Date.now()}${Math.floor(Math.random() * 1000)}`;
+};
+
+const FasTagRegistrationScreen = ({ navigation, route }) => {
+  // Get data from ManualActivationScreen
+  const { registrationData, documentDetails, rawData } = route.params || {};
+  
+  // Access notification context
+  const { addNotification } = useContext(NotificationContext);
+  
   // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
   
+  // UI state
+  const [loading, setLoading] = useState(false);
+  
   // Registration Details
-  const [requestId] = useState(Date.now().toString());
-  const [sessionId] = useState(Date.now().toString());
-  const [channel] = useState("APP");
-  const [agentId] = useState("");
+  const [requestId] = useState(registrationData?.regDetails?.requestId || Date.now().toString());
+  const [sessionId] = useState(registrationData?.regDetails?.sessionId || Date.now().toString());
+  const [channel] = useState(registrationData?.regDetails?.channel || "APP");
+  const [agentId] = useState(registrationData?.regDetails?.agentId || "");
   
   // Customer Details
-  const [name, setName] = useState('');
-  const [mobileNo, setMobileNo] = useState('');
-  const [walletId, setWalletId] = useState('');
+  const [name, setName] = useState(registrationData?.custDetails?.name || rawData?.name || '');
+  const [mobileNo, setMobileNo] = useState(registrationData?.custDetails?.mobileNo || rawData?.mobileNo || '');
+  const [walletId, setWalletId] = useState(registrationData?.custDetails?.walletId || rawData?.walletId || '');
   
   // Vehicle Details
-  const [vrn, setVrn] = useState('');
-  const [chassis, setChassis] = useState('');
-  const [engine, setEngine] = useState('');
-  const [rechargeAmount] = useState("0.00");
-  const [securityDeposit] = useState("100.00");
-  const [tagCost] = useState("100.00");
-  const [debitAmt] = useState("300.00");
+  const [vrn, setVrn] = useState(registrationData?.vrnDetails?.vrn || rawData?.vehicleNo || '');
+  const [chassis, setChassis] = useState(registrationData?.vrnDetails?.chassis || rawData?.chassisNo || '');
+  const [engine, setEngine] = useState(registrationData?.vrnDetails?.engine || rawData?.engineNo || '');
+  const [rechargeAmount] = useState(registrationData?.vrnDetails?.rechargeAmount || rawData?.rechargeAmount || "0.00");
+  const [securityDeposit] = useState(registrationData?.vrnDetails?.securityDeposit || rawData?.securityDeposit || "100.00");
+  const [tagCost] = useState(registrationData?.vrnDetails?.tagCost || rawData?.tagCost || "100.00");
+  const [debitAmt] = useState(registrationData?.vrnDetails?.debitAmt || "300.00");
+  
+  // Additional Vehicle Details
+  const [vehicleManuf] = useState(registrationData?.vrnDetails?.vehicleManuf || rawData?.vehicleManuf || '');
+  const [model] = useState(registrationData?.vrnDetails?.model || rawData?.model || '');
+  const [vehicleColour] = useState(registrationData?.vrnDetails?.vehicleColour || rawData?.vehicleColour || '');
+  const [type] = useState(registrationData?.vrnDetails?.type || rawData?.type || '');
+  const [rtoStatus] = useState(registrationData?.vrnDetails?.rtoStatus || rawData?.rtoStatus || 'ACTIVE');
+  const [npciVehicleClassID] = useState(registrationData?.vrnDetails?.npciVehicleClassID || rawData?.npciVehicleClassID || '4');
+  const [vehicleType] = useState(registrationData?.vrnDetails?.vehicleType || rawData?.vehicleType || '');
+  const [commercial] = useState(registrationData?.vrnDetails?.isCommercial || rawData?.commercial || false);
+  const [npciStatus] = useState(registrationData?.vrnDetails?.npciStatus || rawData?.npciStatus || 'ACTIVE');
   
   // FasTag Details
-  const [serialNo, setSerialNo] = useState('');
-  const [tid, setTid] = useState('');
+  const [serialNo, setSerialNo] = useState(registrationData?.fasTagDetails?.serialNo || '');
+  const [tid, setTid] = useState(registrationData?.fasTagDetails?.tid || '');
   
   // Additional Details
-  const [isNationalPermit, setIsNationalPermit] = useState('1');
+  const [isNationalPermit, setIsNationalPermit] = useState(registrationData?.vrnDetails?.isNationalPermit || '1');
   const [openNationalPermit, setOpenNationalPermit] = useState(false);
   const [nationalPermitItems, setNationalPermitItems] = useState([
     {label: 'Yes', value: '1'},
@@ -52,7 +80,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
   
   // Vehicle Descriptor
   const [openVehicleDescriptor, setOpenVehicleDescriptor] = useState(false);
-  const [vehicleDescriptor, setVehicleDescriptor] = useState('DIESEL');
+  const [vehicleDescriptor, setVehicleDescriptor] = useState(registrationData?.vrnDetails?.vehicleDescriptor || 'DIESEL');
   const [vehicleDescriptorItems, setVehicleDescriptorItems] = useState([
     {label: 'Petrol', value: 'PETROL'},
     {label: 'Diesel', value: 'DIESEL'},
@@ -63,7 +91,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
   
   // State registration
   const [openState, setOpenState] = useState(false);
-  const [stateOfRegistration, setStateOfRegistration] = useState('MH');
+  const [stateOfRegistration, setStateOfRegistration] = useState(registrationData?.vrnDetails?.stateOfRegistration || 'MH');
   const [stateItems, setStateItems] = useState([
     {label: 'Maharashtra', value: 'MH'},
     {label: 'Delhi', value: 'DL'},
@@ -75,7 +103,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
   ]);
   
   // Vehicle Class
-  const [tagVehicleClassID, setTagVehicleClassID] = useState('4');
+  const [tagVehicleClassID, setTagVehicleClassID] = useState(registrationData?.vrnDetails?.tagVehicleClassID || '4');
   const [openVehicleClass, setOpenVehicleClass] = useState(false);
   const [vehicleClassItems, setVehicleClassItems] = useState([
     {label: 'Car/Jeep/Van', value: '4'},
@@ -85,17 +113,17 @@ const FasTagRegistrationScreen = ({ navigation }) => {
   ]);
   
   // Permit Expiry Date
-  const [permitExpiryDate, setPermitExpiryDate] = useState('31/12/2025');
+  const [permitExpiryDate, setPermitExpiryDate] = useState(registrationData?.vrnDetails?.permitExpiryDate || '31/12/2025');
   
   // Validation errors
   const [errors, setErrors] = useState({});
   
   // Optional fields
-  const [udf1, setUdf1] = useState('');
-  const [udf2, setUdf2] = useState('');
-  const [udf3, setUdf3] = useState('');
-  const [udf4, setUdf4] = useState('');
-  const [udf5, setUdf5] = useState('');
+  const [udf1, setUdf1] = useState(registrationData?.fasTagDetails?.udf1 || '');
+  const [udf2, setUdf2] = useState(registrationData?.fasTagDetails?.udf2 || '');
+  const [udf3, setUdf3] = useState(registrationData?.fasTagDetails?.udf3 || '');
+  const [udf4, setUdf4] = useState(registrationData?.fasTagDetails?.udf4 || '');
+  const [udf5, setUdf5] = useState(registrationData?.fasTagDetails?.udf5 || '');
   
   // Animation effect on component mount
   useEffect(() => {
@@ -130,59 +158,51 @@ const FasTagRegistrationScreen = ({ navigation }) => {
   };
   
   // Basic validation
-  const validateField = (field, value) => {
-    let error = '';
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
     
-    switch (field) {
-      case 'vrn':
-        if (!value) {
-          error = 'Vehicle number is required';
-        } else if (!/^[A-Z0-9]{5,10}$/.test(value)) {
-          error = 'Enter a valid vehicle number';
-        }
-        break;
-        
-      case 'mobileNo':
-        if (!value) {
-          error = 'Mobile number is required';
-        } else if (!/^[0-9]{10}$/.test(value)) {
-          error = 'Mobile number must be 10 digits';
-        }
-        break;
-        
-      case 'name':
-        if (!value) {
-          error = 'Name is required';
-        }
-        break;
-        
-      case 'walletId':
-        if (!value) {
-          error = 'Wallet ID is required';
-        }
-        break;
-        
-      case 'serialNo':
-        if (!value) {
-          error = 'Serial number is required';
-        }
-        break;
-        
-      case 'permitExpiryDate':
-        if (!value) {
-          error = 'Permit expiry date is required';
-        } else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
-          error = 'Date must be in DD/MM/YYYY format';
-        }
-        break;
+    // Validate Vehicle Registration Number
+    if (!vrn) {
+      newErrors.vrn = 'Vehicle number is required';
+      isValid = false;
     }
     
-    setErrors(prev => ({
-      ...prev,
-      [field]: error
-    }));
+    // Validate Mobile Number
+    if (!mobileNo) {
+      newErrors.mobileNo = 'Mobile number is required';
+      isValid = false;
+    } else if (!/^[0-9]{10}$/.test(mobileNo)) {
+      newErrors.mobileNo = 'Mobile number must be 10 digits';
+      isValid = false;
+    }
     
-    return !error;
+    // Validate Customer Name
+    if (!name) {
+      newErrors.name = 'Name is required';
+      isValid = false;
+    }
+    
+    // Validate Wallet ID
+    if (!walletId) {
+      newErrors.walletId = 'Wallet ID is required';
+      isValid = false;
+    }
+    
+    // Validate Serial Number
+    if (!serialNo) {
+      newErrors.serialNo = 'Serial number is required';
+      isValid = false;
+    }
+    
+    // Validate Permit Expiry Date
+    if (permitExpiryDate && !/^\d{2}\/\d{2}\/\d{4}$/.test(permitExpiryDate)) {
+      newErrors.permitExpiryDate = 'Date must be in DD/MM/YYYY format';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
   
   // Format current date and time as YYYY-MM-DD HH:mm:ss.SSS
@@ -200,79 +220,98 @@ const FasTagRegistrationScreen = ({ navigation }) => {
   };
   
   // Handle form submission
-  const handleSubmit = () => {
-    // Validate all required fields
-    const validVrn = validateField('vrn', vrn);
-    const validMobile = validateField('mobileNo', mobileNo);
-    const validName = validateField('name', name);
-    const validWallet = validateField('walletId', walletId);
-    const validSerial = validateField('serialNo', serialNo);
-    const validDate = validateField('permitExpiryDate', permitExpiryDate);
-    
-    if (!(validVrn && validMobile && validName && validWallet && validSerial && validDate)) {
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       Alert.alert('Validation Error', 'Please correct the errors in the form.');
       return;
     }
     
-    // Prepare API request payload
-    const payload = {
-      regDetails: {
-        requestId,
-        sessionId,
-        channel,
-        agentId,
-        reqDateTime: getCurrentDateTime()
-      },
-      vrnDetails: {
-        vrn,
-        chassis,
-        engine,
-        vehicleManuf: "",
-        model: "",
-        vehicleColour: "",
-        type: "",
-        status: "ACTIVE",
-        npciStatus: "ACTIVE",
-        isCommercial: true,
-        tagVehicleClassID,
-        npciVehicleClassID: tagVehicleClassID,
-        vehicleType: "Bus axle",
-        rechargeAmount,
-        securityDeposit,
-        tagCost,
-        debitAmt,
-        vehicleDescriptor,
-        isNationalPermit,
-        permitExpiryDate,
-        stateOfRegistration
-      },
-      custDetails: {
-        name,
-        mobileNo,
-        walletId
-      },
-      fasTagDetails: {
-        serialNo,
-        tid,
-        udf1,
-        udf2,
-        udf3,
-        udf4,
-        udf5
+    setLoading(true);
+    
+    try {
+      // Create the registration data object in the correct order
+      const finalRegistrationData = {
+        regDetails: {
+          requestId: requestId || generateRequestId(),
+          sessionId: sessionId || requestId || generateRequestId(),
+          channel: "APP",
+          agentId: "",
+          reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
+        },
+        custDetails: {
+          name: name || "",
+          mobileNo: mobileNo || "",
+          walletId: walletId || ""
+        },
+        vrnDetails: {
+          vrn: vrn || "",
+          chassis: chassis || "",
+          engine: engine || "",
+          vehicleManuf: vehicleManuf || "",
+          model: model || "",
+          vehicleColour: vehicleColour || "",
+          type: type || "",
+          rtoStatus: rtoStatus || "ACTIVE",
+          tagVehicleClassID: tagVehicleClassID || "4",
+          npciVehicleClassID: npciVehicleClassID || "4",
+          vehicleType: vehicleType || "",
+          rechargeAmount: rechargeAmount || "0.00",
+          securityDeposit: securityDeposit || "100.00",
+          tagCost: tagCost || "100.00",
+          vehicleDescriptor: vehicleDescriptor || "DIESEL",
+          isNationalPermit: isNationalPermit || "1",
+          permitExpiryDate: permitExpiryDate || "31/12/2025",
+          stateOfRegistration: stateOfRegistration || "MH",
+          isCommercial: commercial === false ? false : true,
+          status: "ACTIVE",
+          debitAmt: debitAmt || "300.00",
+          npciStatus: npciStatus || "ACTIVE"
+        },
+        fasTagDetails: {
+          serialNo: serialNo || "",
+          tid: tid || "",
+          udf1: udf1 || "",
+          udf2: udf2 || "",
+          udf3: udf3 || "",
+          udf4: udf4 || "",
+          udf5: udf5 || ""
+        }
+      };
+      
+      // Log the registration data for debugging
+      console.log('FasTag Registration Request:', JSON.stringify(finalRegistrationData, null, 2));
+      
+      // Call the API to register the FasTag
+      const response = await bajajApi.registerFasTag(finalRegistrationData);
+      
+      if (response && response.response && response.response.status === 'success') {
+        // Add notification
+        addNotification({
+          id: Date.now(),
+          message: 'FasTag registered successfully!',
+          time: 'Just now',
+          read: false
+        });
+        
+        // Navigate to success screen
+        navigation.navigate('HomeScreen', {
+          success: true,
+          message: 'FasTag registered successfully!'
+        });
+      } else {
+        const errorMsg = response?.response?.errorDesc || 'Failed to register FasTag';
+        throw new Error(errorMsg);
       }
-    };
-    
-    console.log('FasTag Registration Request:', payload);
-    
-    // In a real app, we would call the API here
-    // For the demo, we'll simulate a successful response
-    Alert.alert(
-      'Success',
-      'FasTag registration submitted successfully!',
-      [
-        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-      ]
-    );
+    } catch (error) {
+      console.error('FasTag Registration Error:', error);
+      Alert.alert(
+        'Registration Error',
+        error.message || 'Failed to register FasTag. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -314,7 +353,6 @@ const FasTagRegistrationScreen = ({ navigation }) => {
                 onChangeText={(text) => {
                   const upperText = text.toUpperCase();
                   setVrn(upperText);
-                  validateField('vrn', upperText);
                 }}
                 autoCapitalize="characters"
               />
@@ -435,10 +473,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
                 style={[styles.input, errors.name ? styles.inputError : null]}
                 placeholder="Enter customer name"
                 value={name}
-                onChangeText={(text) => {
-                  setName(text);
-                  validateField('name', text);
-                }}
+                onChangeText={setName}
               />
               {errors.name ? (
                 <Text style={styles.errorText}>{errors.name}</Text>
@@ -452,10 +487,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
                 style={[styles.input, errors.mobileNo ? styles.inputError : null]}
                 placeholder="Enter 10 digit mobile number"
                 value={mobileNo}
-                onChangeText={(text) => {
-                  setMobileNo(text);
-                  validateField('mobileNo', text);
-                }}
+                onChangeText={setMobileNo}
                 keyboardType="phone-pad"
                 maxLength={10}
               />
@@ -471,10 +503,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
                 style={[styles.input, errors.walletId ? styles.inputError : null]}
                 placeholder="Enter wallet ID"
                 value={walletId}
-                onChangeText={(text) => {
-                  setWalletId(text);
-                  validateField('walletId', text);
-                }}
+                onChangeText={setWalletId}
               />
               {errors.walletId ? (
                 <Text style={styles.errorText}>{errors.walletId}</Text>
@@ -488,10 +517,7 @@ const FasTagRegistrationScreen = ({ navigation }) => {
                 style={[styles.input, errors.serialNo ? styles.inputError : null]}
                 placeholder="Enter FasTag serial number"
                 value={serialNo}
-                onChangeText={(text) => {
-                  setSerialNo(text);
-                  validateField('serialNo', text);
-                }}
+                onChangeText={setSerialNo}
               />
               {errors.serialNo ? (
                 <Text style={styles.errorText}>{errors.serialNo}</Text>

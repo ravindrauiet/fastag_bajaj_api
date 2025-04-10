@@ -1,31 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
+  StyleSheet, 
   TextInput, 
   TouchableOpacity, 
-  StyleSheet, 
+  ScrollView, 
   SafeAreaView, 
   StatusBar,
-  ScrollView,
+  Alert,
   Animated,
-  Alert
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
+import { NotificationContext } from '../contexts/NotificationContext';
+import { AntDesign } from '@expo/vector-icons';
+import bajajApi from '../api/bajajApi';
+import { API_URL, API_ENDPOINTS } from '../config';
 
-const ManualActivationScreen = ({ navigation, route }) => {
-  const [fastagId, setFastagId] = useState('');
-  
-  // Animation states
+// Helper function to generate request ID
+const generateRequestId = () => {
+  return `REQ${Date.now()}${Math.floor(Math.random() * 1000)}`;
+};
+
+const ManualActivationScreen = ({ route, navigation }) => {
+  // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
-  const [slideAnim] = useState(new Animated.Value(50));
-
-  useEffect(() => {
-    // If scanned data is passed, set it as the initial value
-    if (route.params?.scannedData) {
-      setFastagId(route.params.scannedData);
-    }
+  const [slideAnim] = useState(new Animated.Value(30));
+  
+  // Form state
+  const [serialNo, setSerialNo] = useState('');
+  const [tid, setTid] = useState('');
+  
+  // Validation errors
+  const [errors, setErrors] = useState({});
+  
+  // Access notification context
+  const { addNotification } = useContext(NotificationContext);
+  
+  // UI state
+  const [loading, setLoading] = useState(false);
+  
+  // Extract all required data from route.params
+  const { 
+    // Base data
+    requestId,
+    sessionId,
+    mobileNo,
+    vehicleNo, 
+    chassisNo,
+    engineNo,
+    customerId,
+    walletId,
+    name,
+    lastName,
     
-    // Start animations when component mounts
+    // Vehicle details from OTP response
+    vehicleManuf,
+    model,
+    vehicleColour,
+    type,
+    rtoStatus,
+    tagVehicleClassID,
+    npciVehicleClassID,
+    vehicleType,
+    rechargeAmount,
+    securityDeposit,
+    tagCost,
+    vehicleDescriptor,
+    isNationalPermit,
+    permitExpiryDate,
+    stateOfRegistration,
+    commercial,
+    npciStatus,
+    documentDetails,
+    
+    // Optional fields
+    udf1 = "",
+    udf2 = "",
+    udf3 = "",
+    udf4 = "",
+    udf5 = "",
+    debitAmt = "300.00"
+  } = route.params || {};
+  
+  // Animation effect on component mount
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -38,18 +99,145 @@ const ManualActivationScreen = ({ navigation, route }) => {
         useNativeDriver: true,
       })
     ]).start();
-  }, [route.params?.scannedData]);
-
-  const handleActivate = () => {
-    if (!fastagId.trim()) {
-      Alert.alert('Error', 'Please enter a valid FASTag ID');
+  }, []);
+  
+  // Basic validation
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
+    
+    // Validate Serial Number
+    if (!serialNo.trim()) {
+      newErrors.serialNo = 'Serial number is required';
+      isValid = false;
+    } else if (serialNo.length < 10) {
+      newErrors.serialNo = 'Serial number must be at least 10 characters';
+      isValid = false;
+    }
+    
+    // Validate TID
+    if (!tid.trim()) {
+      newErrors.tid = 'TID is required';
+      isValid = false;
+    } else if (tid.length < 10) {
+      newErrors.tid = 'TID must be at least 10 characters';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+  
+  // Handle form submission
+  const handleSubmit = () => {
+    // Validate inputs
+    if (!serialNo.trim()) {
+      setErrors(prev => ({ ...prev, serialNo: 'Serial Number is required' }));
+      return;
+    }
+    if (!tid.trim()) {
+      setErrors(prev => ({ ...prev, tid: 'TID is required' }));
       return;
     }
     
-    // Navigate to VehicleKYC screen with the fastag ID
-    navigation.navigate('VehicleKYCScreen', { fastagId });
+    // Clear any existing errors
+    setErrors({});
+    
+    // Create the registration data object in the correct order
+    const registrationData = {
+      regDetails: {
+        requestId: requestId || generateRequestId(),
+        sessionId: sessionId || requestId || generateRequestId(),
+        channel: "APP",
+        agentId: "",
+        reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
+      },
+      custDetails: {
+        name: name || "",
+        mobileNo: mobileNo || "",
+        walletId: walletId || ""
+      },
+      vrnDetails: {
+        vrn: vehicleNo || "",
+        chassis: chassisNo || "",
+        engine: engineNo || "",
+        vehicleManuf: vehicleManuf || "",
+        model: model || "",
+        vehicleColour: vehicleColour || "",
+        type: type || "",
+        rtoStatus: rtoStatus || "ACTIVE",
+        tagVehicleClassID: tagVehicleClassID || "4",
+        npciVehicleClassID: npciVehicleClassID || "4",
+        vehicleType: vehicleType || "",
+        rechargeAmount: rechargeAmount || "0.00",
+        securityDeposit: securityDeposit || "100.00",
+        tagCost: tagCost || "100.00",
+        vehicleDescriptor: vehicleDescriptor || "DIESEL",
+        isNationalPermit: isNationalPermit || "1",
+        permitExpiryDate: permitExpiryDate || "31/12/2025",
+        stateOfRegistration: stateOfRegistration || "MH",
+        isCommercial: commercial === false ? false : true,
+        status: "ACTIVE",
+        debitAmt: debitAmt || "300.00",
+        npciStatus: npciStatus || "ACTIVE"
+      },
+      fasTagDetails: {
+        serialNo: serialNo,
+        tid: tid,
+        udf1: udf1 || "",
+        udf2: udf2 || "",
+        udf3: udf3 || "",
+        udf4: udf4 || "",
+        udf5: udf5 || ""
+      }
+    };
+    
+    // Log the registration data for debugging
+    console.log('FasTag Registration Request:', JSON.stringify(registrationData, null, 2));
+    
+    // Navigate to FasTag registration with the data
+    navigation.navigate('FasTagRegistration', {
+      registrationData,
+      documentDetails,
+      // Also pass the raw data in case it's needed
+      rawData: {
+        requestId,
+        sessionId,
+        mobileNo,
+        vehicleNo,
+        chassisNo,
+        engineNo,
+        customerId,
+        walletId,
+        name,
+        vehicleManuf,
+        model,
+        vehicleColour,
+        type,
+        rtoStatus,
+        tagVehicleClassID,
+        npciVehicleClassID,
+        vehicleType,
+        rechargeAmount,
+        securityDeposit,
+        tagCost,
+        vehicleDescriptor,
+        isNationalPermit,
+        permitExpiryDate,
+        stateOfRegistration,
+        commercial,
+        npciStatus,
+        serialNo,
+        tid,
+        udf1,
+        udf2,
+        udf3,
+        udf4,
+        udf5
+      }
+    });
   };
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -59,60 +247,117 @@ const ManualActivationScreen = ({ navigation, route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manual Activation</Text>
+        <Text style={styles.headerTitle}>FasTag Manual Activation</Text>
         <View style={{ width: 40 }} />
       </View>
       
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <Animated.View 
-          style={[
-            styles.content, 
-            { 
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Animated.View 
+            style={[styles.content, {
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Activate Your FasTag</Text>
-            <Text style={styles.infoText}>
-              Please enter your FASTag ID to proceed with the activation process.
-              The ID can be found on the back of your FasTag.
-            </Text>
-          </View>
-          
-          <View style={styles.formContainer}>
-            <Text style={styles.label}>FASTag ID</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter FASTag ID"
-              keyboardType="numeric"
-              value={fastagId}
-              onChangeText={setFastagId}
-              placeholderTextColor="#999999"
-            />
+            }]}
+          >
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>FasTag Manual Activation</Text>
+              <Text style={styles.infoText}>
+                Please enter the FasTag Serial Number and TID details manually. These details are required to complete the registration process.
+              </Text>
+            </View>
             
+            <View style={styles.formContainer}>
+              {/* Serial Number */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Serial Number<Text style={styles.required}>*</Text></Text>
+                <TextInput
+                  style={[styles.input, errors.serialNo ? styles.inputError : null]}
+                  placeholder="Enter FasTag Serial Number"
+                  value={serialNo}
+                  onChangeText={setSerialNo}
+                  autoCapitalize="characters"
+                />
+                {errors.serialNo ? (
+                  <Text style={styles.errorText}>{errors.serialNo}</Text>
+                ) : null}
+              </View>
+              
+              {/* TID */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>TID<Text style={styles.required}>*</Text></Text>
+                <TextInput
+                  style={[styles.input, errors.tid ? styles.inputError : null]}
+                  placeholder="Enter FasTag TID"
+                  value={tid}
+                  onChangeText={setTid}
+                  autoCapitalize="characters"
+                />
+                {errors.tid ? (
+                  <Text style={styles.errorText}>{errors.tid}</Text>
+                ) : null}
+              </View>
+            </View>
+            
+            {/* Vehicle Details Summary */}
+            {vehicleNo && (
+              <View style={styles.summaryContainer}>
+                <Text style={styles.sectionTitle}>Vehicle Details</Text>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Vehicle Number:</Text>
+                  <Text style={styles.summaryValue}>{vehicleNo || 'N/A'}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Chassis Number:</Text>
+                  <Text style={styles.summaryValue}>{chassisNo || 'N/A'}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Engine Number:</Text>
+                  <Text style={styles.summaryValue}>{engineNo || 'N/A'}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Vehicle Model:</Text>
+                  <Text style={styles.summaryValue}>{model || 'N/A'}</Text>
+                </View>
+              </View>
+            )}
+            
+            {/* Customer Details Summary */}
+            {name && (
+              <View style={styles.summaryContainer}>
+                <Text style={styles.sectionTitle}>Customer Details</Text>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Name:</Text>
+                  <Text style={styles.summaryValue}>{name || 'N/A'}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Mobile Number:</Text>
+                  <Text style={styles.summaryValue}>{mobileNo || 'N/A'}</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Wallet ID:</Text>
+                  <Text style={styles.summaryValue}>{walletId || 'N/A'}</Text>
+                </View>
+              </View>
+            )}
+            
+            {/* Submit Button */}
             <TouchableOpacity 
-              style={styles.button} 
-              onPress={handleActivate}
-              activeOpacity={0.8}
+              style={[styles.submitButton, loading && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={loading}
             >
-              <Text style={styles.buttonText}>Activate Now</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Continue to Registration</Text>
+              )}
             </TouchableOpacity>
-          </View>
-          
-          <View style={styles.helpSection}>
-            <Text style={styles.helpTitle}>Need Help?</Text>
-            <Text style={styles.helpText}>
-              If you're having trouble finding your FASTag ID, please check the back of your FasTag
-              or contact customer support for assistance.
-            </Text>
-          </View>
-        </Animated.View>
-      </ScrollView>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -142,9 +387,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
   content: {
     padding: 16,
   },
@@ -152,7 +394,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333333',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   infoTitle: {
     color: '#FFFFFF',
@@ -168,55 +410,91 @@ const styles = StyleSheet.create({
   formContainer: {
     backgroundColor: '#F9F9F9',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
+  inputGroup: {
+    marginBottom: 16,
+  },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333333',
     marginBottom: 8,
+  },
+  required: {
+    color: '#FF0000',
+    marginLeft: 4,
   },
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DDDDDD',
     borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#333333',
-    padding: 16,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    padding: 12,
     fontSize: 16,
   },
-  helpSection: {
-    backgroundColor: '#F0F0F0',
+  inputError: {
+    borderColor: '#FF0000',
+  },
+  errorText: {
+    color: '#FF0000',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  summaryContainer: {
+    backgroundColor: '#F9F9F9',
     borderRadius: 16,
     padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  helpTitle: {
+  sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 16,
     color: '#333333',
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
-  helpText: {
-    color: '#666666',
+  summaryLabel: {
     fontSize: 14,
-    lineHeight: 20,
+    color: '#666666',
+    flex: 1,
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    flex: 2,
+    textAlign: 'right',
+  },
+  submitButton: {
+    backgroundColor: '#333333',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  disabledButton: {
+    backgroundColor: '#a0a0a0',
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -298,11 +298,11 @@ const CustomDrawerContent = (props) => {
           style={styles.drawerItem}
           onPress={() => props.navigation.navigate('FasTagRekyc')}
         >
-          FasTag Re-KYC Upload
+          FasTag Re-KYC
         </Text>
         <Text 
           style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('ValidateCustomer')}
+          onPress={() => props.navigation.navigate('ValidateOtp')}
         >
           OTP Verification
         </Text>
@@ -364,6 +364,22 @@ const AppNavigator = () => {
           <Drawer.Screen 
             name="Inventory" 
             component={InventoryStack} 
+          />
+          <Drawer.Screen 
+            name="VrnUpdate" 
+            component={VrnUpdateScreen} 
+            options={{
+              title: 'VRN Update',
+              headerTitle: 'VRN Update'
+            }}
+          />
+          <Drawer.Screen 
+            name="FasTagRekyc" 
+            component={FasTagRekycScreen} 
+            options={{
+              title: 'FasTag Re-KYC',
+              headerTitle: 'FasTag Re-KYC'
+            }}
           />
         </Drawer.Navigator>
       </NavigationContainer>

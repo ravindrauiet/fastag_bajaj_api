@@ -8,22 +8,26 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
-  Alert
+  Alert,
+  Switch
 } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
 
+// Development mode flag - set to true to bypass API calls
+const DEV_MODE = true;
+
 const ValidateOtpScreen = ({ navigation, route }) => {
-  // Get params from previous screen
+  // Get params from previous screen with default values to prevent undefined errors
   const {
-    requestId,
-    sessionId,
-    mobileNo,
-    vehicleNo,
-    chassisNo,
-    engineNo,
-    reqType
-  } = route.params;
+    requestId = '',
+    sessionId = '',
+    mobileNo = '',
+    vehicleNo = '',
+    chassisNo = '',
+    engineNo = '',
+    reqType = 'REG'
+  } = route?.params || {};
 
   // OTP state management
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -31,6 +35,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const [devMode, setDevMode] = useState(DEV_MODE);
   
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
@@ -97,8 +102,11 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         }
         
         // Update the route params with the new values
-        route.params.requestId = newRequestId;
-        route.params.sessionId = newSessionId;
+        // We can't directly modify route.params, so we'll use navigation with new params
+        navigation.setParams({
+          requestId: newRequestId,
+          sessionId: newSessionId
+        });
         
         addNotification({
           id: Date.now(),
@@ -147,33 +155,97 @@ const ValidateOtpScreen = ({ navigation, route }) => {
       // Enhanced logging for the parameters being sent to the API
       console.log('===== OTP VERIFICATION DETAILS =====');
       console.log('OTP string entered by user:', otpString);
-      console.log('RequestId from sendOtp response:', route.params.requestId);
-      console.log('SessionId from sendOtp response:', route.params.sessionId);
+      console.log('RequestId from sendOtp response:', requestId);
+      console.log('SessionId from sendOtp response:', sessionId);
       
-      // According to the API documentation:
-      // validateOtpReq: {
-      //   otp: "123456",        <- The 6-digit OTP entered by user
-      //   requestId: "...",     <- From the sendOtp response
-      //   sessionId: "...",     <- From the sendOtp response
-      //   channel: "...",
-      //   agentId: "...",
-      //   reqDateTime: "..."
-      // }
+      let response;
       
-      // Set timeout for the API call - 15 seconds
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout - please try again')), 15000);
-      });
-      
-      // Actual API call
-      const apiCallPromise = bajajApi.verifyOtp(
-        otpString,                 // The 6-digit OTP entered by the user
-        route.params.requestId,    // The requestId from sendOtp response
-        route.params.sessionId     // The sessionId from sendOtp response
-      );
-      
-      // Race between timeout and API call
-      const response = await Promise.race([apiCallPromise, timeoutPromise]);
+      if (devMode) {
+        // Development mode - simulate API response
+        console.log('DEV MODE: Simulating OTP verification response');
+        
+        // Create a simulated response based on the provided data
+        response = {
+          response: {
+            msg: "Request is successful",
+            status: "success",
+            code: "00",
+            errorCode: "",
+            errorDesc: ""
+          },
+          validateOtpResp: {
+            vrnDetails: {
+              vehicleNo: vehicleNo || "HR51BU0439",
+              engineNo: engineNo || "600432ENCS28188",
+              chassisNo: chassisNo || "CHS81B97A65D4A1249344",
+              vehicleManuf: "FORDINDIAPVTLTD",
+              model: "FORDECOSPORT",
+              vehicleColour: "WHITE",
+              type: "VC4",
+              rtoStatus: "ACTIVE",
+              tagVehicleClassID: "4",
+              npciVehicleClassID: "4",
+              vehicleType: "PETROL",
+              rechargeAmount: "100.0",
+              securityDeposit: "200.0",
+              tagCost: "100.0",
+              repTagCost: "0.00",
+              vehicleDescriptor: "PETROL",
+              isNationalPermit: "1",
+              permitExpiryDate: "08/04/2027",
+              stateOfRegistration: "TN",
+              commercial: false
+            },
+            npciStatus: "ACTIVE",
+            custDetails: {
+              name: null,
+              walletStatus: "Active", // NE = New Entity (wallet doesn't exist)
+              kycStatus: "",
+              walletId: null,
+              mobileNo: 7840001360,
+            },
+            respDateTime: new Date().toISOString(),
+            requestId: requestId,
+            req_type: reqType || "REG",
+            udf1: "",
+            udf2: "",
+            udf3: "",
+            udf4: "",
+            udf5: ""
+          }
+        };
+        
+        console.log('DEV MODE: Simulated response:', JSON.stringify(response, null, 2));
+        
+        // Add a small delay to simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else {
+        // Production mode - actual API call
+        // According to the API documentation:
+        // validateOtpReq: {
+        //   otp: "123456",        <- The 6-digit OTP entered by user
+        //   requestId: "...",     <- From the sendOtp response
+        //   sessionId: "...",     <- From the sendOtp response
+        //   channel: "...",
+        //   agentId: "...",
+        //   reqDateTime: "..."
+        // }
+        
+        // Set timeout for the API call - 15 seconds
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout - please try again')), 15000);
+        });
+        
+        // Actual API call
+        const apiCallPromise = bajajApi.verifyOtp(
+          otpString,                 // The 6-digit OTP entered by the user
+          requestId,    // The requestId from sendOtp response
+          sessionId     // The sessionId from sendOtp response
+        );
+        
+        // Race between timeout and API call
+        response = await Promise.race([apiCallPromise, timeoutPromise]);
+      }
       
       console.log('Verify OTP Full Response:', JSON.stringify(response, null, 2));
       
@@ -192,21 +264,26 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           // Success - OTP validated and wallet exists
           console.log('OTP validation successful with code 00');
           
-          // Navigate based on request type
-          if (reqType === 'REG') {
-            // For registration - navigate to DocumentUploadScreen
-            navigation.navigate('DocumentUpload', {
-              // Basic details
-              requestId: route.params.requestId,
-              sessionId: route.params.sessionId,
+          // Check if wallet exists
+          const walletStatus = response.validateOtpResp?.custDetails?.walletStatus;
+          console.log('Wallet status:', walletStatus);
+          
+          if (walletStatus === 'NE') {
+            // Wallet doesn't exist - navigate to CreateWallet
+            console.log('Wallet does not exist (NE) - navigating to CreateWallet');
+            
+            // Navigate to CreateWalletScreen to create a new wallet
+            navigation.navigate('CreateWallet', {
+              requestId: requestId,
+              sessionId: sessionId,
               mobileNo,
               vehicleNo,
               chassisNo,
               engineNo,
-              customerId: response.validateOtpResp?.custDetails?.customerId || '',
-              walletId: response.validateOtpResp?.custDetails?.walletId || '',
-              
-              // Vehicle details from OTP response
+              reqType,
+              // Pass the complete OTP verification response
+              otpResponse: response,
+              // Pass vehicle details from OTP response
               vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
               model: response.validateOtpResp?.vrnDetails?.model,
               vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour,
@@ -225,59 +302,128 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               commercial: response.validateOtpResp?.vrnDetails?.commercial,
               npciStatus: response.validateOtpResp?.npciStatus
             });
-          } else if (reqType === 'REP') {
-            // For replacement, go to FasTag replacement screen
-            navigation.navigate('FasTagReplacement', {
-              requestId: route.params.requestId,
-              sessionId: route.params.sessionId,
-              mobileNo,
-              vehicleNo,
-              chassisNo,
-              engineNo,
-              customerId: response.validateOtpResp?.custDetails?.customerId || '',
-              walletId: response.validateOtpResp?.custDetails?.walletId || ''
+            
+            // Add notification about what happened
+            addNotification({
+              id: Date.now(),
+              message: 'Creating new wallet for you',
+              time: 'Just now',
+              read: false
             });
+          } else {
+            // Wallet exists - navigate based on request type
+            if (reqType === 'REG') {
+              // For registration - navigate to DocumentUploadScreen
+              navigation.navigate('DocumentUpload', {
+                requestId: requestId,
+                sessionId: sessionId,
+                // Pass basic details from OTP response
+                mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
+                // These fields use different names in the API response vs. registration request:
+                // OTP response: vehicleNo, chassisNo, engineNo
+                // Registration: vrn, chassis, engine
+                vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
+                chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
+                engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
+                customerId: response.validateOtpResp?.custDetails?.customerId || '',
+                walletId: response.validateOtpResp?.custDetails?.walletId || '',
+                name: response.validateOtpResp?.custDetails?.name || '',
+                // Pass the complete OTP verification response for FasTag registration
+                otpResponse: response,
+                // Pass vehicle details from OTP response
+                vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf || '',
+                model: response.validateOtpResp?.vrnDetails?.model || '',
+                vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour || '',
+                type: response.validateOtpResp?.vrnDetails?.type || '',
+                rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus || 'ACTIVE',
+                tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID || '4',
+                npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID || '4',
+                vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType || '',
+                rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount || '0.00',
+                securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit || '100.00',
+                tagCost: response.validateOtpResp?.vrnDetails?.tagCost || '100.00',
+                vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'DIESEL',
+                isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
+                permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
+                stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
+                commercial: response.validateOtpResp?.vrnDetails?.commercial === false ? false : true,
+                npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
+                
+                // Also pass all UDF fields
+                udf1: response.validateOtpResp?.udf1 || '',
+                udf2: response.validateOtpResp?.udf2 || '',
+                udf3: response.validateOtpResp?.udf3 || '',
+                udf4: response.validateOtpResp?.udf4 || '',
+                udf5: response.validateOtpResp?.udf5 || ''
+              });
+            } else if (reqType === 'REP') {
+              // For replacement, go to FasTag replacement screen
+              navigation.navigate('FasTagReplacement', {
+                requestId: requestId,
+                sessionId: sessionId,
+                mobileNo,
+                vehicleNo,
+                chassisNo,
+                engineNo,
+                customerId: response.validateOtpResp?.custDetails?.customerId || '',
+                walletId: response.validateOtpResp?.custDetails?.walletId || ''
+              });
+            }
           }
         } else if (response.response.status === 'failed' && response.response.code === '11') {
           // Failed with code 11 - Need to create wallet
           console.log(`OTP verification failed with code 11: ${response.response.errorDesc || 'Unknown error'}`);
           console.log('Error code:', response.response.errorCode);
           
+          // Common wallet creation issues that should redirect to CreateWallet:
+          // - A034: Unable to fetch customer wallet details
+          // - A028: Invalid session, please try again
+          
           // Record error details for debugging
           const errorCode = response.response.errorCode || '';
           const errorDesc = response.response.errorDesc || 'Unknown error';
           
-          // Only navigate to CreateWallet for specific errors that indicate wallet creation is needed
-          const walletCreationErrors = ['A031', 'A032', 'A034', 'A028'];
+          console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
           
-          // Don't create wallet for A100 (NPCIFailure) or other unrelated errors
-          if (walletCreationErrors.includes(errorCode)) {
-            console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
-            
-            // Navigate to CreateWalletScreen to create a new wallet
-            // Important: Keep passing the original requestId and sessionId from the OTP verification
-            navigation.navigate('CreateWallet', {
-              requestId: route.params.requestId,
-              sessionId: route.params.sessionId,
-              mobileNo,
-              vehicleNo,
-              chassisNo,
-              engineNo,
-              reqType
-            });
-            
-            // Add notification about what happened
-            addNotification({
-              id: Date.now(),
-              message: `Creating new wallet: ${errorDesc}`,
-              time: 'Just now',
-              read: false
-            });
-          } else {
-            // For other errors that don't require wallet creation
-            console.log(`Not creating wallet for error: ${errorCode} - ${errorDesc}`);
-            throw new Error(`${errorDesc} (Code: ${errorCode})`);
-          }
+          // Navigate to CreateWalletScreen to create a new wallet
+          // Important: Keep passing the original requestId and sessionId from the OTP verification
+          navigation.navigate('CreateWallet', {
+            requestId: requestId,
+            sessionId: sessionId,
+            mobileNo,
+            vehicleNo,
+            chassisNo,
+            engineNo,
+            reqType,
+            // Pass the complete OTP verification response
+            otpResponse: response,
+            // Pass vehicle details from OTP response
+            vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
+            model: response.validateOtpResp?.vrnDetails?.model,
+            vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour,
+            type: response.validateOtpResp?.vrnDetails?.type,
+            rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus,
+            tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID,
+            npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID,
+            vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType,
+            rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount,
+            securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit,
+            tagCost: response.validateOtpResp?.vrnDetails?.tagCost,
+            vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor,
+            isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit,
+            permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate,
+            stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration,
+            commercial: response.validateOtpResp?.vrnDetails?.commercial,
+            npciStatus: response.validateOtpResp?.npciStatus
+          });
+          
+          // Add notification about what happened
+          addNotification({
+            id: Date.now(),
+            message: `Creating new wallet: ${errorDesc}`,
+            time: 'Just now',
+            read: false
+          });
         } else {
           // Other errors
           const errorMsg = response.response.errorDesc || response.response.msg || 'OTP verification failed';
@@ -348,7 +494,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         {/* OTP Input */}
         <View style={styles.otpContainer}>
           {[0, 1, 2, 3, 4, 5].map((index) => (
-      <TextInput
+            <TextInput
               key={index}
               ref={(input) => (otpInputs.current[index] = input)}
               style={styles.otpInput}
@@ -362,14 +508,26 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           ))}
         </View>
         
+        {/* Dev Mode Toggle */}
+        <View style={styles.devModeContainer}>
+          <Text style={styles.devModeText}>Dev Mode</Text>
+          <Switch
+            value={devMode}
+            onValueChange={setDevMode}
+            trackColor={{ false: '#767577', true: '#81b0ff' }}
+            thumbColor={devMode ? '#2196F3' : '#f4f3f4'}
+          />
+        </View>
+        
         {/* Debug Info */}
         <View style={styles.debugSection}>
           <Text style={styles.debugTitle}>Debug Info (will be hidden in production)</Text>
-          <Text style={styles.debugText}>RequestId: {route.params.requestId}</Text>
-          <Text style={styles.debugText}>SessionId: {route.params.sessionId}</Text>
+          <Text style={styles.debugText}>RequestId: {requestId}</Text>
+          <Text style={styles.debugText}>SessionId: {sessionId}</Text>
           <Text style={styles.debugText}>Mobile: {mobileNo}</Text>
           <Text style={styles.debugText}>Vehicle: {vehicleNo || 'N/A'}</Text>
           <Text style={styles.debugText}>Current OTP: {otp.join('')}</Text>
+          <Text style={styles.debugText}>Dev Mode: {devMode ? 'ON' : 'OFF'}</Text>
         </View>
         
         {/* Timer & Resend */}
@@ -382,23 +540,23 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               <Text style={styles.resendText}>Resend OTP</Text>
             </TouchableOpacity>
           ) : (
-            <Text style={styles.timerText}>Resend OTP in {timer}s</Text>
+            <Text style={styles.timerText}>Resend in {timer}s</Text>
           )}
         </View>
         
         {/* Verify Button */}
         <TouchableOpacity 
-          style={[styles.verifyButton, loading && styles.disabledButton]}
+          style={styles.verifyButton}
           onPress={handleVerifyOtp}
-          disabled={loading}
+          disabled={loading || otp.join('').length !== 6}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.verifyButtonText}>Verify OTP</Text>
           )}
         </TouchableOpacity>
-    </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -406,26 +564,27 @@ const ValidateOtpScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#333333',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#2196F3',
   },
   backButton: {
     padding: 8,
   },
   backButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontSize: 24,
   },
   headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   content: {
@@ -433,20 +592,25 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
-    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
     padding: 16,
-    marginBottom: 32,
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   infoTitle: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#333',
   },
   infoText: {
-    color: '#CCCCCC',
     fontSize: 14,
+    color: '#666',
     lineHeight: 20,
   },
   otpContainer: {
@@ -455,60 +619,70 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   otpInput: {
-    width: 46,
-    height: 56,
+    width: 45,
+    height: 50,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#ddd',
     borderRadius: 8,
     textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
-    backgroundColor: '#FFFFFF',
+    fontSize: 18,
+    backgroundColor: '#fff',
   },
   resendContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   resendText: {
-    color: '#333333',
-    fontWeight: 'bold',
-    fontSize: 16,
-    textDecorationLine: 'underline',
+    color: '#2196F3',
+    fontSize: 14,
+    fontWeight: '500',
   },
   timerText: {
-    color: '#777777',
-    fontSize: 16,
+    color: '#999',
+    fontSize: 14,
   },
   verifyButton: {
-    backgroundColor: '#333333',
-    borderRadius: 16,
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#999999',
+    marginTop: 16,
   },
   verifyButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
   debugSection: {
-    backgroundColor: '#333333',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 32,
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 24,
   },
   debugTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 8,
+    color: '#666',
   },
   debugText: {
-    color: '#CCCCCC',
+    fontSize: 10,
+    color: '#666',
+    marginBottom: 4,
+  },
+  devModeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  devModeText: {
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: 'bold',
+    color: '#666',
   },
 });
 

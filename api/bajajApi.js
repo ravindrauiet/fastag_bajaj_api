@@ -680,8 +680,31 @@ const bajajApi = {
   },
 
   // 5. Document Upload
-  uploadDocument: async (requestId, sessionId, imageType, image) => {
+  uploadDocument: async (requestId, sessionId, imageType, image, isDevelopmentMode = false) => {
     try {
+      // If in development mode, simulate a successful upload
+      if (isDevelopmentMode) {
+        console.log('=== DEVELOPMENT MODE: SIMULATING DOCUMENT UPLOAD ===');
+        console.log(`Document Type: ${imageType}`);
+        console.log(`Request ID: ${requestId}`);
+        console.log(`Session ID: ${sessionId}`);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Return a simulated successful response
+        return {
+          response: {
+            status: 'success',
+            errorCode: '0',
+            errorDesc: 'Success',
+            documentId: `DEV_${Date.now()}_${imageType}`,
+            documentType: imageType,
+            uploadDateTime: new Date().toISOString()
+          }
+        };
+      }
+      
       const reqDateTime = getCurrentDateTime();
 
       const requestData = {
@@ -805,6 +828,62 @@ const bajajApi = {
     } catch (error) {
       console.error('FasTag Registration API Error:', error);
       throw new Error(error.response?.data?.message || 'Failed to register FasTag');
+    }
+  },
+
+  // New function that accepts a single object parameter
+  registerFasTag: async (registrationData) => {
+    try {
+      // Ensure the data has the required structure
+      if (!registrationData.regDetails || !registrationData.vrnDetails || 
+          !registrationData.custDetails || !registrationData.fasTagDetails) {
+        throw new Error('Invalid registration data structure');
+      }
+      
+      // Field mapping note:
+      // The OTP response has different field names than what the registration API expects:
+      // OTP Response      →  Registration API
+      // vehicleNo         →  vrn
+      // chassisNo         →  chassis  
+      // engineNo          →  engine
+      
+      // Console log the original request data
+      console.log('=== REGISTER FASTAG REQUEST ===');
+      console.log(JSON.stringify(registrationData, null, 2));
+
+      const encryptedData = encrypt(JSON.stringify(registrationData));
+      
+      // Console log the encrypted request
+      console.log('=== REGISTER FASTAG ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
+
+      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'aggr_channel': CHANNEL,
+          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
+        }
+      });
+
+      // Console log the encrypted response
+      console.log('=== REGISTER FASTAG ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
+      if (response.data) {
+        const decryptedResponse = decrypt(response.data);
+        
+        // Console log the decrypted response
+        console.log('=== REGISTER FASTAG DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        return parsedResponse;
+      }
+      
+      throw new Error('Empty response from server');
+    } catch (error) {
+      console.error('Register FasTag Error:', error);
+      throw error;
     }
   },
 

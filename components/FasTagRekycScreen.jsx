@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import bajajApi from '../api/bajajApi';
+import { API_URL, API_ENDPOINTS } from '../config';
 
 const FasTagRekycScreen = ({ navigation }) => {
   // Animation values
@@ -84,14 +85,13 @@ const FasTagRekycScreen = ({ navigation }) => {
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
-        base64: true,
       });
       
       if (!result.canceled) {
         updateImage(imageType, result.assets[0]);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image from gallery');
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };
   
@@ -102,7 +102,6 @@ const FasTagRekycScreen = ({ navigation }) => {
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
-        base64: true,
       });
       
       if (!result.canceled) {
@@ -195,85 +194,41 @@ const FasTagRekycScreen = ({ navigation }) => {
     setLoading(true);
     
     try {
-      // Upload each image
-      const imageTypes = Object.keys(images);
-      let uploadSuccessCount = 0;
-      
-      for (const imageType of imageTypes) {
-        try {
-          const response = await bajajApi.uploadReKycImage(
-            vrn,
-            mobileNo,
-            serialNo,
-            imageType,
-            images[imageType].base64
-          );
-          
-          if (response && response.response && response.response.status === 'success') {
-            console.log(`Successfully uploaded ${imageType}`);
-            uploadSuccessCount++;
-            
-            setUploadProgress(prev => ({
-              ...prev,
-              [imageType]: 'success'
-            }));
-          } else {
-            console.error(`Failed to upload ${imageType}:`, response);
-            setUploadProgress(prev => ({
-              ...prev,
-              [imageType]: 'failed'
-            }));
-          }
-        } catch (error) {
-          console.error(`Error uploading ${imageType}:`, error);
-          setUploadProgress(prev => ({
-            ...prev,
-            [imageType]: 'failed'
-          }));
-        }
-      }
-      
-      // Check if all uploads were successful
-      if (uploadSuccessCount === imageTypes.length) {
-        // Check status of uploads
-        try {
-          const statusResponse = await bajajApi.checkReKycImageStatus(
-            vrn,
-            mobileNo,
-            serialNo
-          );
-          
-          console.log('Status check response:', statusResponse);
-          
-          // Add a notification
-          addNotification({
-            id: Date.now(),
-            message: 'FasTag Re-KYC images uploaded successfully',
-            time: 'Just now',
-            read: false
+      const formData = new FormData();
+      Object.entries(images).forEach(([key, image]) => {
+        if (image) {
+          formData.append(key, {
+            uri: image.uri,
+            type: 'image/jpeg',
+            name: `${key}.jpg`
           });
-          
-          Alert.alert(
-            'Success',
-            'All images have been uploaded successfully for FasTag Re-KYC!',
-            [{ text: 'OK', onPress: () => navigation.goBack() }]
-          );
-        } catch (statusError) {
-          console.error('Error checking status:', statusError);
-          Alert.alert(
-            'Success with Warning',
-            'Images uploaded but status check failed. Your Re-KYC might still be processing.'
-          );
         }
+      });
+
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.FASTAG_REKYC}`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', 'Re-KYC images uploaded successfully');
+        setImages({
+          TAGAFFIX: null,
+          VEHICLESIDE: null,
+          VEHICLEFRONT: null,
+          RCFRONT: null,
+          RCBACK: null
+        });
       } else {
-        Alert.alert(
-          'Partial Upload',
-          `Uploaded ${uploadSuccessCount} out of ${imageTypes.length} images. Please try again for the failed ones.`
-        );
+        throw new Error(data.message || 'Failed to upload images');
       }
     } catch (error) {
-      console.error('Error during submission:', error);
-      Alert.alert('Submission Error', `An error occurred during submission: ${error.message}`);
+      Alert.alert('Error', error.message || 'Failed to upload images. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -452,7 +407,7 @@ const FasTagRekycScreen = ({ navigation }) => {
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Upload All Images</Text>
+              <Text style={styles.submitButtonText}>Submit Re-KYC</Text>
             )}
           </TouchableOpacity>
         </Animated.View>
