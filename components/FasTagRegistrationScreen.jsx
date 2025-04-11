@@ -229,6 +229,23 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
     setLoading(true);
     
     try {
+      // First check if user has downloaded Bajaj app and visited FasTag section
+      const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
+      
+      if (appStatusResponse && appStatusResponse.response && appStatusResponse.response.status === 'success') {
+        if (!appStatusResponse.appInstalled) {
+          Alert.alert(
+            'Bajaj App Required',
+            'Please install the Bajaj Finserv App and visit the FasTag section before continuing with registration.',
+            [{ text: 'OK' }]
+          );
+          setLoading(false);
+          return;
+        }
+      } else {
+        console.log('App status check failed, continuing with registration...');
+      }
+      
       // Create the registration data object to match exact API documentation order
       const finalRegistrationData = {
         regDetails: {
@@ -537,10 +554,15 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           
           {/* Submit Button */}
           <TouchableOpacity 
-            style={styles.submitButton}
+            style={[styles.submitButton, loading && styles.disabledButton]}
             onPress={handleSubmit}
+            disabled={loading}
           >
-            <Text style={styles.submitButtonText}>Register FasTag</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Register FasTag</Text>
+            )}
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -648,6 +670,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 24,
+  },
+  disabledButton: {
+    backgroundColor: '#a0a0a0',
   },
   submitButtonText: {
     color: '#FFFFFF',

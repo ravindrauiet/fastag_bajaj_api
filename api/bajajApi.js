@@ -1316,6 +1316,68 @@ const bajajApi = {
       console.error('Check Status KYV Images API Error:', error);
       throw new Error(error.response?.data?.message || 'Failed to check status of KYV images');
     }
+  },
+
+  // Check if user has installed Bajaj Finserv App and visited FasTag section
+  checkBajajAppStatus: async (mobileNo) => {
+    try {
+      const requestId = generateRequestId();
+      const reqDateTime = getCurrentDateTime();
+
+      // Data to be encrypted according to documentation section 3.13
+      const requestData = {
+        mobNo: mobileNo,
+        aggrChannel: CHANNEL,
+        agentId: AGENT_ID,
+        udf1: "",
+        udf2: "",
+        udf3: "",
+        udf4: "",
+        udf5: ""
+      };
+
+      // Console log the original request data
+      console.log('=== CHECK BAJAJ APP STATUS REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+
+      const encryptedData = encrypt(JSON.stringify(requestData));
+
+      // Console log the encrypted request
+      console.log('=== CHECK BAJAJ APP STATUS ENCRYPTED REQUEST ===');
+      console.log(encryptedData);
+
+      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/initDataCheck`, encryptedData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'aggr_channel': CHANNEL,
+          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+        }
+      });
+
+      // Console log the encrypted response
+      console.log('=== CHECK BAJAJ APP STATUS ENCRYPTED RESPONSE ===');
+      console.log(response.data);
+
+      if (response.data) {
+        const decryptedResponse = decrypt(response.data);
+        
+        // Console log the decrypted response
+        console.log('=== CHECK BAJAJ APP STATUS DECRYPTED RESPONSE ===');
+        console.log(decryptedResponse);
+        
+        const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== CHECK BAJAJ APP STATUS PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('=== CHECK BAJAJ APP STATUS API ERROR ===');
+      console.error(error);
+      throw new Error(error.response?.data?.message || 'Failed to check Bajaj app status');
+    }
   }
 };
 

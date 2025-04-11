@@ -131,7 +131,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
   };
   
   // Handle form submission
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate inputs
     if (!serialNo.trim()) {
       setErrors(prev => ({ ...prev, serialNo: 'Serial Number is required' }));
@@ -145,98 +145,130 @@ const ManualActivationScreen = ({ route, navigation }) => {
     // Clear any existing errors
     setErrors({});
     
-    // Create the registration data object to match exact API documentation order
-    const registrationData = {
-      regDetails: {
-        requestId: requestId || generateRequestId(),
-        sessionId: sessionId || requestId || generateRequestId(),
-        channel: channel,
-        agentId: agentId,
-        reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
-      },
-      vrnDetails: {
-        vrn: vehicleNo || "",
-        chassis: chassisNo || "",
-        engine: engineNo || "",
-        vehicleManuf: vehicleManuf || "",
-        model: model || "",
-        vehicleColour: vehicleColour || "",
-        type: type || "",
-        status:  rtoStatus || "ACTIVE",
-        npciStatus: "ACTIVE",
-        isCommercial: commercial === true ? true : false,
-        tagVehicleClassID: tagVehicleClassID || "4",
-        npciVehicleClassID: npciVehicleClassID || "4",
-        vehicleType: vehicleType || "",
-        rechargeAmount: rechargeAmount || "0.00",
-        securityDeposit: securityDeposit || "100.00",
-        tagCost: tagCost || "100.00",
-        debitAmt: debitAmt || "300.00",
-        vehicleDescriptor: vehicleDescriptor || "DIESEL",
-        isNationalPermit: isNationalPermit || "1",
-        permitExpiryDate: permitExpiryDate || "31/12/2025",
-        stateOfRegistration: stateOfRegistration || "MH"
-      },
-      custDetails: {
-        name: name || "",
-        mobileNo: mobileNo || "",
-        walletId: walletId || ""
-      },
-      fasTagDetails: {
-        serialNo: serialNo,
-        tid: tid,
-        udf1: udf1 || "",
-        udf2: udf2 || "",
-        udf3: udf3 || "",
-        udf4: udf4 || "",
-        udf5: udf5 || ""
-      }
-    };
+    setLoading(true);
     
-    // Log the registration data for debugging
-    console.log('FasTag Registration Request:', JSON.stringify(registrationData, null, 2));
-    
-    // Navigate to FasTag registration with the data
-    navigation.navigate('FasTagRegistration', {
-      registrationData,
-      documentDetails,
-      // Also pass the raw data in case it's needed
-      rawData: {
-        requestId,
-        sessionId,
-        mobileNo,
-        vehicleNo,
-        chassisNo,
-        engineNo,
-        customerId,
-        walletId,
-        name,
-        vehicleManuf,
-        model,
-        vehicleColour,
-        type,
-        rtoStatus,
-        tagVehicleClassID,
-        npciVehicleClassID,
-        vehicleType,
-        rechargeAmount,
-        securityDeposit,
-        tagCost,
-        vehicleDescriptor,
-        isNationalPermit,
-        permitExpiryDate,
-        stateOfRegistration,
-        commercial,
-        npciStatus,
-        serialNo,
-        tid,
-        udf1,
-        udf2,
-        udf3,
-        udf4,
-        udf5
+    try {
+      // First check if user has downloaded Bajaj app and visited FasTag section
+      const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
+      
+      if (appStatusResponse && appStatusResponse.response && appStatusResponse.response.status === 'success') {
+        if (!appStatusResponse.appInstalled) {
+          Alert.alert(
+            'Bajaj App Required',
+            'Please install the Bajaj Finserv App and visit the FasTag section before continuing with registration.',
+            [{ text: 'OK' }]
+          );
+          setLoading(false);
+          return;
+        }
+      } else {
+        console.log('App status check failed, continuing with registration...');
       }
-    });
+    
+      // Create the registration data object to match exact API documentation order
+      const registrationData = {
+        regDetails: {
+          requestId: requestId || generateRequestId(),
+          sessionId: sessionId || requestId || generateRequestId(),
+          channel: channel,
+          agentId: agentId,
+          reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
+        },
+        vrnDetails: {
+          vrn: vehicleNo || "",
+          chassis: chassisNo || "",
+          engine: engineNo || "",
+          vehicleManuf: vehicleManuf || "",
+          model: model || "",
+          vehicleColour: vehicleColour || "",
+          type: type || "",
+          status:  rtoStatus || "ACTIVE",
+          npciStatus: "ACTIVE",
+          isCommercial: commercial === true ? true : false,
+          tagVehicleClassID: tagVehicleClassID || "4",
+          npciVehicleClassID: npciVehicleClassID || "4",
+          vehicleType: vehicleType || "",
+          rechargeAmount: rechargeAmount || "0.00",
+          securityDeposit: securityDeposit || "100.00",
+          tagCost: tagCost || "100.00",
+          debitAmt: debitAmt || "300.00",
+          vehicleDescriptor: vehicleDescriptor || "DIESEL",
+          isNationalPermit: isNationalPermit || "1",
+          permitExpiryDate: permitExpiryDate || "31/12/2025",
+          stateOfRegistration: stateOfRegistration || "MH"
+        },
+        custDetails: {
+          name: name || "",
+          mobileNo: mobileNo || "",
+          walletId: walletId || ""
+        },
+        fasTagDetails: {
+          serialNo: serialNo,
+          tid: tid,
+          udf1: udf1 || "",
+          udf2: udf2 || "",
+          udf3: udf3 || "",
+          udf4: udf4 || "",
+          udf5: udf5 || ""
+        }
+      };
+      
+      // Log the registration data for debugging
+      console.log('FasTag Registration Request:', JSON.stringify(registrationData, null, 2));
+      
+      // Navigate to FasTag registration with the data
+      navigation.navigate('FasTagRegistration', {
+        registrationData,
+        documentDetails,
+        // Also pass the raw data in case it's needed
+        rawData: {
+          requestId,
+          sessionId,
+          channel,
+          agentId,
+          mobileNo,
+          vehicleNo,
+          chassisNo,
+          engineNo,
+          customerId,
+          walletId,
+          name,
+          vehicleManuf,
+          model,
+          vehicleColour,
+          type,
+          rtoStatus,
+          tagVehicleClassID,
+          npciVehicleClassID,
+          vehicleType,
+          rechargeAmount,
+          securityDeposit,
+          tagCost,
+          vehicleDescriptor,
+          isNationalPermit,
+          permitExpiryDate,
+          stateOfRegistration,
+          commercial,
+          npciStatus,
+          serialNo,
+          tid,
+          udf1,
+          udf2,
+          udf3,
+          udf4,
+          udf5
+        }
+      });
+    } catch (error) {
+      console.error('Error checking Bajaj app status:', error);
+      Alert.alert(
+        'Error',
+        'Failed to verify Bajaj app installation status. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
