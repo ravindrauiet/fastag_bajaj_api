@@ -329,6 +329,10 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         commercial: vrnDetails.commercial === false ? false : true,
         npciStatus: otpResponse.validateOtpResp?.npciStatus || 'ACTIVE',
         
+        // Pass channel and agentId from OTP response
+        channel: otpResponse.validateOtpResp?.channel || route.params.channel || 'CBPL',
+        agentId: otpResponse.validateOtpResp?.agentId || route.params.agentId || '70003',
+        
         // UDF fields from OTP response
         udf1: otpResponse.validateOtpResp?.udf1 || '',
         udf2: otpResponse.validateOtpResp?.udf2 || '',

@@ -199,7 +199,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
             npciStatus: "ACTIVE",
             custDetails: {
               name: null,
-              walletStatus: "Active", // NE = New Entity (wallet doesn't exist)
+              walletStatus: "NE", // NE = New Entity (wallet doesn't exist)
               kycStatus: "",
               walletId: null,
               mobileNo: 7840001360,
@@ -348,6 +348,10 @@ const ValidateOtpScreen = ({ navigation, route }) => {
                 stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
                 commercial: response.validateOtpResp?.vrnDetails?.commercial === false ? false : true,
                 npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
+                
+                // Pass channel and agentId from OTP response
+                channel: response.validateOtpResp?.channel || 'CBPL',
+                agentId: response.validateOtpResp?.agentId || '70003',
                 
                 // Also pass all UDF fields
                 udf1: response.validateOtpResp?.udf1 || '',

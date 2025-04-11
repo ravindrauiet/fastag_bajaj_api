@@ -769,20 +769,14 @@ const bajajApi = {
   },
 
   // 6. FasTag Registration
-  registerFastag: async (vrnDetails, custDetails, fasTagDetails) => {
+  registerFastag: async (regDetails, vrnDetails, custDetails, fasTagDetails) => {
     try {
       const requestId = generateRequestId();
       const sessionId = requestId;
       const reqDateTime = getCurrentDateTime();
 
       const requestData = {
-        regDetails: {
-          requestId,
-          sessionId,
-          channel: CHANNEL,
-          agentId: AGENT_ID,
-          reqDateTime
-        },
+        regDetails,
         vrnDetails,
         custDetails,
         fasTagDetails
@@ -848,13 +842,13 @@ const bajajApi = {
       // engineNo          →  engine
       
       // Console log the original request data
-      console.log('=== REGISTER FASTAG REQUEST ===');
+      console.log('=== REGISTER NEW FASTAG REQUEST ===');
       console.log(JSON.stringify(registrationData, null, 2));
 
       const encryptedData = encrypt(JSON.stringify(registrationData));
       
       // Console log the encrypted request
-      console.log('=== REGISTER FASTAG ENCRYPTED REQUEST ===');
+      console.log('=== REGISTER NEW FASTAG ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
@@ -866,14 +860,14 @@ const bajajApi = {
       });
 
       // Console log the encrypted response
-      console.log('=== REGISTER FASTAG ENCRYPTED RESPONSE ===');
+      console.log('=== REGISTER NEW FASTAG ENCRYPTED RESPONSE ===');
       console.log(response.data);
 
       if (response.data) {
         const decryptedResponse = decrypt(response.data);
         
         // Console log the decrypted response
-        console.log('=== REGISTER FASTAG DECRYPTED RESPONSE ===');
+        console.log('=== REGISTER NEW FASTAG DECRYPTED RESPONSE ===');
         console.log(decryptedResponse);
         
         const parsedResponse = JSON.parse(decryptedResponse);

@@ -75,6 +75,8 @@ const ManualActivationScreen = ({ route, navigation }) => {
     commercial,
     npciStatus,
     documentDetails,
+    channel,
+    agentId,
     
     // Optional fields
     udf1 = "",
@@ -119,7 +121,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
     if (!tid.trim()) {
       newErrors.tid = 'TID is required';
       isValid = false;
-    } else if (tid.length < 10) {
+    } else if (tid.length < 7) {
       newErrors.tid = 'TID must be at least 10 characters';
       isValid = false;
     }
@@ -143,19 +145,14 @@ const ManualActivationScreen = ({ route, navigation }) => {
     // Clear any existing errors
     setErrors({});
     
-    // Create the registration data object in the correct order
+    // Create the registration data object to match exact API documentation order
     const registrationData = {
       regDetails: {
         requestId: requestId || generateRequestId(),
         sessionId: sessionId || requestId || generateRequestId(),
-        channel: "APP",
-        agentId: "",
+        channel: channel,
+        agentId: agentId,
         reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
-      },
-      custDetails: {
-        name: name || "",
-        mobileNo: mobileNo || "",
-        walletId: walletId || ""
       },
       vrnDetails: {
         vrn: vehicleNo || "",
@@ -165,21 +162,25 @@ const ManualActivationScreen = ({ route, navigation }) => {
         model: model || "",
         vehicleColour: vehicleColour || "",
         type: type || "",
-        rtoStatus: rtoStatus || "ACTIVE",
+        status:  rtoStatus || "ACTIVE",
+        npciStatus: "ACTIVE",
+        isCommercial: commercial === true ? true : false,
         tagVehicleClassID: tagVehicleClassID || "4",
         npciVehicleClassID: npciVehicleClassID || "4",
         vehicleType: vehicleType || "",
         rechargeAmount: rechargeAmount || "0.00",
         securityDeposit: securityDeposit || "100.00",
         tagCost: tagCost || "100.00",
+        debitAmt: debitAmt || "300.00",
         vehicleDescriptor: vehicleDescriptor || "DIESEL",
         isNationalPermit: isNationalPermit || "1",
         permitExpiryDate: permitExpiryDate || "31/12/2025",
-        stateOfRegistration: stateOfRegistration || "MH",
-        isCommercial: commercial === false ? false : true,
-        status: "ACTIVE",
-        debitAmt: debitAmt || "300.00",
-        npciStatus: npciStatus || "ACTIVE"
+        stateOfRegistration: stateOfRegistration || "MH"
+      },
+      custDetails: {
+        name: name || "",
+        mobileNo: mobileNo || "",
+        walletId: walletId || ""
       },
       fasTagDetails: {
         serialNo: serialNo,
