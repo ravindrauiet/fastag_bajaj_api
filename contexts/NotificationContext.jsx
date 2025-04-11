@@ -47,6 +47,11 @@ export const NotificationProvider = ({ children }) => {
     );
   };
   
+  // Alias for removeNotification (for compatibility)
+  const clearNotification = (id) => {
+    removeNotification(id);
+  };
+  
   // Get the count of unread notifications
   const getUnreadCount = () => {
     return notifications.filter(notification => !notification.read).length;
@@ -76,6 +81,7 @@ export const NotificationProvider = ({ children }) => {
         markAsRead,
         markAllAsRead,
         removeNotification,
+        clearNotification,
         getUnreadCount,
         addScreenCompletionNotification
       }}

@@ -17,7 +17,7 @@ const HomeScreen = ({ navigation }) => {
   }, [navigation]);
   
   // Add navigation enhancers to track screen completion
-  const navigateWithNotification = (screenName, params) => {
+  const navigateWithNotification = (screenName, params = {}) => {
     // Navigate to the screen
     navigation.navigate(screenName, params);
     
@@ -25,6 +25,11 @@ const HomeScreen = ({ navigation }) => {
     setTimeout(() => {
       addScreenCompletionNotification(screenName);
     }, 300);
+  };
+
+  // Function to navigate to ValidateCustomer explicitly without data
+  const navigateToValidateCustomer = () => {
+    navigation.navigate('ValidateCustomer');
   };
 
   // Start FasTag registration flow

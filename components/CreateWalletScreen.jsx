@@ -276,18 +276,12 @@ const CreateWalletScreen = ({ navigation, route }) => {
         // According to the documentation, after successful wallet creation, 
         // we need to upload all required documents before FasTag registration
         if (vehicleNo && engineNo) {
-          // Navigate to Document Upload Screen, passing all necessary parameters
-          navigation.navigate('DocumentUploadScreen', {
-            requestId: requestId,
-            sessionId: sessionId,
+          // Navigate to ValidateCustomer screen instead of Document Upload
+          navigation.navigate('ValidateCustomer', {
             mobileNo: mobileNo,
             vehicleNo: vehicleNo,
             chassisNo: chassisNo,
-            engineNo: engineNo,
-            customerId: response.custDetails?.customerId || '',
-            walletId: walletId,
-            name: name,
-            lastName: lastName
+            engineNo: engineNo
           });
         } else {
           // If no vehicle details, go to home screen

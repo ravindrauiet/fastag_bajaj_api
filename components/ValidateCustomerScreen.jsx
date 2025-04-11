@@ -14,13 +14,22 @@ import {
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
 
-const ValidateCustomerScreen = ({ navigation }) => {
+const ValidateCustomerScreen = ({ navigation, route }) => {
+  // Get params from route if available
+  const {
+    mobileNo: initialMobileNo = '',
+    vehicleNo: initialVehicleNo = '',
+    chassisNo: initialChassisNo = '',
+    engineNo: initialEngineNo = '',
+    reqType: initialReqType = 'REG'
+  } = route?.params || {};
+
   // Form state
-  const [mobileNo, setMobileNo] = useState('');
-  const [vehicleNo, setVehicleNo] = useState('');
-  const [chassisNo, setChassisNo] = useState('');
-  const [engineNo, setEngineNo] = useState('');
-  const [reqType, setReqType] = useState('REG'); // Default to Registration
+  const [mobileNo, setMobileNo] = useState(initialMobileNo);
+  const [vehicleNo, setVehicleNo] = useState(initialVehicleNo);
+  const [chassisNo, setChassisNo] = useState(initialChassisNo);
+  const [engineNo, setEngineNo] = useState(initialEngineNo);
+  const [reqType, setReqType] = useState(initialReqType); // Default to Registration
   
   // UI state
   const [loading, setLoading] = useState(false);
