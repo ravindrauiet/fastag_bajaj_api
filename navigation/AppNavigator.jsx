@@ -2,8 +2,9 @@ import React, { useState, useContext, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, ActivityIndicator, Alert } from 'react-native';
 import { NotificationContext, NotificationProvider } from '../contexts/NotificationContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 // Import all screens
 import HomeScreen from '../components/HomeScreen';
@@ -27,10 +28,28 @@ import VehicleKYCScreen from '../components/VehicleKYCScreen';
 import VrnUpdateScreen from '../components/VrnUpdateScreen';
 import FasTagRekycScreen from '../components/FasTagRekycScreen';
 import VrnUpdateDocScreen from '../components/VrnUpdateDocScreen';
+import ProfileScreen from '../components/ProfileScreen';
+
+// Import Authentication Screens
+import LoginScreen from '../components/LoginScreen';
+import SignUpScreen from '../components/SignUpScreen';
+import ForgotPasswordScreen from '../components/ForgotPasswordScreen';
 
 // Create stack navigator for the main app flow
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
+const AuthStack = createStackNavigator();
+
+// Authentication Stack Navigator
+const AuthNavigator = () => {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+    </AuthStack.Navigator>
+  );
+};
 
 // Home Stack
 const HomeStack = () => {
@@ -102,21 +121,13 @@ const InventoryStack = () => {
   );
 };
 
-// Custom 4-dot menu icon component
+// Custom hamburger menu icon component
 const FourDotMenuIcon = ({ onPress }) => (
-  <TouchableOpacity onPress={onPress} style={{ padding: 8 }}>
-    <View style={{
-      width: 24,
-      height: 24,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      alignContent: 'space-between',
-    }}>
-      <View style={dotStyle} />
-      <View style={dotStyle} />
-      <View style={dotStyle} />
-      <View style={dotStyle} />
+  <TouchableOpacity onPress={onPress} style={styles.hamburgerButton}>
+    <View style={styles.hamburgerContainer}>
+      <View style={styles.hamburgerLine} />
+      <View style={styles.hamburgerLine} />
+      <View style={styles.hamburgerLine} />
     </View>
   </TouchableOpacity>
 );
@@ -215,176 +226,222 @@ const NotificationBell = () => {
 
 // Custom logo component
 const LogoTitle = () => (
-  <Image
-    style={{ height: 40, width: 160 }}
-    source={{ uri: 'https://via.placeholder.com/200x50' }} // Replace with actual logo
-    resizeMode="contain"
-  />
+  <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+    <Image
+      style={{ height: 50, width: 180 }}
+      source={require('../assets/tm_square_logo.jpeg')}
+      resizeMode="contain"
+    />
+  </View>
 );
 
 // Custom drawer content component
 const CustomDrawerContent = (props) => {
+  const { logout } = useAuth();
+  
+  const renderMenuItem = (label, iconName, screenName, isMain = false) => {
+    const isActive = props.state.routes[props.state.index].name === screenName;
+    
+    return (
+      <TouchableOpacity
+        style={[
+          styles.drawerMenuItem,
+          isActive && styles.activeDrawerMenuItem
+        ]}
+        onPress={() => props.navigation.navigate(screenName)}
+      >
+        <View style={styles.menuIconContainer}>
+          <Text style={[styles.menuIcon, isActive && styles.activeMenuIcon]}>
+            {iconName}
+          </Text>
+        </View>
+        <Text style={[
+          styles.drawerMenuItemText,
+          isActive && styles.activeDrawerMenuItemText,
+          isMain && styles.mainMenuItemText
+        ]}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          onPress: async () => {
+            await logout();
+          },
+          style: 'destructive'
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.drawerContainer}>
+      {/* User Profile Section */}
       <View style={styles.drawerHeader}>
-        <Text style={styles.drawerTitle}>TMsquare</Text>
-        <Text style={styles.drawerSubtitle}>GLOBAL Solutions</Text>
+        <View style={styles.userAvatarContainer}>
+          <View style={styles.userAvatar}>
+            <Text style={styles.userAvatarText}>IC</Text>
+          </View>
+        </View>
+        <Text style={styles.userName}>Ishita Chitkara</Text>
+        <Text style={styles.userEmail}>ishita.chitkara@example.com</Text>
       </View>
-      <View style={styles.drawerItems}>
-        <Text 
-          style={[styles.drawerItem, props.state.index === 0 ? styles.activeDrawerItem : null]}
-          onPress={() => props.navigation.navigate('Home')}
-        >
-          Home
-        </Text>
-        <Text 
-          style={[styles.drawerItem, props.state.index === 1 ? styles.activeDrawerItem : null]}
-          onPress={() => props.navigation.navigate('NETC')}
-        >
-          NETC Fastag
-        </Text>
-        <Text 
-          style={[styles.drawerItem, props.state.index === 2 ? styles.activeDrawerItem : null]}
-          onPress={() => props.navigation.navigate('Inventory')}
-        >
-          Fastag Inventory
-        </Text>
+
+      {/* Menu Items */}
+      <ScrollView style={styles.drawerMenuContainer}>
+        <View style={styles.drawerSection}>
+          <Text style={styles.drawerSectionTitle}>MAIN</Text>
+          {renderMenuItem('Home', '🏠', 'Home', true)}
+          {renderMenuItem('NETC Fastag', '🔄', 'NETC', true)}
+          {renderMenuItem('Fastag Inventory', '📦', 'Inventory', true)}
+        </View>
         
-        <Text style={styles.drawerSectionTitle}>Services</Text>
+        <View style={styles.drawerDivider} />
         
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('BarcodeScanner')}
+        <View style={styles.drawerSection}>
+          <Text style={styles.drawerSectionTitle}>SERVICES</Text>
+          {renderMenuItem('Barcode Scanner', '📷', 'BarcodeScanner')}
+          {renderMenuItem('Manual Activation', '🔧', 'ManualActivation')}
+          {renderMenuItem('Create Wallet', '💳', 'CreateWallet')}
+          {renderMenuItem('Document Upload', '📄', 'DocumentUpload')}
+          {renderMenuItem('FasTag Registration', '📝', 'FasTagRegistration')}
+          {renderMenuItem('FasTag Replacement', '🔄', 'FasTagReplacement')}
+          {renderMenuItem('VRN Update', '🚗', 'VrnUpdate')}
+          {renderMenuItem('FasTag Re-KYC', '🔐', 'FasTagRekyc')}
+          {renderMenuItem('OTP Verification', '📱', 'ValidateOtp')}
+          {renderMenuItem('Validate Customer', '👤', 'ValidateCustomer')}
+          {renderMenuItem('Vehicle KYC Screen', '🚘', 'VehicleKYCScreen')}
+        </View>
+        
+        <View style={styles.drawerDivider} />
+        
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
         >
-          Barcode Scanner
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('ManualActivation')}
-        >
-          Manual Activation
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('CreateWallet')}
-        >
-          Create Wallet
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('DocumentUpload')}
-        >
-          Document Upload
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('FasTagRegistration')}
-        >
-          FasTag Registration
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('FasTagReplacement')}
-        >
-          FasTag Replacement
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('VrnUpdate')}
-        >
-          VRN Update
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('FasTagRekyc')}
-        >
-          FasTag Re-KYC
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('ValidateOtp')}
-        >
-          OTP Verification
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('ValidateCustomer')}
-        >
-          Validate Customer
-        </Text>
-        <Text 
-          style={styles.drawerItem}
-          onPress={() => props.navigation.navigate('VehicleKYCScreen')}
-        >
-          Vehicle KYC Screen 
-        </Text>
-      </View>
+          <Text style={styles.logoutButtonIcon}>🚪</Text>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>App Version 1.0.0</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
-// Main drawer navigator
-const AppNavigator = () => {
+// Main Application Stack
+const AppStack = () => {
   return (
-    <NotificationProvider>
-      <NavigationContainer>
-        <Drawer.Navigator
-          drawerContent={(props) => <CustomDrawerContent {...props} />}
-          initialRouteName="Home"
-          screenOptions={({ navigation }) => ({
-            headerShown: true,
-            drawerStyle: {
-              width: '70%',
-            },
-            // Apply custom header to all screens by default
-            headerTitle: props => <LogoTitle {...props} />,
-            headerLeft: () => <FourDotMenuIcon onPress={() => navigation.openDrawer()} />,
-            headerRight: () => <NotificationBell />,
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-              elevation: 0,
-              shadowOpacity: 0,
-              borderBottomWidth: 1,
-              borderBottomColor: '#F0F0F0',
-            },
-            headerTintColor: '#333333',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          })}
-        >
-          <Drawer.Screen 
-            name="Home" 
-            component={HomeStack} 
-          />
-          <Drawer.Screen 
-            name="NETC" 
-            component={NETCStack} 
-          />
-          <Drawer.Screen 
-            name="Inventory" 
-            component={InventoryStack} 
-          />
-          <Drawer.Screen 
-            name="VrnUpdate" 
-            component={VrnUpdateScreen} 
-            options={{
-              title: 'VRN Update',
-              headerTitle: 'VRN Update'
-            }}
-          />
-          <Drawer.Screen 
-            name="FasTagRekyc" 
-            component={FasTagRekycScreen} 
-            options={{
-              title: 'FasTag Re-KYC',
-              headerTitle: 'FasTag Re-KYC'
-            }}
-          />
-        </Drawer.Navigator>
-      </NavigationContainer>
-    </NotificationProvider>
+    <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      initialRouteName="Home"
+      screenOptions={({ navigation }) => ({
+        headerShown: true,
+        drawerStyle: {
+          width: '80%',
+          backgroundColor: '#FFFFFF',
+          borderTopRightRadius: 20,
+          borderBottomRightRadius: 20,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 2,
+            height: 0,
+          },
+          shadowOpacity: 0.3,
+          shadowRadius: 5,
+          elevation: 16,
+          paddingVertical: 10,
+        },
+        // Apply custom header to all screens by default
+        headerTitle: props => <LogoTitle {...props} />,
+        headerLeft: () => <FourDotMenuIcon onPress={() => navigation.openDrawer()} />,
+        headerRight: () => <NotificationBell />,
+        headerStyle: {
+          backgroundColor: '#FFFFFF',
+          elevation: 2,
+          shadowOpacity: 0.1,
+          shadowOffset: { width: 0, height: 2 },
+          shadowRadius: 2,
+          borderBottomWidth: 0,
+        },
+        headerTintColor: '#333333',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          textAlign: 'center',
+          alignSelf: 'center',
+          flex: 1,
+        },
+        headerTitleAlign: 'center',
+      })}
+    >
+      <Drawer.Screen 
+        name="Home" 
+        component={HomeStack} 
+      />
+      <Drawer.Screen 
+        name="NETC" 
+        component={NETCStack} 
+      />
+      <Drawer.Screen 
+        name="Inventory" 
+        component={InventoryStack} 
+      />
+      <Drawer.Screen 
+        name="VrnUpdate" 
+        component={VrnUpdateScreen} 
+        options={{
+          title: 'VRN Update',
+          headerTitle: 'VRN Update'
+        }}
+      />
+      <Drawer.Screen 
+        name="FasTagRekyc" 
+        component={FasTagRekycScreen} 
+        options={{
+          title: 'FasTag Re-KYC',
+          headerTitle: 'FasTag Re-KYC'
+        }}
+      />
+      
+      <Drawer.Screen 
+        name="ProfileScreen" 
+        component={ProfileScreen} 
+        options={{
+          title: 'Profile',
+          headerTitle: 'Profile'
+        }}
+      />
+    </Drawer.Navigator>
   );
+};
+
+// Main Navigator that handles authentication state
+const MainNavigator = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    // Show a loading screen while checking authentication state
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#333333" />
+        <Text style={{ marginTop: 20, fontSize: 16, color: '#333333' }}>Loading...</Text>
+      </View>
+    );
+  }
+  
+  // Render either the main app or authentication flow based on auth state
+  return isAuthenticated ? <AppStack /> : <AuthNavigator />;
 };
 
 const styles = StyleSheet.create({
@@ -393,10 +450,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   drawerHeader: {
-    height: 150,
+    height: 180,
     backgroundColor: '#333333',
-    justifyContent: 'flex-end',
-    padding: 16,
+    justifyContent: 'center',
+    padding: 20,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   drawerTitle: {
     color: '#fff',
@@ -412,11 +471,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   drawerSectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#777',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 25,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
   drawerItem: {
     fontSize: 16,
@@ -532,13 +594,152 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#999',
   },
+  drawerHeader: {
+    height: 180,
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    padding: 20,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+  userAvatarContainer: {
+    marginBottom: 15,
+  },
+  userAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  userAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 10,
+  },
+  userEmail: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  drawerMenuContainer: {
+    flex: 1,
+    paddingTop: 5,
+  },
+  drawerSection: {
+    paddingHorizontal: 5,
+  },
+  drawerDivider: {
+    height: 1,
+    backgroundColor: '#EEEEEE',
+    marginVertical: 15,
+    marginHorizontal: 10,
+  },
+  drawerMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginVertical: 2,
+    borderRadius: 10,
+  },
+  activeDrawerMenuItem: {
+    backgroundColor: '#f5f5f5',
+  },
+  drawerMenuItemText: {
+    fontSize: 15,
+    marginLeft: 12,
+    color: '#444',
+  },
+  activeDrawerMenuItemText: {
+    fontWeight: '600',
+    color: '#333',
+  },
+  mainMenuItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  menuIconContainer: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  menuIcon: {
+    fontSize: 18,
+  },
+  activeMenuIcon: {
+    color: '#333',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 15,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFF5F5',
+  },
+  logoutButtonIcon: {
+    fontSize: 18,
+    marginRight: 10,
+    color: '#FF3B30',
+  },
+  logoutButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FF3B30',
+  },
+  versionContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#999',
+  },
+  hamburgerButton: {
+    padding: 12,
+  },
+  hamburgerContainer: {
+    width: 22,
+    height: 16,
+    justifyContent: 'space-between',
+  },
+  hamburgerLine: {
+    width: '100%',
+    height: 2,
+    backgroundColor: '#333',
+    borderRadius: 1,
+  },
 });
 
-const dotStyle = {
-  width: 10,
-  height: 10,
-  backgroundColor: '#2D3A4A',
-  borderRadius: 2,
+// Main App Navigator
+const AppNavigator = () => {
+  return (
+    <AuthProvider>
+      <NotificationProvider>
+        <NavigationContainer>
+          <MainNavigator />
+        </NavigationContainer>
+      </NotificationProvider>
+    </AuthProvider>
+  );
 };
 
 export default AppNavigator;

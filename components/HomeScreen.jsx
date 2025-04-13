@@ -131,38 +131,86 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Services Section */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Service</Text>
-          <View style={styles.servicesGrid}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Services</Text>
+            <TouchableOpacity
+              onPress={() => navigateWithNotification('ServicesScreen')}
+            >
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            horizontal={true} 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.servicesRow}
+          >
             <TouchableOpacity 
               style={styles.serviceCard}
               onPress={() => navigateWithNotification('NETCFastagScreen')}
             >
-              <View style={styles.serviceCardIconContainer}>
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E3F2FD'}]}>
                 <Text style={styles.serviceCardIcon}>📋</Text>
               </View>
               <Text style={styles.serviceCardText}>NETC FasTag</Text>
+              <Text style={styles.serviceCardDescription}>Manage your NETC account</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.serviceCard}
               onPress={() => navigateWithNotification('VrnUpdateScreen')}
             >
-              <View style={styles.serviceCardIconContainer}>
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#FFF8E1'}]}>
                 <Text style={styles.serviceCardIcon}>🚗</Text>
               </View>
               <Text style={styles.serviceCardText}>VRN Update</Text>
+              <Text style={styles.serviceCardDescription}>Update vehicle registration</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.serviceCard}
               onPress={() => navigateWithNotification('FasTagRekycScreen')}
             >
-              <View style={styles.serviceCardIconContainer}>
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E8F5E9'}]}>
                 <Text style={styles.serviceCardIcon}>📷</Text>
               </View>
               <Text style={styles.serviceCardText}>Re-KYC</Text>
+              <Text style={styles.serviceCardDescription}>Update your KYC documents</Text>
             </TouchableOpacity>
-          </View>
+
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => navigateWithNotification('BarcodeScanner')}
+            >
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#F3E5F5'}]}>
+                <Text style={styles.serviceCardIcon}>📱</Text>
+              </View>
+              <Text style={styles.serviceCardText}>Scanner</Text>
+              <Text style={styles.serviceCardDescription}>Scan FasTag barcodes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => navigateWithNotification('ManualActivation')}
+            >
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#FFEBEE'}]}>
+                <Text style={styles.serviceCardIcon}>🔄</Text>
+              </View>
+              <Text style={styles.serviceCardText}>Activation</Text>
+              <Text style={styles.serviceCardDescription}>Manually activate your tag</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => navigateWithNotification('DocumentUpload')}
+            >
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E0F7FA'}]}>
+                <Text style={styles.serviceCardIcon}>📄</Text>
+              </View>
+              <Text style={styles.serviceCardText}>Documents</Text>
+              <Text style={styles.serviceCardDescription}>Upload required documents</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
         
         {/* Space for bottom navigation */}
@@ -180,22 +228,47 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>💳</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>📊</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, { opacity: 0 }]}>
-          <Text></Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>👛</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>👤</Text>
-        </TouchableOpacity>
+      <View style={styles.bottomNavContainer}>
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navItem}>
+            <View style={[styles.navIconContainer, styles.activeNavIcon]}>
+              <Text style={styles.navIcon}>💳</Text>
+            </View>
+            <Text style={[styles.navLabel, styles.activeNavLabel]}>Cards</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.navItem}>
+            <View style={styles.navIconContainer}>
+              <Text style={styles.navIcon}>📊</Text>
+            </View>
+            <Text style={styles.navLabel}>Analytics</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.navItemCenter} onPress={() => navigateWithNotification('BarcodeScanner')}>
+            <View style={styles.navCenterButton}>
+              <View style={styles.navCenterIcon}>
+                <Text style={styles.fabIcon}>▶</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.navItem}>
+            <View style={styles.navIconContainer}>
+              <Text style={styles.navIcon}>💰</Text>
+            </View>
+            <Text style={styles.navLabel}>Wallet</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => navigation.navigate('ProfileScreen')}
+          >
+            <View style={styles.navIconContainer}>
+              <Text style={styles.navIcon}>👤</Text>
+            </View>
+            <Text style={styles.navLabel}>Profile</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -307,84 +380,155 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   
-  // Services Grid
-  servicesGrid: {
+  // Section Headers
+  sectionHeaderRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-  },
-  serviceCard: {
-    width: '48%',
-    backgroundColor: '#F9F9F9',
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
+  viewAllText: {
+    color: '#00ACC1',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  
+  // Services Grid - update the styles
+  servicesRow: {
+    paddingRight: 16,
+    paddingVertical: 8,
+  },
+  serviceCard: {
+    width: 160,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 16,
+    height: 160,
+    justifyContent: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
   serviceCardIconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#EEEEEE',
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   serviceCardIcon: {
-    fontSize: 20,
+    fontSize: 24,
   },
   serviceCardText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#333333',
+    marginBottom: 4,
+  },
+  serviceCardDescription: {
+    fontSize: 12,
+    color: '#777777',
+    lineHeight: 16,
   },
   
-  // Floating Action Button
+  // Floating Action Button - Hidden since we're using center button in navbar
   fabContainer: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    zIndex: 999,
-  },
-  fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  fabIcon: {
-    color: '#FFFFFF',
-    fontSize: 20,
+    display: 'none', // Hide the floating button since we have it in the navbar
   },
   
   // Bottom Navigation
-  bottomNav: {
+  bottomNavContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    backgroundColor: 'transparent',
+    height: 85,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomNav: {
+    width: '92%',
+    height: 75,
     backgroundColor: '#FFFFFF',
+    borderRadius: 25,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
+    paddingHorizontal: 15,
+    position: 'relative',
   },
   navItem: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    height: '100%',
+    paddingTop: 5,
+  },
+  navIconContainer: {
+    width: 45,
+    height: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 14,
+    marginBottom: 5,
+  },
+  activeNavIcon: {
+    backgroundColor: 'rgba(0, 172, 193, 0.1)',
   },
   navIcon: {
-    fontSize: 20,
+    fontSize: 22,
+  },
+  navLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#777777',
+  },
+  activeNavLabel: {
+    color: '#00ACC1',
+    fontWeight: '600',
+  },
+  navItemCenter: {
+    width: 75,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navCenterButton: {
+    width: 65,
+    height: 65,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
+    bottom: 20,
+    position: 'absolute',
+  },
+  navCenterIcon: {
+    width: 55,
+    height: 55,
+    borderRadius: 30,
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
 });
 

@@ -77,6 +77,15 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     VEHICLESIDE: "Vehicle Side View",
     TAGAFFIX: "FasTag Affixed on Windshield"
   };
+
+  // Document icons for visual representation
+  const documentIcons = {
+    RCFRONT: "📄",
+    RCBACK: "📄",
+    VEHICLEFRONT: "🚗",
+    VEHICLESIDE: "🚗",
+    TAGAFFIX: "🏷️"
+  };
   
   // Animation effect on component mount
   useEffect(() => {
@@ -357,8 +366,23 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     const isLoading = loading && currentUploadType === imageType;
     
     return (
-      <View style={styles.documentCard} key={imageType}>
-        <Text style={styles.documentTitle}>{documentDescriptions[imageType]}</Text>
+      <View style={[
+        styles.documentCard, 
+        isUploaded ? styles.documentCardUploaded : null
+      ]} key={imageType}>
+        <View style={styles.documentHeader}>
+          <View style={styles.documentIconContainer}>
+            <Text style={styles.documentIcon}>{documentIcons[imageType]}</Text>
+          </View>
+          <Text style={styles.documentTitle}>{documentDescriptions[imageType]}</Text>
+          {isUploaded && (
+            <View style={styles.uploadedIndicator}>
+              <Text style={styles.uploadedIndicatorText}>✓</Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.documentDivider} />
         
         {images[imageType] ? (
           <View style={styles.imagePreviewContainer}>
@@ -378,7 +402,11 @@ const DocumentUploadScreen = ({ navigation, route }) => {
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.imageButton, styles.uploadButton, isUploaded && styles.uploadedButton]}
+                style={[
+                  styles.imageButton, 
+                  styles.uploadButton, 
+                  isUploaded && styles.uploadedButton
+                ]}
                 onPress={() => uploadDocument(imageType)}
                 disabled={loading || isUploaded}
               >
@@ -386,7 +414,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={styles.imageButtonText}>
-                    {isUploaded ? 'Uploaded ✓' : 'Upload'}
+                    {isUploaded ? 'Uploaded' : 'Upload'}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -395,19 +423,21 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         ) : (
           <View style={styles.imageActions}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.cameraButton]}
+              style={styles.actionButton}
               onPress={() => takePhoto(imageType)}
               disabled={loading}
             >
-              <Text style={styles.actionButtonText}>Take Photo</Text>
+              <Text style={styles.actionButtonIcon}>📷</Text>
+              <Text style={styles.actionButtonText}>Camera</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.actionButton, styles.galleryButton]}
+              style={styles.actionButton}
               onPress={() => pickImage(imageType)}
               disabled={loading}
             >
-              <Text style={styles.actionButtonText}>Pick from Gallery</Text>
+              <Text style={styles.actionButtonIcon}>🖼️</Text>
+              <Text style={styles.actionButtonText}>Gallery</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -435,14 +465,14 @@ const DocumentUploadScreen = ({ navigation, route }) => {
   
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a237e" />
+      <StatusBar barStyle="light-content" />
       
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Upload Documents</Text>
+        <Text style={styles.headerTitle}>Document Upload</Text>
         <View style={{ width: 40 }} />
       </View>
       
@@ -456,8 +486,8 @@ const DocumentUploadScreen = ({ navigation, route }) => {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>FasTag Document Upload</Text>
             <Text style={styles.infoText}>
-              Upload all five mandatory documents required for FasTag registration.
-              All documents must be uploaded before proceeding to registration.
+              Please upload all required documents for FasTag registration.
+              Clear images will help process your application faster.
             </Text>
           </View>
           
@@ -465,9 +495,14 @@ const DocumentUploadScreen = ({ navigation, route }) => {
           
           {/* Progress Indicator */}
           <View style={styles.progressContainer}>
-            <Text style={styles.progressText}>
-              Documents Uploaded: {Object.values(uploadedDocs).filter(Boolean).length} of 5
-            </Text>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressText}>
+                Uploaded: {Object.values(uploadedDocs).filter(Boolean).length} of 5
+              </Text>
+              <Text style={styles.progressPercentage}>
+                {Math.round((Object.values(uploadedDocs).filter(Boolean).length / 5) * 100)}%
+              </Text>
+            </View>
             <View style={styles.progressBar}>
               <View 
                 style={[
@@ -545,9 +580,14 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     backgroundColor: '#333333',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   infoTitle: {
     color: '#FFFFFF',
@@ -556,133 +596,197 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   infoText: {
-    color: '#CCCCCC',
+    color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 20,
+    opacity: 0.8,
   },
   progressContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    padding: 15,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   progressText: {
     fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  progressPercentage: {
+    fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 8,
     color: '#333333',
   },
   progressBar: {
-    height: 8,
-    backgroundColor: '#EEEEEE',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',  // Green for success
+    backgroundColor: '#333333',
+    borderRadius: 3,
   },
   documentsContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   documentCard: {
-    backgroundColor: '#F9F9F9',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    overflow: 'hidden',
+  },
+  documentCardUploaded: {
+    borderColor: '#333333',
+    borderWidth: 1,
+  },
+  documentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#F8F8F8',
+  },
+  documentIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EEEEEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  documentIcon: {
+    fontSize: 18,
   },
   documentTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
     color: '#333333',
+  },
+  uploadedIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadedIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  documentDivider: {
+    height: 1,
+    backgroundColor: '#EEEEEE',
   },
   imageActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  actionButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    padding: 15,
     justifyContent: 'center',
   },
-  cameraButton: {
-    backgroundColor: '#0277BD',
-    marginRight: 8,
+  actionButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    marginHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
   },
-  galleryButton: {
-    backgroundColor: '#00796B',
-    marginLeft: 8,
+  actionButtonIcon: {
+    fontSize: 24,
+    marginBottom: 8,
   },
   actionButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
     fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
   },
   imagePreviewContainer: {
-    width: '100%',
-    borderRadius: 8,
-    overflow: 'hidden',
+    padding: 15,
   },
   imagePreview: {
     width: '100%',
-    height: 200,
+    height: 180,
     borderRadius: 8,
+    marginBottom: 12,
   },
   imageControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
   },
   imageButton: {
     flex: 1,
-    padding: 10,
+    paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: '#FFEBEE',
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
   },
   uploadButton: {
-    backgroundColor: '#3F51B5',
+    backgroundColor: '#333333',
     marginLeft: 8,
   },
   uploadedButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#333333',
+    opacity: 0.5,
   },
   imageButtonText: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 14,
   },
   actionContainer: {
-    marginBottom: 24,
+    marginBottom: 30,
   },
   button: {
-    borderRadius: 16,
+    borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   uploadAllButton: {
-    backgroundColor: '#3F51B5',
+    backgroundColor: '#333333',
   },
   proceedButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#333333',
   },
   disabledButton: {
-    backgroundColor: '#BBBBBB',
+    backgroundColor: '#CCCCCC',
+    elevation: 0,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   devModeContainer: {
     flexDirection: 'row',
@@ -690,14 +794,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 20,
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F8F8F8',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
   },
   devModeText: {
     marginRight: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
   },
 });
 

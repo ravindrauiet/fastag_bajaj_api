@@ -199,7 +199,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
             npciStatus: "ACTIVE",
             custDetails: {
               name: null,
-              walletStatus: "NE", // NE = New Entity (wallet doesn't exist)
+              walletStatus: "Active", // NE = New Entity (wallet doesn't exist)
               kycStatus: "",
               walletId: null,
               mobileNo: 7840001360,
