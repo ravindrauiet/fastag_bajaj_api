@@ -74,7 +74,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <TouchableOpacity 
               style={styles.inventoryButton}
-              onPress={() => navigateWithNotification('FastagInventoryScreen')}
+              onPress={() => navigateWithNotification('Inventory')}
             >
               <Text style={styles.inventoryText}>Inventory</Text>
               <Text style={styles.inventoryIcon}>→</Text>
@@ -237,11 +237,14 @@ const HomeScreen = ({ navigation }) => {
             <Text style={[styles.navLabel, styles.activeNavLabel]}>Cards</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => navigation.navigate('Wallet', { screen: 'TransactionHistory' })}
+          >
             <View style={styles.navIconContainer}>
-              <Text style={styles.navIcon}>📊</Text>
+              <Text style={styles.navIcon}>📋</Text>
             </View>
-            <Text style={styles.navLabel}>Analytics</Text>
+            <Text style={styles.navLabel}>History</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.navItemCenter} onPress={() => navigateWithNotification('BarcodeScanner')}>
@@ -252,7 +255,10 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => navigation.navigate('Wallet', { screen: 'WalletMain' })}
+          >
             <View style={styles.navIconContainer}>
               <Text style={styles.navIcon}>💰</Text>
             </View>

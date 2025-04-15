@@ -29,6 +29,14 @@ import VrnUpdateScreen from '../components/VrnUpdateScreen';
 import FasTagRekycScreen from '../components/FasTagRekycScreen';
 import VrnUpdateDocScreen from '../components/VrnUpdateDocScreen';
 import ProfileScreen from '../components/ProfileScreen';
+import WalletScreen from '../components/WalletScreen';
+import WalletRechargeScreen from '../components/WalletRechargeScreen';
+import PaymentGatewayScreen from '../components/PaymentGatewayScreen';
+import PaymentSuccessScreen from '../components/PaymentSuccessScreen';
+import PaymentFailureScreen from '../components/PaymentFailureScreen';
+import TransactionHistoryScreen from '../components/TransactionHistoryScreen';
+import TransactionDetailScreen from '../components/TransactionDetailScreen';
+import BankAccountLinkScreen from '../components/BankAccountLinkScreen';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -117,6 +125,22 @@ const InventoryStack = () => {
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
       <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
       <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
+    </Stack.Navigator>
+  );
+};
+
+// Wallet Stack
+const WalletStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="WalletMain" component={WalletScreen} />
+      <Stack.Screen name="WalletRecharge" component={WalletRechargeScreen} />
+      <Stack.Screen name="PaymentGateway" component={PaymentGatewayScreen} />
+      <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
+      <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
+      <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+      <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
+      <Stack.Screen name="BankAccountLink" component={BankAccountLinkScreen} />
     </Stack.Navigator>
   );
 };
@@ -341,7 +365,7 @@ const CustomDrawerContent = (props) => {
 };
 
 // Main Application Stack
-const AppStack = () => {
+const AppStack = ({ navigation }) => {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
@@ -396,6 +420,14 @@ const AppStack = () => {
       <Drawer.Screen 
         name="Inventory" 
         component={InventoryStack} 
+      />
+      <Drawer.Screen 
+        name="Wallet" 
+        component={WalletStack} 
+        options={{
+          title: 'My Wallet',
+          headerTitle: 'My Wallet'
+        }}
       />
       <Drawer.Screen 
         name="VrnUpdate" 
