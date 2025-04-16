@@ -272,7 +272,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           rechargeAmount: rechargeAmount || "0.00",
           securityDeposit: securityDeposit || "100.00",
           tagCost: tagCost || "100.00",
-          debitAmt: debitAmt || "300.00",
+          debitAmt: "400.00",
           vehicleDescriptor: vehicleDescriptor || "DIESEL",
           isNationalPermit: isNationalPermit || "1",
           permitExpiryDate: permitExpiryDate || "31/12/2025",
