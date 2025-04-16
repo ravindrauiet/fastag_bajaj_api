@@ -32,8 +32,6 @@ import ProfileScreen from '../components/ProfileScreen';
 import WalletScreen from '../components/WalletScreen';
 import WalletRechargeScreen from '../components/WalletRechargeScreen';
 import PaymentGatewayScreen from '../components/PaymentGatewayScreen';
-import PaymentSuccessScreen from '../components/PaymentSuccessScreen';
-import PaymentFailureScreen from '../components/PaymentFailureScreen';
 import TransactionHistoryScreen from '../components/TransactionHistoryScreen';
 import TransactionDetailScreen from '../components/TransactionDetailScreen';
 import BankAccountLinkScreen from '../components/BankAccountLinkScreen';
@@ -136,8 +134,6 @@ const WalletStack = () => {
       <Stack.Screen name="WalletMain" component={WalletScreen} />
       <Stack.Screen name="WalletRecharge" component={WalletRechargeScreen} />
       <Stack.Screen name="PaymentGateway" component={PaymentGatewayScreen} />
-      <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
-      <Stack.Screen name="PaymentFailure" component={PaymentFailureScreen} />
       <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
       <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
       <Stack.Screen name="BankAccountLink" component={BankAccountLinkScreen} />

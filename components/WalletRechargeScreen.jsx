@@ -24,10 +24,13 @@ const QUICK_AMOUNTS = [
   { label: '₹2000', value: 2000 }
 ];
 
-const WalletRechargeScreen = ({ navigation }) => {
+const WalletRechargeScreen = ({ navigation, route }) => {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const { addNotification } = useContext(NotificationContext);
+  
+  // Get current wallet balance from route params
+  const { currentBalance = 0 } = route.params || {};
 
   // Update amount
   const handleAmountChange = (text) => {
@@ -54,10 +57,11 @@ const WalletRechargeScreen = ({ navigation }) => {
     setTimeout(() => {
       setLoading(false);
       
-      // Navigate to payment screen with amount
+      // Navigate to payment screen with amount and current balance
       navigation.navigate('PaymentGateway', { 
         amount: parseInt(amount),
-        source: 'wallet_recharge'
+        source: 'wallet_recharge',
+        currentBalance: currentBalance
       });
       
       // Add notification about recharge initiation
@@ -81,6 +85,12 @@ const WalletRechargeScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Current Balance */}
+          <View style={styles.balanceSection}>
+            <Text style={styles.balanceLabel}>Current Balance</Text>
+            <Text style={styles.balanceAmount}>₹{currentBalance.toLocaleString('en-IN')}</Text>
+          </View>
+          
           {/* Amount Input Section */}
           <View style={styles.amountSection}>
             <Text style={styles.sectionTitle}>Enter Amount</Text>
@@ -189,6 +199,23 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 20,
     paddingBottom: 90,
+  },
+  balanceSection: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 8,
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333333',
   },
   amountSection: {
     marginBottom: 30,

@@ -257,7 +257,7 @@ const HomeScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.navItem}
-            onPress={() => navigation.navigate('Wallet', { screen: 'WalletMain' })}
+            onPress={() => navigation.navigate('Wallet')}
           >
             <View style={styles.navIconContainer}>
               <Text style={styles.navIcon}>💰</Text>
