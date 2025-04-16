@@ -8,9 +8,6 @@ import {
   StatusBar,
   ActivityIndicator
 } from 'react-native';
-// Temporarily commenting out barcode scanner imports to avoid native module error
-// import { Camera } from 'expo-camera';
-// import { BarCodeScanner } from 'expo-barcode-scanner';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const BarcodeScannerScreen = ({ navigation }) => {

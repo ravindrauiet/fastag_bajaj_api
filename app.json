@@ -9,23 +9,24 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": false
         }
-      ],
-      [
-        "expo-barcode-scanner",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes"
-        }
       ]
     ],
     "ios": {
       "infoPlist": {
-        "NSCameraUsageDescription": "This app needs camera access to scan barcodes"
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
       }
     },
     "android": {
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "android.permission.CAMERA"
       ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d5bb0c34-b4a9-424c-9971-161711e70632"
+      }
     }
   }
 }
