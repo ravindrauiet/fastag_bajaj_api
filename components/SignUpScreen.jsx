@@ -33,7 +33,7 @@ const SignUpScreen = ({ navigation }) => {
   const { addNotification } = useContext(NotificationContext);
   
   // Access auth context
-  const { register } = useAuth();
+  const { register, error: authError } = useAuth();
   
   // Validate form
   const validateForm = () => {
@@ -92,18 +92,17 @@ const SignUpScreen = ({ navigation }) => {
     
     setLoading(true);
     
-    // Prepare user data
-    const userData = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      password
-    };
-    
-    // Simulate API request
-    setTimeout(async () => {
-      // Use AuthContext register function
+    try {
+      // Prepare user data
+      const userData = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        password
+      };
+      
+      // Use AuthContext register function with Firebase
       const success = await register(userData);
       
       if (success) {
@@ -127,16 +126,22 @@ const SignUpScreen = ({ navigation }) => {
           ]
         );
       } else {
-        // Registration failed
+        // Registration failed with Firebase error
         Alert.alert(
           'Registration Failed',
-          'There was a problem creating your account. Please try again.',
+          authError || 'There was a problem creating your account. Please try again.',
           [{ text: 'OK' }]
         );
       }
-      
+    } catch (error) {
+      Alert.alert(
+        'Registration Error',
+        error.message || 'There was a problem creating your account. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
   
   return (

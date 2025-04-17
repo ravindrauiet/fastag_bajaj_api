@@ -16,15 +16,18 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
+  // Access auth context
+  const { userInfo, logout } = useAuth();
+
   // State for user data
   const [userData, setUserData] = useState({
-    name: 'Ishita Chitkara',
-    email: 'ishita.chitkara@example.com',
-    phone: '8435120730',
-    customerId: 'CUST358729689',
-    walletBalance: '₹25,000',
-    kycStatus: 'Verified',
-    address: 'D/O: Sudhir Joshi, 146-A SILVER OAKS COLONY Indore ANNAPURNA ROAD, 452009, INDORE, MADHYA PRADESH',
+    name: 'Guest User',
+    email: 'guest@example.com',
+    phone: '',
+    customerId: 'GUEST000000',
+    walletBalance: '₹0',
+    kycStatus: 'Not Verified',
+    address: '',
   });
 
   // State for loading
@@ -37,17 +40,28 @@ const ProfileScreen = ({ navigation }) => {
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
   
-  // Access auth context
-  const { logout } = useAuth();
-  
-  // Simulate loading profile data
+  // Update profile data when userInfo changes
   useEffect(() => {
     setLoading(true);
-    // Simulate API call delay
+    
+    // Update userData with Firebase auth data if available
+    if (userInfo) {
+      const displayName = userInfo.displayName || 'Fastag User';
+      const email = userInfo.email || 'No email provided';
+      
+      setUserData(prevData => ({
+        ...prevData,
+        name: displayName,
+        email: email,
+        customerId: userInfo.uid ? `CUST${userInfo.uid.substring(0, 8)}` : prevData.customerId,
+        kycStatus: userInfo.emailVerified ? 'Verified' : 'Pending',
+      }));
+    }
+    
     setTimeout(() => {
       setLoading(false);
     }, 1000);
-  }, []);
+  }, [userInfo]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -136,7 +150,7 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.infoCard}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Phone</Text>
-                  <Text style={styles.infoValue}>{userData.phone}</Text>
+                  <Text style={styles.infoValue}>{userData.phone || 'Not provided'}</Text>
                 </View>
                 <View style={styles.separator} />
                 <View style={styles.infoRow}>
@@ -146,7 +160,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.separator} />
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Address</Text>
-                  <Text style={styles.infoValue}>{userData.address}</Text>
+                  <Text style={styles.infoValue}>{userData.address || 'Not provided'}</Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.editButton}>

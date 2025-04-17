@@ -246,13 +246,19 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         console.log('App status check failed, continuing with registration...');
       }
       
+      // Ensure amounts are properly formatted with 2 decimal places
+      const formatAmount = (amount) => {
+        // Convert to number, format with 2 decimal places, and convert back to string
+        return parseFloat(amount).toFixed(2);
+      };
+      
       // Create the registration data object to match exact API documentation order
       const finalRegistrationData = {
         regDetails: {
           requestId: requestId || generateRequestId(),
           sessionId: sessionId || requestId || generateRequestId(),
-          channel: channel,
-          agentId: agentId,
+          channel: channel || "CBPL",
+          agentId: agentId || "70003",
           reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
         },
         vrnDetails: {
@@ -263,16 +269,16 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           model: model || "",
           vehicleColour: vehicleColour || "",
           type: type || "",
-          status:  rtoStatus || "ACTIVE",
+          status: rtoStatus || "ACTIVE",
           npciStatus: "ACTIVE",
           isCommercial: commercial === true ? true : false,
           tagVehicleClassID: tagVehicleClassID || "4",
           npciVehicleClassID: npciVehicleClassID || "4",
           vehicleType: vehicleType || "",
-          rechargeAmount: rechargeAmount || "0.00",
-          securityDeposit: securityDeposit || "100.00",
-          tagCost: tagCost || "100.00",
-          debitAmt: "400.00",
+          rechargeAmount: formatAmount(rechargeAmount || "0.00"),
+          securityDeposit: formatAmount(securityDeposit || "100.00"),
+          tagCost: formatAmount(tagCost || "100.00"),
+          debitAmt: formatAmount("400.00"), // Fixed amount
           vehicleDescriptor: vehicleDescriptor || "DIESEL",
           isNationalPermit: isNationalPermit || "1",
           permitExpiryDate: permitExpiryDate || "31/12/2025",
@@ -284,8 +290,8 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           walletId: walletId || null
         },
         fasTagDetails: {
-          serialNo: serialNo || "",
-          tid: tid || "",
+          serialNo: serialNo.trim() || "",
+          tid: tid.trim() || "",
           udf1: udf1 || "",
           udf2: udf2 || "",
           udf3: udf3 || "",
@@ -297,8 +303,13 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       // Log the registration data for debugging
       console.log('FasTag Registration Request:', JSON.stringify(finalRegistrationData, null, 2));
       
+      // Additional validation for session ID to ensure it matches document uploads
+      console.log(`Using session ID for registration: ${finalRegistrationData.regDetails.sessionId}`);
+      
       // Call the API to register the FasTag
       const response = await bajajApi.registerFasTag(finalRegistrationData);
+      
+      console.log('FasTag Registration Response:', JSON.stringify(response, null, 2));
       
       if (response && response.response && response.response.status === 'success') {
         // Add notification
@@ -316,7 +327,17 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         });
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to register FasTag';
-        throw new Error(errorMsg);
+        
+        // Special handling for RC image errors
+        if (errorMsg.includes('RCIMAGE')) {
+          Alert.alert(
+            'Registration Error - RC Images',
+            'There was an issue with your RC images. Please go back to the Document Upload screen and re-upload clearer images of your Registration Certificate.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          throw new Error(errorMsg);
+        }
       }
     } catch (error) {
       console.error('FasTag Registration Error:', error);

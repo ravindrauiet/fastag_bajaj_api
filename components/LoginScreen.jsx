@@ -29,14 +29,7 @@ const LoginScreen = ({ navigation }) => {
   const { addNotification } = useContext(NotificationContext);
   
   // Access auth context
-  const { login } = useAuth();
-  
-  // Dummy user data for testing
-  const dummyUser = {
-    email: 'test@example.com',
-    password: 'password123',
-    name: 'Ishita Chitkara'
-  };
+  const { login, error: authError } = useAuth();
   
   // Validate form
   const validateForm = () => {
@@ -66,10 +59,12 @@ const LoginScreen = ({ navigation }) => {
     
     setLoading(true);
     
-    // Simulate API request
-    setTimeout(async () => {
-      if (email === dummyUser.email && password === dummyUser.password) {
-        // Successful login
+    try {
+      // Use AuthContext login function with Firebase
+      const success = await login({ email, password });
+      
+      if (success) {
+        // Show success notification
         addNotification({
           id: Date.now(),
           message: 'Login successful. Welcome back!',
@@ -77,35 +72,24 @@ const LoginScreen = ({ navigation }) => {
           read: false
         });
         
-        // Use AuthContext login function
-        const userData = {
-          email: dummyUser.email,
-          name: dummyUser.name
-        };
-        
-        const success = await login(userData);
-        
-        if (success) {
-          // Auth context will handle the app state
-          console.log('Login successful');
-        } else {
-          Alert.alert(
-            'Login Error',
-            'There was a problem with the login process.',
-            [{ text: 'OK' }]
-          );
-        }
+        console.log('Login successful');
       } else {
-        // Failed login
+        // Show error message from Firebase
         Alert.alert(
           'Login Failed',
-          'Invalid email or password. Please try again.',
+          authError || 'Invalid email or password. Please try again.',
           [{ text: 'OK' }]
         );
       }
-      
+    } catch (error) {
+      Alert.alert(
+        'Login Error',
+        error.message || 'There was a problem with the login process.',
+        [{ text: 'OK' }]
+      );
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
   
   return (
@@ -208,9 +192,8 @@ const LoginScreen = ({ navigation }) => {
           
           {/* Testing credentials notice */}
           <View style={styles.testingNote}>
-            <Text style={styles.testingTitle}>Testing Credentials:</Text>
-            <Text style={styles.testingCredentials}>Email: test@example.com</Text>
-            <Text style={styles.testingCredentials}>Password: password123</Text>
+            <Text style={styles.testingTitle}>Firebase Authentication:</Text>
+            <Text style={styles.testingCredentials}>Register a new account or use your existing credentials.</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

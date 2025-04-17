@@ -705,6 +705,17 @@ const bajajApi = {
         };
       }
       
+      // Basic validation of the base64 image data
+      if (!image || typeof image !== 'string') {
+        console.error(`Invalid image data for ${imageType}: Image data is empty or not a string`);
+        throw new Error(`Invalid image data for ${imageType}`);
+      }
+      
+      // Log image metadata to help diagnose issues
+      console.log(`Uploading ${imageType} document with base64 length: ${image.length}`);
+      console.log(`First 30 chars of base64: ${image.substring(0, 30)}...`);
+      console.log(`Last 30 chars of base64: ...${image.substring(image.length - 30)}`);
+      
       const reqDateTime = getCurrentDateTime();
 
       const requestData = {
@@ -757,6 +768,13 @@ const bajajApi = {
         const parsedResponse = JSON.parse(decryptedResponse);
         console.log('=== UPLOAD DOCUMENT PARSED RESPONSE ===');
         console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        // Store the document info in a global cache to help with debugging
+        if (parsedResponse.response && parsedResponse.response.status === 'success') {
+          console.log(`${imageType} document uploaded successfully with sessionId: ${parsedResponse.documentDetails?.sessionId || sessionId}`);
+        } else {
+          console.error(`Failed to upload ${imageType} document:`, parsedResponse.response?.errorDesc || 'Unknown error');
+        }
         
         return parsedResponse;
       }
@@ -834,6 +852,11 @@ const bajajApi = {
         throw new Error('Invalid registration data structure');
       }
       
+      // Ensure walletId is string, not null
+      if (registrationData.custDetails.walletId === null) {
+        registrationData.custDetails.walletId = "";
+      }
+      
       // Field mapping note:
       // The OTP response has different field names than what the registration API expects:
       // OTP Response      →  Registration API
@@ -871,6 +894,17 @@ const bajajApi = {
         console.log(decryptedResponse);
         
         const parsedResponse = JSON.parse(decryptedResponse);
+        console.log('=== REGISTER NEW FASTAG PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        // Check specifically for RC image errors
+        if (parsedResponse.response && 
+            parsedResponse.response.status === 'failed' && 
+            parsedResponse.response.errorDesc && 
+            parsedResponse.response.errorDesc.includes('RCIMAGE')) {
+          console.error('RC Image Error:', parsedResponse.response.errorDesc);
+        }
+        
         return parsedResponse;
       }
       

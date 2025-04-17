@@ -1,5 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-// Temporary approach without AsyncStorage
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../services/firebase';
+import { 
+  loginWithEmailAndPassword, 
+  registerWithEmailAndPassword, 
+  logoutUser, 
+  updateUserProfile
+} from '../api/firebaseAuth';
 
 // Create auth context
 export const AuthContext = createContext();
@@ -12,50 +19,107 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userInfo, setUserInfo] = useState(null);
+  const [error, setError] = useState("");
 
-  // Check for existing login on app start (simulated)
+  // Check for existing Firebase session on app start
   useEffect(() => {
-    // Simulate checking for authentication - for now, always start logged out
-    setTimeout(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setUserInfo(user);
+        setIsAuthenticated(true);
+      } else {
+        // User is signed out
+        setUserInfo(null);
+        setIsAuthenticated(false);
+      }
       setIsLoading(false);
-    }, 1000);
+    });
+
+    // Cleanup subscription on unmount
+    return unsubscribe;
   }, []);
 
   // Login function
-  const login = async (userData) => {
+  const login = async ({ email, password }) => {
     try {
-      // Store user data in state only (no persistence for now)
-      setUserInfo(userData);
-      setIsAuthenticated(true);
-      return true;
+      setError("");
+      setIsLoading(true);
+      
+      const result = await loginWithEmailAndPassword(email, password);
+      
+      if (result.success) {
+        setUserInfo(result.user);
+        setIsAuthenticated(true);
+        return true;
+      } else {
+        setError(result.error || "Login failed");
+        return false;
+      }
     } catch (e) {
-      console.log('Login error:', e);
+      console.log('Login error:', e.message);
+      setError(e.message);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Logout function
   const logout = async () => {
     try {
-      // Clear user data from state
-      setUserInfo(null);
-      setIsAuthenticated(false);
-      return true;
+      setIsLoading(true);
+      const result = await logoutUser();
+      
+      if (result.success) {
+        setUserInfo(null);
+        setIsAuthenticated(false);
+        return true;
+      } else {
+        setError(result.error || "Logout failed");
+        return false;
+      }
     } catch (e) {
-      console.log('Logout error:', e);
+      console.log('Logout error:', e.message);
+      setError(e.message);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Register function
   const register = async (userData) => {
     try {
-      // In a real app, you would call your API to register the user
-      // For now just return success
-      return true;
+      setError("");
+      setIsLoading(true);
+      
+      const { email, password, firstName, lastName } = userData;
+      const displayName = `${firstName} ${lastName}`;
+      
+      const result = await registerWithEmailAndPassword(email, password, { 
+        displayName 
+      });
+      
+      if (result.success) {
+        // Update profile with additional information if needed
+        await updateUserProfile({ 
+          displayName
+        });
+        
+        setUserInfo(result.user);
+        setIsAuthenticated(true);
+        return true;
+      } else {
+        setError(result.error || "Registration failed");
+        return false;
+      }
     } catch (e) {
-      console.log('Registration error:', e);
+      console.log('Registration error:', e.message);
+      setError(e.message);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,7 +130,8 @@ export const AuthProvider = ({ children }) => {
     userInfo,
     login,
     logout,
-    register
+    register,
+    error
   };
 
   return (

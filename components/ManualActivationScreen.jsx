@@ -84,7 +84,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
     udf3 = "",
     udf4 = "",
     udf5 = "",
-    debitAmt = "300.00"
+    debitAmt = "400.00"
   } = route.params || {};
   
   // Animation effect on component mount
@@ -148,6 +148,10 @@ const ManualActivationScreen = ({ route, navigation }) => {
     setLoading(true);
     
     try {
+      console.log('Starting FasTag registration process...');
+      console.log('Document details status:', JSON.stringify(documentDetails));
+      console.log('Using session ID:', sessionId);
+      
       // First check if user has downloaded Bajaj app and visited FasTag section
       const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
       
@@ -170,8 +174,8 @@ const ManualActivationScreen = ({ route, navigation }) => {
         regDetails: {
           requestId: requestId || generateRequestId(),
           sessionId: sessionId || requestId || generateRequestId(),
-          channel: channel,
-          agentId: agentId,
+          channel: channel || 'CBPL',
+          agentId: agentId || '70003',
           reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
         },
         vrnDetails: {
@@ -191,7 +195,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
           rechargeAmount: rechargeAmount || "0.00",
           securityDeposit: securityDeposit || "100.00",
           tagCost: tagCost || "100.00",
-          debitAmt: debitAmt || "300.00",
+          debitAmt: debitAmt || "400.00",
           vehicleDescriptor: vehicleDescriptor || "DIESEL",
           isNationalPermit: isNationalPermit || "1",
           permitExpiryDate: permitExpiryDate || "31/12/2025",
@@ -203,8 +207,8 @@ const ManualActivationScreen = ({ route, navigation }) => {
           walletId: walletId || ""
         },
         fasTagDetails: {
-          serialNo: serialNo,
-          tid: tid,
+          serialNo: serialNo.trim(),
+          tid: tid.trim(),
           udf1: udf1 || "",
           udf2: udf2 || "",
           udf3: udf3 || "",
@@ -213,7 +217,23 @@ const ManualActivationScreen = ({ route, navigation }) => {
         }
       };
       
-      // Log the registration data for debugging
+      // Validate all required document uploads
+      if (!documentDetails || 
+          !documentDetails.RCFRONT || 
+          !documentDetails.RCBACK || 
+          !documentDetails.VEHICLEFRONT || 
+          !documentDetails.VEHICLESIDE || 
+          !documentDetails.TAGAFFIX) {
+        console.error('Missing document uploads:', JSON.stringify(documentDetails));
+        Alert.alert(
+          'Missing Documents',
+          'Some required documents are missing. Please go back and ensure all documents are uploaded.',
+          [{ text: 'OK' }]
+        );
+        setLoading(false);
+        return;
+      }
+
       console.log('FasTag Registration Request:', JSON.stringify(registrationData, null, 2));
       
       // Navigate to FasTag registration with the data
