@@ -1,10 +1,17 @@
-import React, { useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView } from 'react-native';
+import React, { useEffect, useContext, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const HomeScreen = ({ navigation }) => {
   // Access the notification context
   const { addScreenCompletionNotification, addNotification } = useContext(NotificationContext);
+  
+  // Access auth context to get user data
+  const { userInfo, userProfile, isLoading } = useAuth();
+  
+  // State for balance (in a real app, this would come from an API)
+  const [balance, setBalance] = useState('₹ 0');
   
   // Add a navigation listener to track screen changes
   useEffect(() => {
@@ -46,6 +53,36 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
+  // Get display name from user profile or auth user
+  const getDisplayName = () => {
+    if (userProfile && userProfile.displayName) {
+      return userProfile.displayName;
+    } else if (userInfo && userInfo.displayName) {
+      return userInfo.displayName;
+    }
+    return 'Guest User';
+  };
+
+  // Get user ID from Firestore or Firebase Auth
+  const getUserId = () => {
+    if (userProfile && userProfile.id) {
+      return `ID ${userProfile.id.substring(0, 8)}`;
+    } else if (userInfo && userInfo.uid) {
+      return `ID ${userInfo.uid.substring(0, 8)}`;
+    }
+    return 'Guest';
+  };
+
+  // If data is still loading, show loading spinner
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00ACC1" />
+        <Text style={styles.loadingText}>Loading your data...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -56,7 +93,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.balanceCard}>
           <View style={styles.balanceTopSection}>
             <Text style={styles.balanceLabel}>Available Balance</Text>
-            <Text style={styles.balanceAmount}>₹ 25,000</Text>
+            <Text style={styles.balanceAmount}>{balance}</Text>
           </View>
           
           <View style={styles.barcodeSection}>
@@ -69,8 +106,8 @@ const HomeScreen = ({ navigation }) => {
           
           <View style={styles.balanceBottomSection}>
             <View>
-              <Text style={styles.userName}>Ishita Chitkara</Text>
-              <Text style={styles.userId}>ID 358729689</Text>
+              <Text style={styles.userName}>{getDisplayName()}</Text>
+              <Text style={styles.userId}>{getUserId()}</Text>
             </View>
             <TouchableOpacity 
               style={styles.inventoryButton}
@@ -81,6 +118,19 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Welcome Message for User */}
+        {userProfile && (
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>
+              Welcome back, {userProfile.firstName || getDisplayName().split(' ')[0]}!
+            </Text>
+            <Text style={styles.welcomeSubtext}>
+              Your account was created on {" "}
+              {userProfile.createdAt ? new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString() : 'recently'}
+            </Text>
+          </View>
+        )}
 
         {/* Frequently Used Section */}
         <View style={styles.sectionContainer}>
@@ -285,6 +335,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#777777',
+  },
   // Header styles removed as we're now using the default React Navigation header
   
   // Balance Card
@@ -343,6 +404,23 @@ const styles = StyleSheet.create({
   inventoryIcon: {
     color: '#FFFFFF',
     fontSize: 18,
+  },
+  
+  // Welcome Message
+  welcomeContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    marginTop: -8,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  welcomeSubtext: {
+    fontSize: 14,
+    color: '#777777',
+    marginTop: 4,
   },
   
   // Sections

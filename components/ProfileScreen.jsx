@@ -10,27 +10,25 @@ import {
   Image,
   Switch,
   ActivityIndicator,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
   // Access auth context
-  const { userInfo, logout } = useAuth();
+  const { userInfo, userProfile, logout, updateProfile, isLoading } = useAuth();
 
-  // State for user data
-  const [userData, setUserData] = useState({
-    name: 'Guest User',
-    email: 'guest@example.com',
+  // State for editing profile
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     phone: '',
-    customerId: 'GUEST000000',
-    walletBalance: '₹0',
-    kycStatus: 'Not Verified',
+    email: '',
     address: '',
   });
-
-  // State for loading
   const [loading, setLoading] = useState(false);
   
   // Toggle states
@@ -40,28 +38,92 @@ const ProfileScreen = ({ navigation }) => {
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
   
-  // Update profile data when userInfo changes
+  // Update form data when user profile changes
   useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        firstName: userProfile.firstName || '',
+        lastName: userProfile.lastName || '',
+        phone: userProfile.phone || '',
+        email: userProfile.email || '',
+        address: userProfile.address || '',
+      });
+    }
+  }, [userProfile]);
+
+  // Get full name from profile
+  const getFullName = () => {
+    if (userProfile && userProfile.displayName) {
+      return userProfile.displayName;
+    } else if (userInfo && userInfo.displayName) {
+      return userInfo.displayName;
+    }
+    return 'Guest User';
+  };
+
+  // Get customer ID from profile
+  const getCustomerId = () => {
+    if (userProfile && userProfile.id) {
+      return `CUST${userProfile.id.substring(0, 8)}`;
+    } else if (userInfo && userInfo.uid) {
+      return `CUST${userInfo.uid.substring(0, 8)}`;
+    }
+    return 'GUEST000000';
+  };
+
+  // Get KYC status from profile
+  const getKycStatus = () => {
+    if (userProfile && userProfile.kycStatus) {
+      return userProfile.kycStatus;
+    } else if (userInfo && userInfo.emailVerified) {
+      return 'Verified';
+    }
+    return 'Not Verified';
+  };
+
+  // Handle form input changes
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Save profile changes
+  const handleSaveProfile = async () => {
     setLoading(true);
     
-    // Update userData with Firebase auth data if available
-    if (userInfo) {
-      const displayName = userInfo.displayName || 'Fastag User';
-      const email = userInfo.email || 'No email provided';
+    try {
+      // Create display name
+      const displayName = `${formData.firstName} ${formData.lastName}`;
       
-      setUserData(prevData => ({
-        ...prevData,
-        name: displayName,
-        email: email,
-        customerId: userInfo.uid ? `CUST${userInfo.uid.substring(0, 8)}` : prevData.customerId,
-        kycStatus: userInfo.emailVerified ? 'Verified' : 'Pending',
-      }));
-    }
-    
-    setTimeout(() => {
+      // Update profile in Firestore
+      const success = await updateProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        displayName,
+        phone: formData.phone,
+        address: formData.address,
+      });
+      
+      if (success) {
+        addNotification({
+          id: Date.now(),
+          message: 'Profile updated successfully',
+          time: 'Just now',
+          read: false
+        });
+        
+        setIsEditing(false);
+      } else {
+        Alert.alert('Error', 'Failed to update profile. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'An error occurred while updating profile');
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [userInfo]);
+    }
+  };
 
   // Handle logout
   const handleLogout = async () => {
@@ -95,6 +157,19 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
   
+  // If auth is still loading, show loading spinner
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#00ACC1" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -119,13 +194,13 @@ const ProfileScreen = ({ navigation }) => {
             {/* Profile Summary */}
             <View style={styles.profileSummary}>
               <View style={styles.avatarContainer}>
-                <Text style={styles.avatarText}>{userData.name.charAt(0)}</Text>
+                <Text style={styles.avatarText}>{getFullName().charAt(0)}</Text>
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{userData.name}</Text>
-                <Text style={styles.profileId}>{userData.customerId}</Text>
+                <Text style={styles.profileName}>{getFullName()}</Text>
+                <Text style={styles.profileId}>{getCustomerId()}</Text>
                 <View style={styles.kycBadge}>
-                  <Text style={styles.kycText}>KYC {userData.kycStatus}</Text>
+                  <Text style={styles.kycText}>KYC {getKycStatus()}</Text>
                 </View>
               </View>
             </View>
@@ -136,7 +211,7 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.walletCard}>
                 <View style={styles.walletInfo}>
                   <Text style={styles.walletLabel}>Available Balance</Text>
-                  <Text style={styles.walletBalance}>{userData.walletBalance}</Text>
+                  <Text style={styles.walletBalance}>₹0</Text>
                 </View>
                 <TouchableOpacity style={styles.addMoneyButton}>
                   <Text style={styles.addMoneyButtonText}>Add Money</Text>
@@ -147,25 +222,120 @@ const ProfileScreen = ({ navigation }) => {
             {/* Personal Information */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Personal Information</Text>
-              <View style={styles.infoCard}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Phone</Text>
-                  <Text style={styles.infoValue}>{userData.phone || 'Not provided'}</Text>
+              
+              {isEditing ? (
+                // Edit Form
+                <View style={styles.infoCard}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>First Name</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.firstName}
+                      onChangeText={(text) => handleInputChange('firstName', text)}
+                      placeholder="Enter your first name"
+                    />
+                  </View>
+                  
+                  <View style={styles.separator} />
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Last Name</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.lastName}
+                      onChangeText={(text) => handleInputChange('lastName', text)}
+                      placeholder="Enter your last name"
+                    />
+                  </View>
+                  
+                  <View style={styles.separator} />
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Phone</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.phone}
+                      onChangeText={(text) => handleInputChange('phone', text)}
+                      placeholder="Enter your phone number"
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                  
+                  <View style={styles.separator} />
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Email</Text>
+                    <TextInput
+                      style={[styles.textInput, { color: '#777777' }]}
+                      value={formData.email}
+                      editable={false}
+                      placeholder="Email address"
+                    />
+                  </View>
+                  
+                  <View style={styles.separator} />
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Address</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.address}
+                      onChangeText={(text) => handleInputChange('address', text)}
+                      placeholder="Enter your address"
+                      multiline
+                      numberOfLines={3}
+                    />
+                  </View>
                 </View>
-                <View style={styles.separator} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoValue}>{userData.email}</Text>
+              ) : (
+                // Display Info
+                <View style={styles.infoCard}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Phone</Text>
+                    <Text style={styles.infoValue}>{userProfile?.phone || 'Not provided'}</Text>
+                  </View>
+                  <View style={styles.separator} />
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Email</Text>
+                    <Text style={styles.infoValue}>{userProfile?.email || userInfo?.email || 'Not provided'}</Text>
+                  </View>
+                  <View style={styles.separator} />
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Address</Text>
+                    <Text style={styles.infoValue}>{userProfile?.address || 'Not provided'}</Text>
+                  </View>
                 </View>
-                <View style={styles.separator} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Address</Text>
-                  <Text style={styles.infoValue}>{userData.address || 'Not provided'}</Text>
+              )}
+              
+              {isEditing ? (
+                <View style={styles.editButtonsRow}>
+                  <TouchableOpacity 
+                    style={styles.cancelButton}
+                    onPress={() => setIsEditing(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.saveButton}
+                    onPress={handleSaveProfile}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Save Changes</Text>
+                    )}
+                  </TouchableOpacity>
                 </View>
-              </View>
-              <TouchableOpacity style={styles.editButton}>
-                <Text style={styles.editButtonText}>Edit Information</Text>
-              </TouchableOpacity>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.editButton}
+                  onPress={() => setIsEditing(true)}
+                >
+                  <Text style={styles.editButtonText}>Edit Information</Text>
+                </TouchableOpacity>
+              )}
             </View>
             
             {/* Settings */}
@@ -473,6 +643,54 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     marginHorizontal: 12,
   },
+  
+  // Edit Form
+  inputGroup: {
+    padding: 12,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#777777',
+    marginBottom: 8,
+  },
+  textInput: {
+    fontSize: 16,
+    color: '#333333',
+    padding: 8,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+  },
+  editButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  cancelButtonText: {
+    color: '#777777',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: '#00ACC1',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   editButton: {
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
@@ -655,7 +873,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 30,
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
