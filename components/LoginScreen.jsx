@@ -108,7 +108,7 @@ const LoginScreen = ({ navigation }) => {
           <View style={styles.headerContainer}>
             <Image
               style={styles.logo}
-              source={require('../assets/tm_square_logo.jpeg')}
+              source={require('../assets/icons/tm_square_logo.png')}
               resizeMode="contain"
             />
             <Text style={styles.welcomeText}>Welcome Back</Text>

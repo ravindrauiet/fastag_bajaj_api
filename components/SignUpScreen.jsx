@@ -169,7 +169,7 @@ const SignUpScreen = ({ navigation }) => {
           <View style={styles.logoContainer}>
             <Image
               style={styles.logo}
-              source={require('../assets/tm_square_logo.jpeg')}
+              source={require('../assets/icons/tm_square_logo.png')}
               resizeMode="contain"
             />
           </View>

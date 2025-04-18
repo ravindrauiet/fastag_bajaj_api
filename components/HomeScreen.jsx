@@ -136,20 +136,6 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Frequently Used</Text>
           <View style={styles.frequentlyUsedGrid}>
-            <TouchableOpacity style={styles.serviceItem}>
-              <View style={styles.serviceIconContainer}>
-                <Text style={styles.serviceIcon}>📞</Text>
-              </View>
-              <Text style={styles.serviceText}>FasTag{'\n'}Recharge</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.serviceItem}>
-              <View style={styles.serviceIconContainer}>
-                <Text style={styles.serviceIcon}>💳</Text>
-              </View>
-              <Text style={styles.serviceText}>FasTag{'\n'}Insurance</Text>
-            </TouchableOpacity>
-            
             <TouchableOpacity 
               style={styles.serviceItem}
               onPress={() => navigateWithNotification('FasTagReplacementScreen')}
@@ -158,6 +144,13 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.serviceIcon}>▶</Text>
               </View>
               <Text style={styles.serviceText}>FasTag{'\n'}Replacement</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.serviceItem}>
+              <View style={styles.serviceIconContainer}>
+                <Text style={styles.serviceIcon}>💳</Text>
+              </View>
+              <Text style={styles.serviceText}>FasTag{'\n'}Insurance</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -170,11 +163,24 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.serviceText}>Add{'\n'}FasTag</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.serviceItem}>
+            <TouchableOpacity 
+              style={styles.serviceItem}
+              onPress={() => navigateWithNotification('WalletRecharge')}
+            >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>💰</Text>
               </View>
               <Text style={styles.serviceText}>Request{'\n'}Money</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.serviceItem}
+              onPress={() => navigateWithNotification('FeedbackForm')}
+            >
+              <View style={styles.serviceIconContainer}>
+                <Text style={styles.serviceIcon}>📝</Text>
+              </View>
+              <Text style={styles.serviceText}>Feedback</Text>
             </TouchableOpacity>
           </View>
         </View>

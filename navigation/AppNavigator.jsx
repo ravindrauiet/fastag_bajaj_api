@@ -35,6 +35,7 @@ import PaymentGatewayScreen from '../components/PaymentGatewayScreen';
 import TransactionHistoryScreen from '../components/TransactionHistoryScreen';
 import TransactionDetailScreen from '../components/TransactionDetailScreen';
 import BankAccountLinkScreen from '../components/BankAccountLinkScreen';
+import FeedbackForm from '../components/FeedbackForm';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -80,6 +81,7 @@ const HomeStack = () => {
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
       <Stack.Screen name="VrnUpdate" component={VrnUpdateScreen} />
       <Stack.Screen name="FasTagRekyc" component={FasTagRekycScreen} />
+      <Stack.Screen name="FeedbackForm" component={FeedbackForm} />
       
       {/* Add FASTag Flow Screens */}
       <Stack.Screen name="EnterDetails" component={EnterDetailsScreen} />
@@ -248,8 +250,8 @@ const NotificationBell = () => {
 const LogoTitle = () => (
   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
     <Image
-      style={{ height: 50, width: 180 }}
-      source={require('../assets/tm_square_logo.jpeg')}
+      style={{ height: 35, width: 180, marginVertical: 5 }}
+      source={require('../assets/icons/tm_square_logo.png')}
       resizeMode="contain"
     />
   </View>
@@ -307,13 +309,15 @@ const CustomDrawerContent = (props) => {
     <View style={styles.drawerContainer}>
       {/* User Profile Section */}
       <View style={styles.drawerHeader}>
-        <View style={styles.userAvatarContainer}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>IC</Text>
-          </View>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../assets/icons/tm_square_logo.png')}
+            style={styles.drawerLogo}
+            resizeMode="contain"
+          />
         </View>
-        <Text style={styles.userName}>Ishita Chitkara</Text>
-        <Text style={styles.userEmail}>ishita.chitkara@example.com</Text>
+        <Text style={styles.appName}>FasTag Admin Portal</Text>
+        <Text style={styles.userEmail}>Powered by TMsquare Global Solutions</Text>
       </View>
 
       {/* Menu Items */}
@@ -394,6 +398,7 @@ const AppStack = ({ navigation }) => {
           shadowOffset: { width: 0, height: 2 },
           shadowRadius: 2,
           borderBottomWidth: 0,
+          height: 60,
         },
         headerTintColor: '#333333',
         headerTitleStyle: {
@@ -481,6 +486,7 @@ const styles = StyleSheet.create({
     height: 180,
     backgroundColor: '#333333',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
@@ -626,44 +632,33 @@ const styles = StyleSheet.create({
     height: 180,
     backgroundColor: '#333333',
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
   },
-  userAvatarContainer: {
+  logoContainer: {
     marginBottom: 15,
-  },
-  userAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
   },
-  userAvatarText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+  drawerLogo: {
+    width: 120,
+    height: 60,
+    backgroundColor: 'transparent',
   },
-  userName: {
+  appName: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
     marginTop: 10,
+    textAlign: 'center',
   },
   userEmail: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 14,
     marginTop: 4,
+    textAlign: 'center',
   },
   drawerMenuContainer: {
     flex: 1,
