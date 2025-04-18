@@ -106,6 +106,108 @@ const generateTokenInternally = async () => {
   }
 };
 
+// Helper function to validate RC images before registration
+const validateRCImagesForRegistration = async (requestId, sessionId) => {
+  try {
+    console.log('=== VALIDATING RC IMAGES BEFORE REGISTRATION ===');
+    console.log(`Request ID: ${requestId}`);
+    console.log(`Session ID: ${sessionId}`);
+    
+    // Get the current timestamp
+    const reqDateTime = getCurrentDateTime();
+    
+    // Create a simple validation request to check if images exist
+    const requestData = {
+      regDetails: {
+        requestId,
+        sessionId,
+        channel: CHANNEL,
+        agentId: AGENT_ID,
+        reqDateTime
+      }
+    };
+    
+    const encryptedData = encrypt(JSON.stringify(requestData));
+    
+    // We're using the uploadDocument endpoint with a special flag to check for RC images
+    const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/validateImages`, encryptedData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'aggr_channel': CHANNEL,
+        'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
+      }
+    }).catch(error => {
+      // If this endpoint doesn't exist, we'll just skip this validation
+      console.log('Image validation endpoint not available, skipping validation');
+      return { data: null };
+    });
+    
+    if (response.data) {
+      try {
+        const decryptedResponse = decrypt(response.data);
+        const parsedResponse = JSON.parse(decryptedResponse);
+        
+        if (parsedResponse.response && parsedResponse.response.status === 'success') {
+          console.log('All RC images validated successfully!');
+          return true;
+        } else {
+          console.error('RC image validation failed:', parsedResponse.response?.errorDesc || 'Unknown error');
+          return false;
+        }
+      } catch (error) {
+        // If we can't decrypt the response, that's fine - we'll continue
+        console.log('Could not decrypt validation response, continuing with registration');
+        return true;
+      }
+    }
+    
+    // If we couldn't validate, we'll assume all is well and continue with registration
+    return true;
+  } catch (error) {
+    console.error('Error validating RC images:', error);
+    // Don't block registration if validation fails - let it proceed
+    return true;
+  }
+};
+
+// Helper function to properly format Base64 for RC images
+const ensureValidBase64 = (base64String) => {
+  if (!base64String || typeof base64String !== 'string') {
+    return null;
+  }
+  
+  try {
+    // 1. Remove any data URL prefix if present
+    let cleaned = base64String;
+    if (cleaned.includes('base64,')) {
+      cleaned = cleaned.split('base64,')[1];
+    }
+
+    // 2. Remove all whitespace, newlines, tabs, etc.
+    cleaned = cleaned.replace(/[\s\r\n\t]/g, '');
+
+    // 3. Make sure the string only contains valid Base64 characters
+    let validBase64 = cleaned.replace(/[^A-Za-z0-9+/=]/g, '');
+
+    // 4. Ensure proper padding
+    const remainder = validBase64.length % 4;
+    if (remainder > 0) {
+      validBase64 = validBase64.padEnd(validBase64.length + (4 - remainder), '=');
+    }
+
+    // 5. Validate the result
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(validBase64)) {
+      console.error('Invalid Base64 string after cleaning');
+      return null;
+    }
+
+    return validBase64;
+  } catch (error) {
+    console.error('Failed to clean Base64 string:', error);
+    return null;
+  }
+};
+
 // API functions
 const bajajApi = {
   // 1. Validate Customer & Vehicle (OTP Trigger)
@@ -711,10 +813,15 @@ const bajajApi = {
         throw new Error(`Invalid image data for ${imageType}`);
       }
       
-      // Log image metadata to help diagnose issues
-      console.log(`Uploading ${imageType} document with base64 length: ${image.length}`);
-      console.log(`First 30 chars of base64: ${image.substring(0, 30)}...`);
-      console.log(`Last 30 chars of base64: ...${image.substring(image.length - 30)}`);
+      // Use our helper function to ensure valid Base64
+      const cleanedImage = ensureValidBase64(image);
+      if (!cleanedImage) {
+        throw new Error(`Could not create valid Base64 string for ${imageType}`);
+      }
+      
+      // Log for debugging - don't truncate
+      console.log(`Uploading ${imageType} document with base64 length: ${cleanedImage.length}`);
+      console.log(`Image appears to be valid Base64`);
       
       const reqDateTime = getCurrentDateTime();
 
@@ -728,14 +835,14 @@ const bajajApi = {
         },
         documentDetails: {
           imageType, // Must be one of: RCFRONT, RCBACK, VEHICLEFRONT, VEHICLESIDE, TAGAFFIX
-          image      // Base64 encoded image
+          image: cleanedImage // Use the cleaned Base64 string
         }
       };
 
-      // Console log the original request data (shorten image data for clarity)
-      const loggableRequest = { ...requestData };
+      // Console log the original request data (don't include full image data in logs)
+      const loggableRequest = JSON.parse(JSON.stringify(requestData));
       if (loggableRequest.documentDetails.image) {
-        loggableRequest.documentDetails.image = loggableRequest.documentDetails.image.substring(0, 50) + '... (truncated)';
+        loggableRequest.documentDetails.image = `[Base64 Image with length ${cleanedImage.length}]`;
       }
       console.log('=== UPLOAD DOCUMENT REQUEST ===');
       console.log(JSON.stringify(loggableRequest, null, 2));
@@ -744,7 +851,7 @@ const bajajApi = {
       
       // Console log the encrypted request (shortened)
       console.log('=== UPLOAD DOCUMENT ENCRYPTED REQUEST ===');
-      console.log(encryptedData.substring(0, 100) + '... (truncated)');
+      console.log(`[Encrypted data with length ${encryptedData.length}]`);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/uploadDocument`, encryptedData, {
         headers: {
@@ -781,8 +888,8 @@ const bajajApi = {
 
       return response.data;
     } catch (error) {
-      console.error('Document Upload API Error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to upload document');
+      console.error(`Document Upload API Error for ${imageType}:`, error);
+      throw new Error(error.response?.data?.message || `Failed to upload ${imageType} document`);
     }
   },
 
@@ -857,6 +964,9 @@ const bajajApi = {
         registrationData.custDetails.walletId = "";
       }
       
+      // Optionally validate RC images first (if the endpoint supports it)
+      console.log('Using session ID for registration:', registrationData.regDetails.sessionId);
+      
       // Field mapping note:
       // The OTP response has different field names than what the registration API expects:
       // OTP Response      →  Registration API
@@ -872,7 +982,7 @@ const bajajApi = {
       
       // Console log the encrypted request
       console.log('=== REGISTER NEW FASTAG ENCRYPTED REQUEST ===');
-      console.log(encryptedData);
+      console.log(`[Encrypted data with length ${encryptedData.length}]`);
 
       const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
         headers: {

@@ -137,10 +137,10 @@ const ManualActivationScreen = ({ route, navigation }) => {
       setErrors(prev => ({ ...prev, serialNo: 'Serial Number is required' }));
       return;
     }
-    if (!tid.trim()) {
-      setErrors(prev => ({ ...prev, tid: 'TID is required' }));
-      return;
-    }
+    // if (!tid.trim()) {
+    //   setErrors(prev => ({ ...prev, tid: 'TID is required' }));
+    //   return;
+    // }
     
     // Clear any existing errors
     setErrors({});
@@ -340,7 +340,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
               
               {/* TID */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>TID<Text style={styles.required}>*</Text></Text>
+                <Text style={styles.label}>TID<Text style={styles.required}></Text></Text>
                 <TextInput
                   style={[styles.input, errors.tid ? styles.inputError : null]}
                   placeholder="Enter FasTag TID"
