@@ -14,8 +14,31 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { NotificationContext } from '../contexts/NotificationContext';
+import bajajApi from '../api/bajajApi';
 
-const FasTagReplacementScreen = ({ navigation }) => {
+const FasTagReplacementScreen = ({ navigation, route }) => {
+  // Extract params from route
+  const { 
+    requestId,
+    sessionId,
+    mobileNo: initialMobile,
+    vehicleNo: initialVehicle,
+    chassisNo: initialChassis,
+    engineNo: initialEngine,
+    walletId: initialWallet,
+    isNationalPermit: initialNationalPermit,
+    permitExpiryDate: initialPermitDate,
+    stateOfRegistration: initialState,
+    vehicleDescriptor: initialDescriptor,
+    channel,
+    agentId,
+    udf1: initialUdf1,
+    udf2: initialUdf2,
+    udf3: initialUdf3,
+    udf4: initialUdf4,
+    udf5: initialUdf5
+  } = route.params;
+
   // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(30));
@@ -23,16 +46,35 @@ const FasTagReplacementScreen = ({ navigation }) => {
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
   
-  // Form state
-  const [mobileNo, setMobileNo] = useState('');
-  const [walletId, setWalletId] = useState('');
-  const [vehicleNo, setVehicleNo] = useState('');
+  // Initialize form state with received params
+  const [mobileNo, setMobileNo] = useState(initialMobile);
+  const [walletId, setWalletId] = useState(initialWallet);
+  const [vehicleNo, setVehicleNo] = useState(initialVehicle);
   const [serialNo, setSerialNo] = useState('');
-  const [chassisNo, setChassisNo] = useState('');
-  const [engineNo, setEngineNo] = useState('');
+  const [chassisNo, setChassisNo] = useState(initialChassis);
+  const [engineNo, setEngineNo] = useState(initialEngine);
+  const [udf1, setUdf1] = useState(initialUdf1);
+  const [udf2, setUdf2] = useState(initialUdf2);
+  const [udf3, setUdf3] = useState(initialUdf3);
+  const [udf4, setUdf4] = useState(initialUdf4);
+  const [udf5, setUdf5] = useState(initialUdf5);
+
+  // Dropdown states
+  const [isNationalPermit, setIsNationalPermit] = useState(initialNationalPermit);
+  const [stateOfRegistration, setStateOfRegistration] = useState(initialState);
+  const [vehicleDescriptor, setVehicleDescriptor] = useState(initialDescriptor);
+  const [reasonId, setReasonId] = useState(null);
+  const [reasonDesc, setReasonDesc] = useState('');
+
+  // Dropdown items
+  const [reasonItems] = useState([
+    {label: 'Tag Damaged', value: '1'},
+    {label: 'Lost Tag', value: '2'},
+    {label: 'Tag Not Working', value: '3'},
+    {label: 'Others', value: '99'},
+  ]);
   
   // National Permit
-  const [isNationalPermit, setIsNationalPermit] = useState('1');
   const [openNationalPermit, setOpenNationalPermit] = useState(false);
   const [nationalPermitItems, setNationalPermitItems] = useState([
     {label: 'Yes', value: '1'},
@@ -40,22 +82,13 @@ const FasTagReplacementScreen = ({ navigation }) => {
   ]);
   
   // Date input state
-  const [permitExpiryDate, setPermitExpiryDate] = useState('31/12/2025');
+  const [permitExpiryDate, setPermitExpiryDate] = useState(initialPermitDate);
   
   // Reason state
   const [openReason, setOpenReason] = useState(false);
-  const [reasonId, setReasonId] = useState(null);
-  const [reasonDesc, setReasonDesc] = useState('');
-  const [reasonItems, setReasonItems] = useState([
-    {label: 'Tag Damaged', value: '1'},
-    {label: 'Lost Tag', value: '2'},
-    {label: 'Tag Not Working', value: '3'},
-    {label: 'Others', value: '99'},
-  ]);
   
   // State registration
   const [openState, setOpenState] = useState(false);
-  const [stateOfRegistration, setStateOfRegistration] = useState('MH');
   const [stateItems, setStateItems] = useState([
     {label: 'Maharashtra', value: 'MH'},
     {label: 'Delhi', value: 'DL'},
@@ -68,7 +101,6 @@ const FasTagReplacementScreen = ({ navigation }) => {
   
   // Vehicle descriptor dropdown
   const [openVehicleDescriptor, setOpenVehicleDescriptor] = useState(false);
-  const [vehicleDescriptor, setVehicleDescriptor] = useState('Petrol');
   const [vehicleDescriptorItems, setVehicleDescriptorItems] = useState([
     {label: 'Petrol', value: 'Petrol'},
     {label: 'Diesel', value: 'Diesel'},
@@ -79,13 +111,6 @@ const FasTagReplacementScreen = ({ navigation }) => {
   
   // Validation errors
   const [errors, setErrors] = useState({});
-  
-  // Optional fields
-  const [udf1, setUdf1] = useState('');
-  const [udf2, setUdf2] = useState('');
-  const [udf3, setUdf3] = useState('');
-  const [udf4, setUdf4] = useState('');
-  const [udf5, setUdf5] = useState('');
   
   // Animation effect on component mount
   useEffect(() => {
@@ -195,41 +220,17 @@ const FasTagReplacementScreen = ({ navigation }) => {
   };
   
   // Handle form submission
-  const handleSubmit = () => {
-    // Validate all required fields
-    const validMobile = validateField('mobileNo', mobileNo);
-    const validVehicle = validateField('vehicleNo', vehicleNo);
-    const validWallet = validateField('walletId', walletId);
-    const validSerial = validateField('serialNo', serialNo);
-    const validReason = validateField('reasonId', reasonId);
-    const validReasonDesc = validateField('reasonDesc', reasonDesc);
-    const validDate = validateField('permitExpiryDate', permitExpiryDate);
-    
-    if (!(validMobile && validVehicle && validWallet && validSerial && validReason && validReasonDesc && validDate)) {
-      Alert.alert('Validation Error', 'Please correct the errors in the form.');
-      return;
-    }
-    
-    // If validation passes, add this code before the Alert:
-    addNotification({
-      id: Date.now(),
-      message: 'FasTag replacement request submitted',
-      time: 'Just now',
-      read: false
-    });
-    
-    // Prepare API request payload
+  const handleSubmit = async () => {
     const payload = {
       tagReplaceReq: {
         mobileNo,
         walletId,
         vehicleNo,
-        channel: "APP",
-        agentId: "",
-        reqDateTime: getCurrentDateTime(),
-        debitAmt: "",
-        requestId: Date.now().toString(),
-        sessionId: Date.now().toString(),
+        channel,
+        agentId,
+        reqDateTime: new Date().toISOString(),
+        requestId,
+        sessionId,
         serialNo,
         reason: reasonId,
         reasonDesc: reasonId === '99' ? reasonDesc : "",
@@ -246,18 +247,18 @@ const FasTagReplacementScreen = ({ navigation }) => {
         udf5
       }
     };
-    
-    console.log('FasTag Replacement Request:', payload);
-    
-    // In a real app, we would call the API here
-    // For the demo, we'll simulate a successful response
-    Alert.alert(
-      'Success',
-      'FasTag replacement request submitted successfully!',
-      [
-        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-      ]
-    );
+
+    try {
+      const response = await bajajApi.replaceFastag(payload);
+      if (response?.response?.status === 'success') {
+        navigation.navigate('Confirmation', {
+          type: 'replacement',
+          data: response.tagReplaceResp
+        });
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
   };
   
   return (

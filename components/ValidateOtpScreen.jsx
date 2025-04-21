@@ -365,12 +365,27 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               navigation.navigate('FasTagReplacement', {
                 requestId: requestId,
                 sessionId: sessionId,
-                mobileNo,
-                vehicleNo,
-                chassisNo,
-                engineNo,
+                mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
+                vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
+                chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
+                engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
                 customerId: response.validateOtpResp?.custDetails?.customerId || '',
-                walletId: response.validateOtpResp?.custDetails?.walletId || ''
+                walletId: response.validateOtpResp?.custDetails?.walletId || '',
+                otpResponse: response,
+                vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
+                model: response.validateOtpResp?.vrnDetails?.model,
+                isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
+                permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
+                stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
+                vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'Petrol',
+                npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
+                channel: response.validateOtpResp?.channel || 'CBPL',
+                agentId: response.validateOtpResp?.agentId || '70003',
+                udf1: response.validateOtpResp?.udf1 || '',
+                udf2: response.validateOtpResp?.udf2 || '',
+                udf3: response.validateOtpResp?.udf3 || '',
+                udf4: response.validateOtpResp?.udf4 || '',
+                udf5: response.validateOtpResp?.udf5 || ''
               });
             }
           }
