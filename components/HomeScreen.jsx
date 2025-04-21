@@ -34,6 +34,9 @@ const HomeScreen = ({ navigation }) => {
   
   // Add navigation enhancers to track screen completion
   const navigateWithNotification = (screenName, params = {}) => {
+    // Debug logging
+    console.log(`Navigating to ${screenName}`, params);
+    
     // Navigate to the screen
     navigation.navigate(screenName, params);
     
@@ -216,7 +219,11 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Services</Text>
             <TouchableOpacity
-              onPress={() => navigateWithNotification('ServicesScreen')}
+              onPress={() => {
+                console.log('View All button pressed');
+                // Try direct navigation without using the notification wrapper
+                navigation.navigate('ServicesScreen');
+              }}
             >
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>

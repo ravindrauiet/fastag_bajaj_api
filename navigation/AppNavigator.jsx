@@ -39,6 +39,7 @@ import FeedbackForm from '../components/FeedbackForm';
 import AdminDashboard from '../components/AdminDashboard';
 import FormSubmissionsScreen from '../components/admin/FormSubmissionsScreen';
 import FormSubmissionDetailScreen from '../components/admin/FormSubmissionDetailScreen';
+import ServicesScreen from '../components/ServicesScreen';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -85,6 +86,7 @@ const HomeStack = () => {
       <Stack.Screen name="VrnUpdate" component={VrnUpdateScreen} />
       <Stack.Screen name="FasTagRekyc" component={FasTagRekycScreen} />
       <Stack.Screen name="FeedbackForm" component={FeedbackForm} />
+      <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
       
       {/* Add FASTag Flow Screens */}
       <Stack.Screen name="EnterDetails" component={EnterDetailsScreen} />
@@ -251,9 +253,9 @@ const NotificationBell = () => {
 
 // Custom logo component
 const LogoTitle = () => (
-  <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+  <View style={styles.logoTitleContainer}>
     <Image
-      style={{ height: 35, width: 180, marginVertical: 5 }}
+      style={styles.logoTitleImage}
       source={require('../assets/icons/tm_square_logo.png')}
       resizeMode="contain"
     />
@@ -409,6 +411,7 @@ const AppStack = ({ navigation }) => {
           textAlign: 'center',
           alignSelf: 'center',
           flex: 1,
+          marginLeft: -40, // Adjust to center the logo properly accounting for the left menu button
         },
         headerTitleAlign: 'center',
       })}
@@ -416,14 +419,24 @@ const AppStack = ({ navigation }) => {
       <Drawer.Screen 
         name="Home" 
         component={HomeStack} 
+        options={{
+          headerTitle: (props) => <LogoTitle {...props} />,
+          headerRight: () => (
+            <View style={styles.headerRight}>
+              <NotificationBell />
+            </View>
+          ),
+        }}
       />
       <Drawer.Screen 
         name="NETC" 
         component={NETCStack} 
+        options={{ headerTitle: 'NETC FasTag' }}
       />
       <Drawer.Screen 
         name="Inventory" 
         component={InventoryStack} 
+        options={{ headerTitle: 'FasTag Inventory' }}
       />
       <Drawer.Screen 
         name="Wallet" 
@@ -457,6 +470,11 @@ const AppStack = ({ navigation }) => {
           title: 'Profile',
           headerTitle: 'Profile'
         }}
+      />
+      <Drawer.Screen
+        name="ServicesScreen"
+        component={ServicesScreen}
+        options={{ headerTitle: 'All Services' }}
       />
     </Drawer.Navigator>
   );
@@ -549,6 +567,17 @@ const MainNavigator = () => {
                 headerShown: false
               }}
             />
+            <Stack.Screen
+              name="ServicesScreen"
+              component={ServicesScreen}
+              options={{
+                headerTitle: 'All Services',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
             {/* Add other screens that might be needed in admin flow */}
             <Stack.Screen name="HomeScreen" component={HomeScreen} />
             <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
@@ -566,14 +595,15 @@ const MainNavigator = () => {
                 width: 280,
               },
               headerStyle: {
-                backgroundColor: '#00ACC1',
+                backgroundColor: '#FFFFFF',
                 elevation: 0,
                 shadowOpacity: 0,
               },
-              headerTintColor: '#FFFFFF',
+              headerTintColor: '#333333',
               headerTitleStyle: {
                 fontWeight: 'bold',
               },
+              headerTitleAlign: 'center',
             }}
           >
             <Drawer.Screen
@@ -608,6 +638,11 @@ const MainNavigator = () => {
               component={WalletStack}
               options={{ headerTitle: 'My Wallet' }}
             />
+            <Drawer.Screen
+              name="ServicesScreen"
+              component={ServicesScreen}
+              options={{ headerTitle: 'All Services' }}
+            />
           </Drawer.Navigator>
         )
       ) : (
@@ -625,7 +660,7 @@ const styles = StyleSheet.create({
   },
   drawerHeader: {
     height: 180,
-    backgroundColor: '#333333',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -771,7 +806,7 @@ const styles = StyleSheet.create({
   },
   drawerHeader: {
     height: 180,
-    backgroundColor: '#333333',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -784,19 +819,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   drawerLogo: {
-    width: 120,
+    width: 180,
     height: 60,
     backgroundColor: 'transparent',
+    marginVertical: 10,
   },
   appName: {
-    color: '#fff',
+    color: '#333333',
     fontSize: 18,
     fontWeight: '600',
     marginTop: 10,
     textAlign: 'center',
   },
   userEmail: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#666666',
     fontSize: 14,
     marginTop: 4,
     textAlign: 'center',
@@ -904,6 +940,18 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     marginRight: 10,
+  },
+  logoTitleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    marginLeft: 0,
+  },
+  logoTitleImage: {
+    height: 35,
+    width: 180,
+    marginVertical: 5,
   },
 });
 
