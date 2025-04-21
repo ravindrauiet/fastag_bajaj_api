@@ -2,6 +2,7 @@ import React, { useEffect, useContext, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
+import DebugConsole from './DebugConsole';
 
 const HomeScreen = ({ navigation }) => {
   // Access the notification context
@@ -13,6 +14,9 @@ const HomeScreen = ({ navigation }) => {
   // State for balance (in a real app, this would come from an API)
   const [balance, setBalance] = useState('₹ 0');
   
+  // Debug console state
+  const [debugVisible, setDebugVisible] = useState(false);
+  
   // Add a navigation listener to track screen changes
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -22,6 +26,11 @@ const HomeScreen = ({ navigation }) => {
     
     return unsubscribe;
   }, [navigation]);
+  
+  // Toggle debug console
+  const toggleDebugConsole = () => {
+    setDebugVisible(!debugVisible);
+  };
   
   // Add navigation enhancers to track screen completion
   const navigateWithNotification = (screenName, params = {}) => {
@@ -86,6 +95,13 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      
+      {/* Debug Console */}
+      <DebugConsole 
+        visible={debugVisible}
+        onClose={() => setDebugVisible(false)}
+      />
+      
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header removed and replaced with default React Navigation header */}
 
@@ -118,6 +134,16 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
+        
+        {/* Debug Button - Only visible for admins */}
+        {userInfo && userInfo.isAdmin && (
+          <TouchableOpacity 
+            style={styles.debugButton}
+            onPress={toggleDebugConsole}
+          >
+            <Text style={styles.debugButtonText}>Debug Console</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Welcome Message for User */}
         {userProfile && (
@@ -619,6 +645,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#FFFFFF',
+  },
+  
+  // Debug Button
+  debugButton: {
+    backgroundColor: '#333333',
+    borderRadius: 8,
+    padding: 8,
+    margin: 16,
+    marginTop: 0,
+    alignItems: 'center',
+    width: '40%',
+    alignSelf: 'flex-end',
+  },
+  debugButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
 });
 

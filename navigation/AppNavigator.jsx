@@ -36,6 +36,9 @@ import TransactionHistoryScreen from '../components/TransactionHistoryScreen';
 import TransactionDetailScreen from '../components/TransactionDetailScreen';
 import BankAccountLinkScreen from '../components/BankAccountLinkScreen';
 import FeedbackForm from '../components/FeedbackForm';
+import AdminDashboard from '../components/AdminDashboard';
+import FormSubmissionsScreen from '../components/admin/FormSubmissionsScreen';
+import FormSubmissionDetailScreen from '../components/admin/FormSubmissionDetailScreen';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -259,7 +262,7 @@ const LogoTitle = () => (
 
 // Custom drawer content component
 const CustomDrawerContent = (props) => {
-  const { logout } = useAuth();
+  const { logout, userProfile, isAdmin } = useAuth();
   
   const renderMenuItem = (label, iconName, screenName, isMain = false) => {
     const isActive = props.state.routes[props.state.index].name === screenName;
@@ -459,22 +462,160 @@ const AppStack = ({ navigation }) => {
   );
 };
 
-// Main Navigator that handles authentication state
+// Main Navigator that handles authentication flow
 const MainNavigator = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading, userInfo } = useAuth();
+  
+  console.log('MainNavigator state:', { 
+    isAuthenticated, 
+    isAdmin, 
+    isLoading,
+    email: userInfo?.email 
+  });
   
   if (isLoading) {
-    // Show a loading screen while checking authentication state
+    // Show loading screen while checking authentication
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#333333" />
-        <Text style={{ marginTop: 20, fontSize: 16, color: '#333333' }}>Loading...</Text>
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
   
-  // Render either the main app or authentication flow based on auth state
-  return isAuthenticated ? <AppStack /> : <AuthNavigator />;
+  // Special case: admin user - should always go to admin dashboard
+  const isAdminEmail = userInfo?.email === 'admin@gmail.com';
+  
+  // Force admin nav if email is admin@gmail.com, even if isAdmin flag isn't set yet
+  const showAdminDashboard = isAuthenticated && (isAdmin || isAdminEmail);
+  
+  console.log('Navigation decision:', { 
+    showAdminDashboard, 
+    isAuthenticated, 
+    isAdmin, 
+    isAdminEmail 
+  });
+  
+  return (
+    <NavigationContainer>
+      {isAuthenticated ? (
+        showAdminDashboard ? (
+          // Admin is authenticated, show admin dashboard
+          <Stack.Navigator>
+            <Stack.Screen 
+              name="AdminDashboard" 
+              component={AdminDashboard}
+              options={{
+                headerShown: false // Use the custom header in AdminDashboard
+              }}
+            />
+            <Stack.Screen 
+              name="ProfileScreen" 
+              component={ProfileScreen}
+              options={{
+                headerTitle: 'Profile',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen
+              name="FormSubmissionsScreen"
+              component={FormSubmissionsScreen}
+              options={{
+                headerTitle: 'Form Submissions',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen
+              name="FormSubmissionDetailScreen"
+              component={FormSubmissionDetailScreen}
+              options={{
+                headerTitle: 'Submission Details',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{
+                headerShown: false
+              }}
+            />
+            {/* Add other screens that might be needed in admin flow */}
+            <Stack.Screen name="HomeScreen" component={HomeScreen} />
+            <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
+            <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
+            <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
+            <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
+          </Stack.Navigator>
+        ) : (
+          // User is authenticated, show main app flow
+          <Drawer.Navigator
+            drawerContent={(props) => <CustomDrawerContent {...props} />}
+            screenOptions={{
+              drawerStyle: {
+                backgroundColor: '#FFFFFF',
+                width: 280,
+              },
+              headerStyle: {
+                backgroundColor: '#00ACC1',
+                elevation: 0,
+                shadowOpacity: 0,
+              },
+              headerTintColor: '#FFFFFF',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
+          >
+            <Drawer.Screen
+              name="Home"
+              component={HomeStack}
+              options={{
+                headerTitle: (props) => <LogoTitle {...props} />,
+                headerRight: () => (
+                  <View style={styles.headerRight}>
+                    <NotificationBell />
+                  </View>
+                ),
+              }}
+            />
+            <Drawer.Screen
+              name="ProfileScreen"
+              component={ProfileScreen}
+              options={{ headerTitle: 'My Profile' }}
+            />
+            <Drawer.Screen
+              name="NETC"
+              component={NETCStack}
+              options={{ headerTitle: 'NETC FasTag' }}
+            />
+            <Drawer.Screen
+              name="Inventory"
+              component={InventoryStack}
+              options={{ headerTitle: 'FasTag Inventory' }}
+            />
+            <Drawer.Screen
+              name="Wallet"
+              component={WalletStack}
+              options={{ headerTitle: 'My Wallet' }}
+            />
+          </Drawer.Navigator>
+        )
+      ) : (
+        // User is not authenticated, show auth flow
+        <AuthNavigator />
+      )}
+    </NavigationContainer>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -750,18 +891,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     borderRadius: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#333333',
+  },
+  headerRight: {
+    marginRight: 10,
+  },
 });
 
 // Main App Navigator
 const AppNavigator = () => {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <NavigationContainer>
-          <MainNavigator />
-        </NavigationContainer>
-      </NotificationProvider>
-    </AuthProvider>
+    <NotificationProvider>
+      <AuthProvider>
+        <MainNavigator />
+      </AuthProvider>
+    </NotificationProvider>
   );
 };
 

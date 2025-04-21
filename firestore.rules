@@ -1,19 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to the authenticated user's own document
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'admin@gmail.com';
+    }
+    
+    // Admin access rule - grant full access to all documents if admin
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // User collection rules
     match /users/{userId} {
-      // Allow read access if the user is logged in and the document ID matches their UID
       allow read: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow write access if the user is logged in and the document ID matches their UID
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Add rules for other collections as needed
-    match /{document=**} {
-      // Deny access to all other documents by default
-      allow read, write: if false;
+    // Submissions collection rules
+    match /submissions/{document} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Add explicit rules for other collections your dashboard accesses
+    match /vehicle-details/{document} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    match /user-details/{document} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    match /payment-info/{document} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    match /fastag-registrations/{document} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    match /kyc-documents/{document} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
-} 
+}

@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
+import { trackFormSubmission, FORM_TYPES, SUBMISSION_STATUS } from '../utils/FormTracker';
+import FormLogger from '../utils/FormLogger';
 
 const ValidateCustomerScreen = ({ navigation, route }) => {
   // Get params from route if available
@@ -85,6 +87,36 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
       console.log('Engine:', engineNo);
       console.log('Req Type:', reqType);
       
+      // First, save this form data to Firestore
+      const formData = {
+        mobileNo,
+        vehicleNo: vehicleNo.trim() || null,
+        chassisNo: chassisNo.trim() || null,
+        engineNo: engineNo.trim() || null,
+        reqType,
+        timestamp: new Date().toISOString(),
+        flowStartedAt: new Date().toISOString()
+      };
+      
+      // Track using the old FormTracker
+      const trackingResult = await trackFormSubmission(
+        FORM_TYPES.VALIDATE_CUSTOMER, 
+        formData, 
+        null, // No submission ID yet
+        SUBMISSION_STATUS.STARTED
+      );
+      
+      console.log('Form tracking result:', trackingResult);
+      
+      // Also log using new FormLogger for admin dashboard
+      await FormLogger.logFormAction(
+        FORM_TYPES.VALIDATE_CUSTOMER,
+        formData,
+        'initiate',
+        'started'
+      );
+      
+      // Continue with API call
       const response = await bajajApi.validateCustomerAndSendOtp(
         mobileNo,
         vehicleNo.trim() ? vehicleNo : null,
@@ -112,6 +144,36 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           read: false
         });
         
+        // Update the form data with response data
+        if (trackingResult.success) {
+          // Update the form submission with API response data
+          await trackFormSubmission(
+            FORM_TYPES.VALIDATE_CUSTOMER,
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              requestId,
+              sessionId,
+              apiSuccess: true
+            },
+            trackingResult.submissionId, // Now we have a submission ID
+            SUBMISSION_STATUS.COMPLETED // This step is now complete
+          );
+        }
+        
+        // Log success with FormLogger
+        await FormLogger.logFormAction(
+          FORM_TYPES.VALIDATE_CUSTOMER,
+          {
+            ...formData,
+            requestId,
+            sessionId,
+            apiSuccess: true
+          },
+          'send_otp',
+          'success'
+        );
+        
         // Navigate to OTP verification screen with necessary params
         navigation.navigate('ValidateOtp', {
           requestId: response.validateCustResp.requestId,
@@ -120,14 +182,60 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           vehicleNo: vehicleNo,
           chassisNo: chassisNo,
           engineNo: engineNo,
-          reqType: reqType
+          reqType: reqType,
+          formSubmissionId: trackingResult.submissionId // Pass the submission ID to next screen
         });
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to send OTP';
+        
+        // Update form submission with error
+        if (trackingResult.success) {
+          await trackFormSubmission(
+            FORM_TYPES.VALIDATE_CUSTOMER,
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              error: errorMsg,
+              apiSuccess: false
+            },
+            trackingResult.submissionId,
+            SUBMISSION_STATUS.REJECTED
+          );
+        }
+        
+        // Log error with FormLogger
+        await FormLogger.logFormAction(
+          FORM_TYPES.VALIDATE_CUSTOMER,
+          {
+            ...formData,
+            error: errorMsg,
+            apiSuccess: false
+          },
+          'send_otp',
+          'error',
+          new Error(errorMsg)
+        );
+        
         throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Send OTP Error:', error);
+      
+      // Log the error with FormLogger
+      await FormLogger.logFormAction(
+        FORM_TYPES.VALIDATE_CUSTOMER,
+        {
+          mobileNo,
+          vehicleNo,
+          chassisNo,
+          engineNo,
+          reqType
+        },
+        'send_otp',
+        'error',
+        error
+      );
+      
       Alert.alert(
         'Error',
         `Failed to send OTP: ${error.message}`,
@@ -391,13 +499,13 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#333333',
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginBottom: 24,
   },
   disabledButton: {
-    backgroundColor: '#999999',
+    opacity: 0.7,
   },
   submitButtonText: {
     color: '#FFFFFF',

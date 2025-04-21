@@ -27,20 +27,42 @@ export const createOrUpdateUser = async (userId, userData) => {
     // Reference to the user document
     const userRef = doc(db, 'users', userId);
     
+    // Check if the document already exists
+    const userDoc = await getDoc(userRef);
+    
     // Create data object with timestamp
-    const dataToSave = {
+    let dataToSave = {
       ...userData,
       updatedAt: serverTimestamp(),
     };
     
-    // If it's a new user, add creation timestamp
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) {
+    // If user already exists, make sure we preserve the isAdmin flag
+    // Specifically handle admin@gmail.com to always have isAdmin=true
+    if (userDoc.exists()) {
+      const existingData = userDoc.data();
+      
+      // If updating admin user, always keep isAdmin as true
+      if (existingData.email === 'admin@gmail.com' || userData.email === 'admin@gmail.com') {
+        dataToSave.isAdmin = true;
+      } 
+      // Otherwise, preserve the existing isAdmin flag if not explicitly set in userData
+      else if (existingData.isAdmin && !userData.hasOwnProperty('isAdmin')) {
+        dataToSave.isAdmin = existingData.isAdmin;
+      }
+    } else {
+      // It's a new user, add creation timestamp
       dataToSave.createdAt = serverTimestamp();
+      
+      // If it's admin@gmail.com, ensure isAdmin is true
+      if (userData.email === 'admin@gmail.com') {
+        dataToSave.isAdmin = true;
+      }
     }
     
     // Set or update the user document
     await setDoc(userRef, dataToSave, { merge: true });
+    
+    console.log('User data saved:', { userId, isAdmin: dataToSave.isAdmin });
     
     return {
       success: true,

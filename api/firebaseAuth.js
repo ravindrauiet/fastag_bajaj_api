@@ -8,8 +8,50 @@ import {
   updateEmail,
   updatePassword,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  fetchSignInMethodsForEmail
 } from 'firebase/auth';
+
+// Admin credentials for testing
+const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_PASSWORD = '123456';
+
+// Check if admin user exists, create if not (for testing purposes)
+export const ensureAdminExists = async () => {
+  try {
+    // Check if the admin email already exists
+    const methods = await fetchSignInMethodsForEmail(auth, ADMIN_EMAIL);
+    
+    if (methods.length === 0) {
+      // Admin user doesn't exist, create it
+      console.log('Creating admin user for testing...');
+      const userCredential = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+      
+      // Update the admin user profile
+      await updateProfile(userCredential.user, {
+        displayName: 'Admin User'
+      });
+      
+      console.log('Admin user created successfully');
+      return true;
+    }
+    
+    console.log('Admin user already exists');
+    return true;
+  } catch (error) {
+    // Don't treat email-already-in-use as a fatal error
+    if (error.code === 'auth/email-already-in-use') {
+      console.log('Admin user already exists (caught from error)');
+      return true;
+    }
+    
+    console.error('Error ensuring admin exists:', error);
+    return false;
+  }
+};
+
+// Call this function early to ensure the admin user exists
+ensureAdminExists().catch(console.error);
 
 /**
  * Login with email and password
@@ -19,12 +61,36 @@ import {
  */
 export const loginWithEmailAndPassword = async (email, password) => {
   try {
+    // For admin login, ensure the admin exists first
+    if (email === ADMIN_EMAIL) {
+      await ensureAdminExists();
+    }
+    
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return {
       success: true,
       user: userCredential.user
     };
   } catch (error) {
+    console.log('Login error:', error.message);
+    
+    // If this is an admin login attempt and it failed, try to create the admin account
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      try {
+        console.log('Attempting to create admin user on login...');
+        await ensureAdminExists();
+        
+        // Try login again
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        return {
+          success: true,
+          user: userCredential.user
+        };
+      } catch (createError) {
+        console.error('Admin creation error:', createError);
+      }
+    }
+    
     return {
       success: false,
       error: error.message

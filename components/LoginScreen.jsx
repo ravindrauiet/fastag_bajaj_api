@@ -73,6 +73,8 @@ const LoginScreen = ({ navigation }) => {
         });
         
         console.log('Login successful');
+        
+        // Admin redirection is handled in the navigation component
       } else {
         // Show error message from Firebase
         Alert.alert(
@@ -190,10 +192,10 @@ const LoginScreen = ({ navigation }) => {
             </View>
           </View>
           
-          {/* Testing credentials notice */}
+          {/* Testing credentials */}
           <View style={styles.testingNote}>
-            <Text style={styles.testingTitle}>Firebase Authentication:</Text>
-            <Text style={styles.testingCredentials}>Register a new account or use your existing credentials.</Text>
+            <Text style={styles.testingNoteTitle}>Firebase Authentication:</Text>
+            <Text style={styles.testingNoteText}>Please create an account using a valid email and password combination.</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -340,13 +342,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#00ACC1',
   },
-  testingTitle: {
+  testingNoteTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333333',
     marginBottom: 8,
   },
-  testingCredentials: {
+  testingNoteText: {
     fontSize: 14,
     color: '#666666',
   },

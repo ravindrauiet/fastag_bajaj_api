@@ -11,11 +11,13 @@ import {
   Animated, 
   Image,
   Alert,
-  Modal
+  Modal,
+  ActivityIndicator
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DropDownPicker from 'react-native-dropdown-picker';
 import * as ImagePicker from 'expo-image-picker';
+import { saveFormSubmission } from '../api/formSubmissionsApi';
 
 const VehicleDetailsScreen = ({ route, navigation }) => {
   // Animation values
@@ -26,6 +28,8 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
   const [vehicleNo, setVehicleNo] = useState('');
   const [rcImageUri, setRcImageUri] = useState(null);
   const [showImageOptions, setShowImageOptions] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionId, setSubmissionId] = useState(route.params?.submissionId || null);
   
   // Dropdown state
   const [openVehicleClass, setOpenVehicleClass] = useState(false);
@@ -67,6 +71,15 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
         useNativeDriver: true,
       })
     ]).start();
+    
+    // Load existing data if editing
+    if (route.params?.vehicleDetails) {
+      const { vehicleNo, vehicleClass, makeModel, rcImageUri } = route.params.vehicleDetails;
+      setVehicleNo(vehicleNo || '');
+      setVehicleClass(vehicleClass || null);
+      setMakeModel(makeModel || null);
+      setRcImageUri(rcImageUri || null);
+    }
   }, []);
   
   // Field validation
@@ -151,8 +164,41 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
     }
   };
   
+  // Save form data to Firebase
+  const saveFormData = async () => {
+    try {
+      setSubmitting(true);
+      
+      // Create form data object
+      const formData = {
+        vehicleNo,
+        vehicleClass,
+        makeModel,
+        rcImageUri: rcImageUri || null // In a real app, you'd upload this image to Firebase Storage
+      };
+      
+      // Save to Firestore using our API
+      const result = await saveFormSubmission('vehicle-details', formData, submissionId);
+      
+      if (result.success) {
+        // Save the submission ID for possible updates later
+        setSubmissionId(result.submissionId);
+        return true;
+      } else {
+        Alert.alert('Error', result.error || 'Failed to save data. Please try again.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Save form error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  
   // Handle proceed to next screen
-  const handleProceed = () => {
+  const handleProceed = async () => {
     // Validate required fields
     let isValid = true;
     const newErrors = {};
@@ -182,15 +228,21 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
     setErrors(newErrors);
     
     if (isValid) {
-      // Navigate to next screen with vehicle details
-      navigation.navigate('UserDetails', {
-        vehicleDetails: {
-          vehicleNo,
-          vehicleClass,
-          makeModel,
-          rcImageUri
-        }
-      });
+      // First save data to Firebase
+      const saveSuccess = await saveFormData();
+      
+      if (saveSuccess) {
+        // Navigate to next screen with vehicle details and submission ID
+        navigation.navigate('UserDetails', {
+          vehicleDetails: {
+            vehicleNo,
+            vehicleClass,
+            makeModel,
+            rcImageUri
+          },
+          submissionId
+        });
+      }
     } else {
       Alert.alert('Validation Error', 'Please fill all required fields correctly.');
     }
@@ -248,14 +300,13 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
               setItems={setVehicleClassItems}
               placeholder="Select vehicle class"
               style={[styles.dropdown, errors.vehicleClass ? styles.inputError : null]}
+              textStyle={styles.dropdownText}
               dropDownContainerStyle={styles.dropdownContainer}
-              placeholderStyle={styles.dropdownPlaceholder}
-              zIndex={2000}
             />
             {errors.vehicleClass ? <Text style={styles.errorText}>{errors.vehicleClass}</Text> : null}
           </View>
           
-          {/* Make and Model Dropdown */}
+          {/* Make/Model Dropdown */}
           <View style={[styles.inputGroup, { zIndex: 1000 }]}>
             <Text style={styles.label}>Vehicle Make & Model<Text style={styles.required}>*</Text></Text>
             <DropDownPicker
@@ -265,98 +316,98 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
               setOpen={setOpenMakeModel}
               setValue={setMakeModel}
               setItems={setMakeModelItems}
-              placeholder="Select make and model"
+              placeholder="Select make & model"
               style={[styles.dropdown, errors.makeModel ? styles.inputError : null]}
+              textStyle={styles.dropdownText}
               dropDownContainerStyle={styles.dropdownContainer}
-              placeholderStyle={styles.dropdownPlaceholder}
-              zIndex={1000}
             />
             {errors.makeModel ? <Text style={styles.errorText}>{errors.makeModel}</Text> : null}
           </View>
           
-          {/* RC Upload */}
+          {/* RC Image Upload */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Upload RC<Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Registration Certificate (RC)<Text style={styles.required}>*</Text></Text>
             
             <TouchableOpacity 
-              style={[styles.uploadContainer, errors.rcImage ? styles.inputError : null]}
+              style={[styles.uploadButton, errors.rcImage ? styles.inputError : null]}
               onPress={() => setShowImageOptions(true)}
             >
-              {rcImageUri ? (
-                <View style={styles.imagePreviewContainer}>
-                  <Image 
-                    source={{ uri: rcImageUri }}
-                    style={styles.imagePreview}
-                  />
-                  <Text style={styles.changeImageText}>Tap to change</Text>
-                </View>
-              ) : (
-                <View style={styles.uploadPrompt}>
-                  <Icon name="upload" size={24} color="#666666" />
-                  <Text style={styles.uploadText}>Tap to upload RC image</Text>
-                </View>
-              )}
+              <Icon name="cloud-upload-outline" size={24} color="#00ACC1" />
+              <Text style={styles.uploadButtonText}>
+                {rcImageUri ? 'Change RC Image' : 'Upload RC Image'}
+              </Text>
             </TouchableOpacity>
+            
+            {rcImageUri && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: rcImageUri }} style={styles.imagePreview} />
+                <TouchableOpacity 
+                  style={styles.removeImageButton}
+                  onPress={() => setRcImageUri(null)}
+                >
+                  <Icon name="close-circle" size={20} color="#FF5252" />
+                </TouchableOpacity>
+              </View>
+            )}
+            
             {errors.rcImage ? <Text style={styles.errorText}>{errors.rcImage}</Text> : null}
           </View>
           
-          <Text style={styles.infoText}>
-            Please ensure that the RC details are clearly visible in the uploaded image.
-          </Text>
-        </Animated.View>
-        
-        {/* Proceed Button */}
-        <TouchableOpacity 
-          style={styles.proceedButton} 
-          onPress={handleProceed}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.proceedButtonText}>Proceed</Text>
-        </TouchableOpacity>
-        
-        <View style={{ height: 20 }} />
-      </ScrollView>
-      
-      {/* Image Source Selection Modal */}
-      <Modal
-        transparent={true}
-        visible={showImageOptions}
-        animationType="slide"
-        onRequestClose={() => setShowImageOptions(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowImageOptions(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Upload RC Image</Text>
-            
+          {/* Image Upload Options Modal */}
+          <Modal
+            visible={showImageOptions}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowImageOptions(false)}
+          >
             <TouchableOpacity 
-              style={styles.modalOption}
-              onPress={() => handleUploadImage('camera')}
-            >
-              <Icon name="camera" size={24} color="#333333" style={styles.modalIcon} />
-              <Text style={styles.modalOptionText}>Take a Photo</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modalOption}
-              onPress={() => handleUploadImage('gallery')}
-            >
-              <Icon name="image" size={24} color="#333333" style={styles.modalIcon} />
-              <Text style={styles.modalOptionText}>Choose from Gallery</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.modalOption, styles.cancelOption]}
+              style={styles.modalOverlay}
+              activeOpacity={1}
               onPress={() => setShowImageOptions(false)}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Upload RC Image</Text>
+                
+                <TouchableOpacity 
+                  style={styles.modalOption}
+                  onPress={() => handleUploadImage('camera')}
+                >
+                  <Icon name="camera" size={24} color="#00ACC1" />
+                  <Text style={styles.modalOptionText}>Take Photo</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.modalOption}
+                  onPress={() => handleUploadImage('gallery')}
+                >
+                  <Icon name="image" size={24} color="#00ACC1" />
+                  <Text style={styles.modalOptionText}>Choose from Gallery</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalOption, styles.cancelOption]}
+                  onPress={() => setShowImageOptions(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+          </Modal>
+          
+          {/* Submit button */}
+          <TouchableOpacity 
+            style={styles.proceedButton}
+            onPress={handleProceed}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.proceedButtonText}>Save & Continue</Text>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -456,26 +507,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderTopWidth: 0,
   },
-  dropdownPlaceholder: {
-    color: '#999999',
+  dropdownText: {
+    color: '#333333',
     fontSize: 16,
   },
-  uploadContainer: {
+  uploadButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DDDDDD',
     borderRadius: 4,
-    height: 150,
-    justifyContent: 'center',
+    padding: 12,
     alignItems: 'center',
   },
-  uploadPrompt: {
-    alignItems: 'center',
-  },
-  uploadText: {
-    color: '#666666',
-    fontSize: 14,
-    marginTop: 8,
+  uploadButtonText: {
+    color: '#00ACC1',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   imagePreviewContainer: {
     width: '100%',
@@ -488,16 +535,11 @@ const styles = StyleSheet.create({
     height: '80%',
     resizeMode: 'contain',
   },
-  changeImageText: {
-    color: '#333333',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#666666',
-    fontStyle: 'italic',
-    marginTop: 8,
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
   },
   proceedButton: {
     backgroundColor: '#333333',
