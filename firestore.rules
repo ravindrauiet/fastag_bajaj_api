@@ -23,6 +23,18 @@ service cloud.firestore {
       allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
+    // Form submissions collection rules - CORRECTED COLLECTION NAME
+    match /formSubmissions/{document} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Form logs collection rules - CORRECTED COLLECTION NAME
+    match /formLogs/{document} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
     // Add explicit rules for other collections your dashboard accesses
     match /vehicle-details/{document} {
       allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;

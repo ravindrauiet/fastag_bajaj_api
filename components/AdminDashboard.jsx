@@ -121,7 +121,7 @@ const AdminDashboard = ({ navigation }) => {
   
       // Load submissions count
       try {
-        const submissionsRef = collection(db, 'submissions');
+        const submissionsRef = collection(db, 'formSubmissions');
         const unsubscribeSubmissions = onSnapshot(
           submissionsRef, 
           (querySnapshot) => {
@@ -145,7 +145,7 @@ const AdminDashboard = ({ navigation }) => {
       // Load recent submissions
       try {
         const recentSubmissionsQuery = query(
-          collection(db, 'submissions'),
+          collection(db, 'formSubmissions'),
           orderBy('createdAt', 'desc'),
           limit(5)
         );
@@ -182,7 +182,7 @@ const AdminDashboard = ({ navigation }) => {
       // Load pending approvals count
       try {
         const pendingApprovalsQuery = query(
-          collection(db, 'submissions'),
+          collection(db, 'formSubmissions'),
           where('status', '==', 'pending')
         );
         

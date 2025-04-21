@@ -37,7 +37,7 @@ const FormSubmissionDetailScreen = ({ navigation, route }) => {
     
     try {
       // Get the document from Firestore
-      const submissionRef = doc(db, 'submissions', submissionId);
+      const submissionRef = doc(db, 'formSubmissions', submissionId);
       const docSnap = await getDoc(submissionRef);
       
       if (docSnap.exists()) {

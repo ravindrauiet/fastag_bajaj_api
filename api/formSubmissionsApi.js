@@ -114,7 +114,7 @@ export const getUserSubmissions = async (formType = null) => {
 };
 
 /**
- * Get all form submissions (admin only)
+ * Get all submissions (admin only)
  * @param {string} [formType] - Optional filter by form type
  * @returns {Promise} - Array of all submissions
  */
@@ -126,8 +126,8 @@ export const getAllSubmissions = async (formType = null) => {
       throw new Error('Only admin can access all submissions');
     }
     
-    // Start with the submissions collection
-    const submissionsRef = collection(db, 'submissions');
+    // Start with the formSubmissions collection
+    const submissionsRef = collection(db, 'formSubmissions');
     
     // Create a query with filters
     let submissionsQuery = submissionsRef;
