@@ -18,6 +18,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
+import ErrorHandler from './ValidationErrorHandler';
 
 // Add the missing generateRequestId function
 const generateRequestId = () => {
@@ -179,7 +180,10 @@ const DocumentUploadScreen = ({ navigation, route }) => {
   // Upload a single document to the API
   const uploadDocument = async (imageType) => {
     if (!images[imageType]) {
-      Alert.alert('Error', `Please select a ${documentDescriptions[imageType]} image first.`);
+      ErrorHandler.showErrorAlert(
+        'Missing Image',
+        `Please select a ${documentDescriptions[imageType]} image first.`
+      );
       return false;
     }
     
@@ -222,11 +226,10 @@ const DocumentUploadScreen = ({ navigation, route }) => {
       } else {
         const errorMsg = response?.response?.errorDesc || `Failed to upload ${documentDescriptions[imageType]}`;
         
-        // Show popup for error description
-        Alert.alert(
+        // Use our new error handler instead of Alert.alert directly
+        ErrorHandler.showErrorAlert(
           'Upload Error',
-          `${errorMsg}. You can try again.`,
-          [{ text: 'OK' }]
+          `${errorMsg}. You can try again.`
         );
         
         // Keep the session active but return false to indicate failure
@@ -235,15 +238,19 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     } catch (error) {
       console.error(`Document Upload Error (${imageType}):`, error);
       
-      // Show popup for error description
-      Alert.alert(
-        'Upload Error',
-        `Failed to upload ${documentDescriptions[imageType]}: ${error.message}. You can try again later.`,
-        [{ text: 'OK' }]
+      // Use our new error handler for better error display and logging
+      return await ErrorHandler.handleApiError(
+        error,
+        `Upload ${documentDescriptions[imageType]}`,
+        {
+          imageType,
+          documentType: documentDescriptions[imageType],
+          requestId,
+          sessionId
+        },
+        null, // No specific form type for now
+        'upload_document'
       );
-      
-      // Return false but don't kill the session
-      return false;
     } finally {
       setLoading(false);
       setCurrentUploadType(null);

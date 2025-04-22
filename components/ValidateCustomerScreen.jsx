@@ -15,6 +15,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
 import { trackFormSubmission, FORM_TYPES, SUBMISSION_STATUS } from '../utils/FormTracker';
 import FormLogger from '../utils/FormLogger';
+import ErrorHandler from './ValidationErrorHandler';
 
 const ValidateCustomerScreen = ({ navigation, route }) => {
   // Get params from route if available
@@ -128,11 +129,12 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
         
         if (appStatusResponse && appStatusResponse.response && appStatusResponse.response.status === 'success') {
           if (!appStatusResponse.appInstalled) {
-            // Show popup for error description
-            Alert.alert(
+            // Use our error handler for consistent UI
+            ErrorHandler.showErrorAlert(
               'Bajaj App Required',
               'Please install the Bajaj Finserv App and visit the FasTag section before continuing with registration.',
-              [{ text: 'OK' }]
+              null,
+              false
             );
             
             // Log the error with FormLogger
@@ -165,14 +167,15 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           );
         }
       } catch (appError) {
-        // Log error but continue with OTP sending
+        // Log error but continue with OTP sending - use error handler
         console.error('App status check error:', appError);
         
-        // Show popup for error description
-        Alert.alert(
+        // Show popup with error handler
+        ErrorHandler.showErrorAlert(
           'App Check Warning',
           'Could not verify Bajaj app installation. You may continue, but the app is required for completing FasTag registration.',
-          [{ text: 'Continue' }]
+          null,
+          true
         );
         
         // Log the error with FormLogger
@@ -289,14 +292,21 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           new Error(errorMsg)
         );
         
-        throw new Error(errorMsg);
+        // Use error handler instead of throwing
+        ErrorHandler.showErrorAlert(
+          'OTP Error',
+          errorMsg,
+          null,
+          true
+        );
       }
     } catch (error) {
       console.error('Send OTP Error:', error);
       
-      // Log the error with FormLogger
-      await FormLogger.logFormAction(
-        FORM_TYPES.VALIDATE_CUSTOMER,
+      // Use our error handler for consistent error alerts
+      await ErrorHandler.handleApiError(
+        error,
+        'Send OTP',
         {
           mobileNo,
           vehicleNo,
@@ -304,15 +314,8 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           engineNo,
           reqType
         },
-        'send_otp',
-        'error',
-        error
-      );
-      
-      Alert.alert(
-        'Error',
-        `Failed to send OTP: ${error.message}`,
-        [{ text: 'OK' }]
+        FORM_TYPES.VALIDATE_CUSTOMER,
+        'send_otp'
       );
     } finally {
       setLoading(false);

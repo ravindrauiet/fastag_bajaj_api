@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js';
 import axios from 'axios';
+import { Alert, Platform } from 'react-native';
 
 // Constants for API integration
 const BASE_URL = 'https://pay-api-uat.bajajfinserv.in/'; // UAT URL
@@ -206,6 +207,20 @@ const ensureValidBase64 = (base64String) => {
     console.error('Failed to clean Base64 string:', error);
     return null;
   }
+};
+
+// Add a wrapper function to handle API errors with alerts
+const handleApiError = (error, operation = 'API operation') => {
+  console.error(`${operation} error:`, error);
+  
+  // Return structured error response instead of throwing
+  return {
+    response: {
+      status: 'error',
+      code: error.code || 'UNKNOWN_ERROR',
+      errorDesc: error.message || `Failed to perform ${operation}`
+    }
+  };
 };
 
 // API functions
@@ -1465,78 +1480,64 @@ const bajajApi = {
   // Check if user has installed Bajaj Finserv App and visited FasTag section
   checkBajajAppStatus: async (mobileNo) => {
     try {
-      const requestId = generateRequestId();
-      const reqDateTime = getCurrentDateTime();
-
-      // Data to be encrypted according to documentation section 3.13
+      // Log the request data
+      console.log('Checking Bajaj app status for mobile:', mobileNo);
+      
+      // Create request payload
       const requestData = {
-        mobNo: mobileNo,
-        aggrChannel: CHANNEL,
-        agentId: AGENT_ID,
-        udf1: "",
-        udf2: "",
-        udf3: "",
-        udf4: "",
-        udf5: ""
+        mobileNumber: mobileNo
       };
-
-      // Console log the original request data
-      console.log('=== CHECK BAJAJ APP STATUS REQUEST ===');
-      console.log(JSON.stringify(requestData, null, 2));
-
+      
+      // Log the request and encrypted data
+      console.log('Original request data:', JSON.stringify(requestData));
       const encryptedData = encrypt(JSON.stringify(requestData));
-
-      // Console log the encrypted request
-      console.log('=== CHECK BAJAJ APP STATUS ENCRYPTED REQUEST ===');
-      console.log(encryptedData);
-
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/initDataCheck`, encryptedData, {
+      console.log('Encrypted request data:', encryptedData);
+      
+      // API call
+      const response = await fetch(`${BASE_URL}/checkAppInstalled`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'aggr_channel': CHANNEL,
-          'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
-        }
+          'Authorization': `Bearer ${await generateTokenInternally()}`
+        },
+        body: JSON.stringify({
+          encRequest: encryptedData
+        })
       });
-
-      // Console log the encrypted response
-      console.log('=== CHECK BAJAJ APP STATUS ENCRYPTED RESPONSE ===');
-      console.log(response.data);
-
-      if (response.data) {
-        const decryptedResponse = decrypt(response.data);
-        
-        // Console log the decrypted response
-        console.log('=== CHECK BAJAJ APP STATUS DECRYPTED RESPONSE ===');
-        console.log(decryptedResponse);
-        
-        const parsedResponse = JSON.parse(decryptedResponse);
-        console.log('=== CHECK BAJAJ APP STATUS PARSED RESPONSE ===');
-        console.log(JSON.stringify(parsedResponse, null, 2));
-        
-        return parsedResponse;
-      }
-
-      return {
-        response: {
-          status: "error",
-          code: "99",
-          errorDesc: "No data received from Bajaj app check"
-        },
-        appInstalled: false
-      };
-    } catch (error) {
-      console.error('=== CHECK BAJAJ APP STATUS API ERROR ===');
-      console.error(error);
       
-      // Return a formatted error response instead of throwing
-      return {
-        response: {
-          status: "error",
-          code: "99",
-          errorDesc: error.message || "Failed to check Bajaj app status"
-        },
-        appInstalled: false
-      };
+      const responseData = await response.json();
+      
+      // Log the response
+      console.log('Encrypted response:', JSON.stringify(responseData));
+      
+      if (responseData && responseData.encResponse) {
+        // Decrypt the response
+        const decryptedData = decrypt(responseData.encResponse);
+        console.log('Decrypted response:', decryptedData);
+        
+        const parsedData = JSON.parse(decryptedData);
+        
+        // Check if app is installed
+        const appInstalled = parsedData.appInstalled === true;
+        
+        return {
+          response: parsedData.response || { status: 'success' },
+          appInstalled
+        };
+      } else {
+        // Return structured error response instead of throwing
+        return {
+          response: {
+            status: 'error',
+            code: 'NO_DATA',
+            errorDesc: 'No data received from the server'
+          },
+          appInstalled: false
+        };
+      }
+    } catch (error) {
+      // Use the error handler instead of throwing
+      return handleApiError(error, 'Check Bajaj app status');
     }
   }
 };
