@@ -1516,11 +1516,27 @@ const bajajApi = {
         return parsedResponse;
       }
 
-      return response.data;
+      return {
+        response: {
+          status: "error",
+          code: "99",
+          errorDesc: "No data received from Bajaj app check"
+        },
+        appInstalled: false
+      };
     } catch (error) {
       console.error('=== CHECK BAJAJ APP STATUS API ERROR ===');
       console.error(error);
-      throw new Error(error.response?.data?.message || 'Failed to check Bajaj app status');
+      
+      // Return a formatted error response instead of throwing
+      return {
+        response: {
+          status: "error",
+          code: "99",
+          errorDesc: error.message || "Failed to check Bajaj app status"
+        },
+        appInstalled: false
+      };
     }
   }
 };

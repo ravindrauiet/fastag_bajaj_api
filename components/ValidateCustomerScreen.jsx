@@ -67,6 +67,12 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
       isValid = false;
     }
     
+    // Engine number is now mandatory
+    if (!engineNo.trim()) {
+      newErrors.engineNo = 'Engine number is required';
+      isValid = false;
+    }
+    
     setErrors(newErrors);
     return isValid;
   };
@@ -115,6 +121,73 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
         'initiate',
         'started'
       );
+      
+      // Check if user has downloaded Bajaj app before sending OTP
+      try {
+        const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
+        
+        if (appStatusResponse && appStatusResponse.response && appStatusResponse.response.status === 'success') {
+          if (!appStatusResponse.appInstalled) {
+            // Show popup for error description
+            Alert.alert(
+              'Bajaj App Required',
+              'Please install the Bajaj Finserv App and visit the FasTag section before continuing with registration.',
+              [{ text: 'OK' }]
+            );
+            
+            // Log the error with FormLogger
+            await FormLogger.logFormAction(
+              FORM_TYPES.VALIDATE_CUSTOMER,
+              {
+                ...formData,
+                error: 'Bajaj app not installed',
+                apiSuccess: false
+              },
+              'check_app_status',
+              'error',
+              new Error('Bajaj app not installed')
+            );
+            
+            setLoading(false);
+            return;
+          }
+          
+          // Log success with FormLogger
+          await FormLogger.logFormAction(
+            FORM_TYPES.VALIDATE_CUSTOMER,
+            {
+              ...formData,
+              appInstalled: true,
+              apiSuccess: true
+            },
+            'check_app_status',
+            'success'
+          );
+        }
+      } catch (appError) {
+        // Log error but continue with OTP sending
+        console.error('App status check error:', appError);
+        
+        // Show popup for error description
+        Alert.alert(
+          'App Check Warning',
+          'Could not verify Bajaj app installation. You may continue, but the app is required for completing FasTag registration.',
+          [{ text: 'Continue' }]
+        );
+        
+        // Log the error with FormLogger
+        await FormLogger.logFormAction(
+          FORM_TYPES.VALIDATE_CUSTOMER,
+          {
+            ...formData,
+            error: `App check error: ${appError.message}`,
+            apiSuccess: false
+          },
+          'check_app_status',
+          'error',
+          appError
+        );
+      }
       
       // Continue with API call
       const response = await bajajApi.validateCustomerAndSendOtp(
@@ -343,10 +416,10 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           
           {/* Engine Number */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Engine Number</Text>
+            <Text style={styles.label}>Engine Number<Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter engine number (optional)"
+              placeholder="Enter engine number"
               value={engineNo}
               onChangeText={(text) => setEngineNo(text.toUpperCase())}
               autoCapitalize="characters"

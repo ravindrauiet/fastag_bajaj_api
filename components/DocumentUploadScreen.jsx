@@ -221,15 +221,28 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         return true;
       } else {
         const errorMsg = response?.response?.errorDesc || `Failed to upload ${documentDescriptions[imageType]}`;
-        throw new Error(errorMsg);
+        
+        // Show popup for error description
+        Alert.alert(
+          'Upload Error',
+          `${errorMsg}. You can try again.`,
+          [{ text: 'OK' }]
+        );
+        
+        // Keep the session active but return false to indicate failure
+        return false;
       }
     } catch (error) {
       console.error(`Document Upload Error (${imageType}):`, error);
+      
+      // Show popup for error description
       Alert.alert(
         'Upload Error',
-        `Failed to upload ${documentDescriptions[imageType]}: ${error.message}`,
+        `Failed to upload ${documentDescriptions[imageType]}: ${error.message}. You can try again later.`,
         [{ text: 'OK' }]
       );
+      
+      // Return false but don't kill the session
       return false;
     } finally {
       setLoading(false);
@@ -360,87 +373,99 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     }
   };
   
-  // Render document upload card
+  // Render each document upload card
   const renderDocumentCard = (imageType) => {
+    const hasImage = images[imageType] !== null;
     const isUploaded = uploadedDocs[imageType];
-    const isLoading = loading && currentUploadType === imageType;
+    const isCurrentlyUploading = currentUploadType === imageType && loading;
+    
+    // Determine if this is a camera-only document type
+    const isCameraOnly = ['VEHICLEFRONT', 'VEHICLESIDE', 'TAGAFFIX'].includes(imageType);
     
     return (
-      <View style={[
-        styles.documentCard, 
-        isUploaded ? styles.documentCardUploaded : null
-      ]} key={imageType}>
+      <View style={styles.documentCard} key={imageType}>
         <View style={styles.documentHeader}>
           <View style={styles.documentIconContainer}>
             <Text style={styles.documentIcon}>{documentIcons[imageType]}</Text>
           </View>
-          <Text style={styles.documentTitle}>{documentDescriptions[imageType]}</Text>
+          <View style={styles.documentTitleContainer}>
+            <Text style={styles.documentTitle}>{documentDescriptions[imageType]}</Text>
+            <Text style={styles.documentSubtitle}>
+              {hasImage 
+                ? (isUploaded ? 'Uploaded successfully' : 'Ready to upload') 
+                : 'Select or take a photo'}
+            </Text>
+          </View>
           {isUploaded && (
-            <View style={styles.uploadedIndicator}>
-              <Text style={styles.uploadedIndicatorText}>✓</Text>
+            <View style={styles.uploadedBadge}>
+              <Text style={styles.uploadedBadgeText}>✓</Text>
             </View>
           )}
         </View>
         
-        <View style={styles.documentDivider} />
-        
-        {images[imageType] ? (
-          <View style={styles.imagePreviewContainer}>
-            <Image 
-              source={{ uri: images[imageType].uri }} 
-              style={styles.imagePreview} 
-              resizeMode="cover"
-            />
-            
-            <View style={styles.imageControls}>
+        <View style={styles.documentContent}>
+          {hasImage ? (
+            <View style={styles.imagePreviewContainer}>
+              <Image 
+                source={{uri: images[imageType].uri}} 
+                style={styles.imagePreview}
+              />
               <TouchableOpacity 
-                style={[styles.imageButton, styles.removeButton]}
+                style={styles.removeImageButton}
                 onPress={() => removeImage(imageType)}
-                disabled={loading}
+                disabled={isUploaded || isCurrentlyUploading}
               >
-                <Text style={styles.imageButtonText}>Remove</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.imageButton, 
-                  styles.uploadButton, 
-                  isUploaded && styles.uploadedButton
-                ]}
-                onPress={() => uploadDocument(imageType)}
-                disabled={loading || isUploaded}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.imageButtonText}>
-                    {isUploaded ? 'Uploaded' : 'Upload'}
-                  </Text>
-                )}
+                <Text style={[
+                  styles.removeImageText,
+                  (isUploaded || isCurrentlyUploading) && styles.disabledText
+                ]}>❌</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        ) : (
-          <View style={styles.imageActions}>
+          ) : (
+            <View style={styles.imageOptions}>
+              <TouchableOpacity 
+                style={styles.imageOptionButton}
+                onPress={() => takePhoto(imageType)}
+              >
+                <Text style={styles.imageOptionIcon}>📷</Text>
+                <Text style={styles.imageOptionText}>Camera</Text>
+              </TouchableOpacity>
+              
+              {!isCameraOnly && (
+                <TouchableOpacity 
+                  style={styles.imageOptionButton}
+                  onPress={() => pickImage(imageType)}
+                >
+                  <Text style={styles.imageOptionIcon}>🖼️</Text>
+                  <Text style={styles.imageOptionText}>Gallery</Text>
+                </TouchableOpacity>
+              )}
+              
+              {isCameraOnly && (
+                <View style={[styles.imageOptionButton, styles.disabledButton]}>
+                  <Text style={[styles.imageOptionIcon, styles.disabledText]}>🖼️</Text>
+                  <Text style={[styles.imageOptionText, styles.disabledText]}>Gallery (Disabled)</Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.documentFooter}>
+          {hasImage && !isUploaded && (
             <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => takePhoto(imageType)}
-              disabled={loading}
+              style={styles.uploadButton}
+              onPress={() => uploadDocument(imageType)}
+              disabled={isCurrentlyUploading}
             >
-              <Text style={styles.actionButtonIcon}>📷</Text>
-              <Text style={styles.actionButtonText}>Camera</Text>
+              {isCurrentlyUploading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.uploadButtonText}>Upload</Text>
+              )}
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => pickImage(imageType)}
-              disabled={loading}
-            >
-              <Text style={styles.actionButtonIcon}>🖼️</Text>
-              <Text style={styles.actionButtonText}>Gallery</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          )}
+        </View>
       </View>
     );
   };
@@ -650,10 +675,6 @@ const styles = StyleSheet.create({
     borderColor: '#EEEEEE',
     overflow: 'hidden',
   },
-  documentCardUploaded: {
-    borderColor: '#333333',
-    borderWidth: 1,
-  },
   documentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -672,13 +693,19 @@ const styles = StyleSheet.create({
   documentIcon: {
     fontSize: 18,
   },
-  documentTitle: {
+  documentTitleContainer: {
     flex: 1,
+  },
+  documentTitle: {
     fontSize: 15,
     fontWeight: '600',
     color: '#333333',
   },
-  uploadedIndicator: {
+  documentSubtitle: {
+    fontSize: 12,
+    color: '#666666',
+  },
+  uploadedBadge: {
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -686,39 +713,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  uploadedIndicatorText: {
+  uploadedBadgeText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  documentDivider: {
-    height: 1,
-    backgroundColor: '#EEEEEE',
-  },
-  imageActions: {
-    flexDirection: 'row',
+  documentContent: {
     padding: 15,
-    justifyContent: 'center',
-  },
-  actionButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    marginHorizontal: 10,
-    borderRadius: 8,
-    backgroundColor: '#F8F8F8',
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-  },
-  actionButtonIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333333',
   },
   imagePreviewContainer: {
     padding: 15,
@@ -729,35 +730,68 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
   },
-  imageControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  imageButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeButton: {
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 5,
+    borderRadius: 12,
     backgroundColor: '#FFEBEE',
-    marginRight: 8,
     borderWidth: 1,
     borderColor: '#FFCDD2',
   },
+  removeImageText: {
+    color: '#333333',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  disabledText: {
+    color: '#CCCCCC',
+  },
+  imageOptions: {
+    flexDirection: 'row',
+    padding: 15,
+    justifyContent: 'center',
+  },
+  imageOptionButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    marginHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  imageOptionIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  imageOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+  },
+  documentFooter: {
+    padding: 15,
+  },
   uploadButton: {
     backgroundColor: '#333333',
-    marginLeft: 8,
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  uploadedButton: {
-    backgroundColor: '#333333',
-    opacity: 0.5,
-  },
-  imageButtonText: {
+  uploadButtonText: {
     color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
-    fontSize: 14,
   },
   actionContainer: {
     marginBottom: 30,
@@ -780,8 +814,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#333333',
   },
   disabledButton: {
-    backgroundColor: '#CCCCCC',
-    elevation: 0,
+    backgroundColor: '#F0F0F0',
+    borderColor: '#DDDDDD',
   },
   buttonText: {
     color: '#FFFFFF',
