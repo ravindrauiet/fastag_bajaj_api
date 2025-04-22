@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
+import ErrorHandler from './ValidationErrorHandler';
+import { FORM_TYPES } from '../utils/FormTracker';
 
 // Development mode flag - set to true to bypass API calls
 const DEV_MODE = true;
@@ -98,7 +100,15 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         
         // Verify we have the new values before updating
         if (!newRequestId || !newSessionId) {
-          throw new Error('Missing requestId or sessionId in OTP response');
+          // Use the error handler
+          ErrorHandler.showErrorAlert(
+            'Missing Data',
+            'Missing requestId or sessionId in OTP response. Please try again.',
+            null,
+            true
+          );
+          setLoading(false);
+          return;
         }
         
         // Update the route params with the new values
@@ -126,14 +136,28 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         }
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to resend OTP';
-        throw new Error(errorMsg);
+        // Use the error handler instead of throwing
+        ErrorHandler.showErrorAlert(
+          'OTP Resend Failed',
+          errorMsg,
+          null,
+          true
+        );
       }
     } catch (error) {
       console.error('Resend OTP Error:', error);
-      Alert.alert(
-        'Error',
-        `Failed to resend OTP: ${error.message}`,
-        [{ text: 'OK' }]
+      // Use the error handler
+      await ErrorHandler.handleApiError(
+        error,
+        'Resend OTP',
+        {
+          mobileNo,
+          vehicleNo,
+          chassisNo,
+          engineNo
+        },
+        FORM_TYPES.VALIDATE_CUSTOMER,
+        'resend_otp'
       );
     } finally {
       setLoading(false);
@@ -390,66 +414,95 @@ const ValidateOtpScreen = ({ navigation, route }) => {
             }
           }
         } else if (response.response.status === 'failed' && response.response.code === '11') {
-          // Failed with code 11 - Need to create wallet
+          // Failed with code 11 - Need to create wallet or handle specific errors
           console.log(`OTP verification failed with code 11: ${response.response.errorDesc || 'Unknown error'}`);
           console.log('Error code:', response.response.errorCode);
           
-          // Common wallet creation issues that should redirect to CreateWallet:
-          // - A034: Unable to fetch customer wallet details
-          // - A028: Invalid session, please try again
-          
-          // Record error details for debugging
           const errorCode = response.response.errorCode || '';
           const errorDesc = response.response.errorDesc || 'Unknown error';
           
+          // Handle different error codes differently
+          if (errorCode === 'A028' || errorDesc.includes('Invalid session')) {
+            ErrorHandler.showErrorAlert(
+              'Session Expired',
+              'Your session has expired. Please start again from the beginning.',
+              () => {
+                // Navigate back to the starting screen
+                navigation.navigate('ValidateCustomer', {
+                  mobileNo: mobileNo,
+                  vehicleNo: vehicleNo,
+                  chassisNo: chassisNo,
+                  engineNo: engineNo,
+                  reqType: reqType
+                });
+              },
+              false
+            );
+            return;
+          }
+          // Special handling for "VRN already available" error (A100)
+          else if (errorCode === 'A100' || errorDesc.includes('VRN is already available')) {
+            ErrorHandler.showErrorAlert(
+              'Registration Already Exists',
+              'This vehicle is already registered in the system. You may proceed to create a wallet or check your existing account.',
+              () => {
+                // Navigate to create wallet but use a special flag to handle this case
+                navigation.navigate('CreateWallet', {
+                  mobileNo,
+                  vehicleNo,
+                  chassisNo,
+                  engineNo,
+                  reqType,
+                  vrnAlreadyExists: true,
+                  // We won't use the sessionId from OTP at all in this case
+                  // The CreateWallet screen will get fresh IDs from a new API call
+                });
+              },
+              true
+            );
+            return;
+          }
+          
+          // For other error codes, we might need to create a new wallet
           console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
           
-          // Navigate to CreateWalletScreen to create a new wallet
-          // Important: Keep passing the original requestId and sessionId from the OTP verification
-          navigation.navigate('CreateWallet', {
-            requestId: requestId,
-            sessionId: sessionId,
-            mobileNo,
-            vehicleNo,
-            chassisNo,
-            engineNo,
-            reqType,
-            // Pass the complete OTP verification response
-            otpResponse: response,
-            // Pass vehicle details from OTP response
-            vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
-            model: response.validateOtpResp?.vrnDetails?.model,
-            vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour,
-            type: response.validateOtpResp?.vrnDetails?.type,
-            rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus,
-            tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID,
-            npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID,
-            vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType,
-            rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount,
-            securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit,
-            tagCost: response.validateOtpResp?.vrnDetails?.tagCost,
-            vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor,
-            isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit,
-            permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate,
-            stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration,
-            commercial: response.validateOtpResp?.vrnDetails?.commercial,
-            npciStatus: response.validateOtpResp?.npciStatus
-          });
-          
-          // Add notification about what happened
-          addNotification({
-            id: Date.now(),
-            message: `Creating new wallet: ${errorDesc}`,
-            time: 'Just now',
-            read: false
-          });
+          // Show warning about possible errors
+          ErrorHandler.showErrorAlert(
+            'Wallet Creation Required',
+            `${errorDesc}. You'll need to create a wallet to continue.`,
+            () => {
+              navigation.navigate('CreateWallet', {
+                mobileNo,
+                vehicleNo,
+                chassisNo,
+                engineNo,
+                reqType,
+                // We won't pass the sessionId from a failed OTP verification
+                errorCode: errorCode,
+                errorDesc: errorDesc
+              });
+            },
+            true
+          );
         } else {
           // Other errors
           const errorMsg = response.response.errorDesc || response.response.msg || 'OTP verification failed';
-          throw new Error(errorMsg);
+          // Instead of throwing, use the error handler
+          ErrorHandler.showErrorAlert(
+            'OTP Verification Failed',
+            errorMsg,
+            null,
+            true
+          );
         }
       } else {
-        throw new Error('Invalid response format');
+        // Use the error handler instead of throwing
+        ErrorHandler.showErrorAlert(
+          'Invalid Response',
+          'Invalid response format from server. Please try again.',
+          null,
+          true
+        );
       }
     } catch (error) {
       console.error('=== OTP VERIFICATION ERROR ===');
@@ -461,27 +514,30 @@ const ValidateOtpScreen = ({ navigation, route }) => {
                              error.message.includes('ECONNABORTED');
       
       if (isNetworkError) {
-        Alert.alert(
+        ErrorHandler.showErrorAlert(
           'Connection Error',
           'Unable to connect to the server. Please check your internet connection and try again.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Retry', 
-              onPress: () => {
-                // Wait a moment before retrying
-                setTimeout(() => {
-                  handleVerifyOtp();
-                }, 1000);
-              } 
-            }
-          ]
+          () => {
+            // Wait a moment before retrying
+            setTimeout(() => {
+              handleVerifyOtp();
+            }, 1000);
+          },
+          true
         );
       } else {
-        Alert.alert(
-          'Error',
-          `Failed to verify OTP: ${error.message}`,
-          [{ text: 'OK' }]
+        // Use our error handler for other errors
+        await ErrorHandler.handleApiError(
+          error,
+          'Verify OTP',
+          {
+            mobileNo,
+            requestId,
+            sessionId,
+            otp: otp.join('')
+          },
+          FORM_TYPES.VALIDATE_CUSTOMER,
+          'verify_otp'
         );
       }
     } finally {

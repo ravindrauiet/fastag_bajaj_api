@@ -18,6 +18,8 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { AntDesign } from '@expo/vector-icons';
 import bajajApi from '../api/bajajApi';
 import { API_URL, API_ENDPOINTS } from '../config';
+import ErrorHandler from './ValidationErrorHandler';
+import { FORM_TYPES } from '../utils/FormTracker';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -108,42 +110,50 @@ const ManualActivationScreen = ({ route, navigation }) => {
     let isValid = true;
     const newErrors = {};
     
-    // Validate Serial Number
+    // Serial Number
     if (!serialNo.trim()) {
-      newErrors.serialNo = 'Serial number is required';
+      newErrors.serialNo = 'Serial Number is required';
       isValid = false;
-    } else if (serialNo.length < 10) {
-      newErrors.serialNo = 'Serial number must be at least 10 characters';
+    } else if (serialNo.trim().length < 3) {
+      newErrors.serialNo = 'Serial Number is too short';
+      isValid = false;
+    } else if (serialNo.trim().length > 40) {
+      newErrors.serialNo = 'Serial Number is too long';
       isValid = false;
     }
     
-    // Validate TID
+    // TID
     if (!tid.trim()) {
       newErrors.tid = 'TID is required';
       isValid = false;
-    } else if (tid.length < 7) {
-      newErrors.tid = 'TID must be at least 10 characters';
+    } else if (tid.trim().length < 3) {
+      newErrors.tid = 'TID is too short';
+      isValid = false;
+    } else if (tid.trim().length > 40) {
+      newErrors.tid = 'TID is too long';
       isValid = false;
     }
     
     setErrors(newErrors);
+    
+    if (!isValid) {
+      // Use error handler for validation errors instead of Alert
+      ErrorHandler.showErrorAlert(
+        'Validation Error',
+        'Please fix the errors in the form before continuing.',
+        null,
+        false
+      );
+    }
+    
     return isValid;
   };
   
   // Handle form submission
   const handleSubmit = async () => {
-    // Validate inputs
-    if (!serialNo.trim()) {
-      setErrors(prev => ({ ...prev, serialNo: 'Serial Number is required' }));
+    if (!validateForm()) {
       return;
     }
-    // if (!tid.trim()) {
-    //   setErrors(prev => ({ ...prev, tid: 'TID is required' }));
-    //   return;
-    // }
-    
-    // Clear any existing errors
-    setErrors({});
     
     setLoading(true);
     
@@ -225,10 +235,13 @@ const ManualActivationScreen = ({ route, navigation }) => {
           !documentDetails.VEHICLESIDE || 
           !documentDetails.TAGAFFIX) {
         console.error('Missing document uploads:', JSON.stringify(documentDetails));
-        Alert.alert(
+        
+        // Use error handler instead of Alert
+        ErrorHandler.showErrorAlert(
           'Missing Documents',
           'Some required documents are missing. Please go back and ensure all documents are uploaded.',
-          [{ text: 'OK' }]
+          null,
+          false
         );
         setLoading(false);
         return;
@@ -280,11 +293,20 @@ const ManualActivationScreen = ({ route, navigation }) => {
         }
       });
     } catch (error) {
-      console.error('Error checking Bajaj app status:', error);
-      Alert.alert(
-        'Error',
-        'Failed to verify Bajaj app installation status. Please try again.',
-        [{ text: 'OK' }]
+      console.error('Error in manual activation:', error);
+      
+      // Use our error handler for consistent error alerts
+      await ErrorHandler.handleApiError(
+        error,
+        'Manual Activation',
+        {
+          serialNo,
+          tid,
+          vehicleNo,
+          mobileNo
+        },
+        FORM_TYPES.FASTAG_REGISTRATION,
+        'manual_activation'
       );
     } finally {
       setLoading(false);

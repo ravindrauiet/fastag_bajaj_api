@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -11,21 +11,32 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
-  Modal
+  Modal,
+  Platform
 } from 'react-native';
 import bajajApi from '../api/bajajApi';
 import { NotificationContext } from '../contexts/NotificationContext';
+import ErrorHandler from './ValidationErrorHandler';
+import { FORM_TYPES } from '../utils/FormTracker';
+
+// Helper function to generate a new requestId (only used as fallback)
+const generateRequestId = () => {
+  return `REQ${Date.now()}${Math.floor(Math.random() * 1000)}`;
+};
 
 const CreateWalletScreen = ({ navigation, route }) => {
   // Get parameters from route
   const { 
-    requestId,
-    sessionId,
+    requestId: routeRequestId,
+    sessionId: routeSessionId,
     mobileNo: routeMobileNo,
     vehicleNo,
     chassisNo,
     engineNo,
-    reqType
+    reqType,
+    vrnAlreadyExists = false, // Special flag for VRN already registered
+    errorCode = '',
+    errorDesc = ''
   } = route.params || {};
 
   // Form state
@@ -40,20 +51,63 @@ const CreateWalletScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   
-  // Document types
-  const documentTypes = [
-    { label: 'PAN Card', value: 'PAN', code: '1' },
-    { label: 'Driving License', value: 'DL', code: '2' },
-    { label: 'Voter ID', value: 'VID', code: '3' },
-    { label: 'Passport', value: 'PASS', code: '4' }
-  ];
+  // Session state
+  const [requestId, setRequestId] = useState(routeRequestId || '');
+  const [sessionId, setSessionId] = useState(routeSessionId || '');
+  const [sessionInitialized, setSessionInitialized] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
   
-  // Context
+  // Context for notifications
   const { addNotification } = useContext(NotificationContext);
+  
+  // Flag to track if we're currently submitting to prevent duplicate submissions
+  const isSubmitting = useRef(false);
   
   // Animation states
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  
+  // Get a fresh session from the API if needed
+  useEffect(() => {
+    const initializeSession = async () => {
+      // If we already have a session or are in the middle of submitting, skip
+      if ((requestId && sessionId && !vrnAlreadyExists) || isSubmitting.current) {
+        setSessionInitialized(true);
+        return;
+      }
+      
+      try {
+        // For VRN already exists case, we start fresh with validate customer
+        if (vrnAlreadyExists && mobileNo && (vehicleNo || engineNo)) {
+          console.log('VRN already exists, initializing fresh session...');
+          // We don't need to make a real API call here, just wait for form submission
+          setSessionInitialized(true);
+          return;
+        }
+        
+        // If no session provided but we have mobile number, we can try to get a new session
+        if (!sessionId && mobileNo) {
+          console.log('No session provided, will get fresh session during form submission');
+          setSessionInitialized(true);
+          return;
+        }
+        
+        // If we reach here, we'll use the provided session or just wait
+        setSessionInitialized(true);
+      } catch (error) {
+        console.error('Session initialization error:', error);
+        ErrorHandler.showErrorAlert(
+          'Session Error',
+          'Unable to initialize session. Please try again later.',
+          null,
+          true
+        );
+        setSessionInitialized(true);
+      }
+    };
+    
+    initializeSession();
+  }, [requestId, sessionId, mobileNo, vehicleNo, engineNo, vrnAlreadyExists]);
   
   // Start animations when component mounts
   useEffect(() => {
@@ -89,155 +143,296 @@ const CreateWalletScreen = ({ navigation, route }) => {
     setter(formatted);
   };
   
-  const validateField = (field, value) => {
-    let error = '';
+  // IMPORTANT: Only validate fields fully on submit, not during typing
+  // Just do light validation during typing
+  const validateField = (field, value, isSubmitting = false) => {
+    let errorMessage = '';
+    let showAlert = false;
     
-    switch (field) {
-      case 'name':
-        if (!value) {
-          error = 'First name is required';
-        }
-        break;
-        
-      case 'lastName':
-        if (!value) {
-          error = 'Last name is required';
-        }
-        break;
-        
-      case 'mobileNo':
-        if (!value) {
-          error = 'Mobile number is required';
-        } else if (!/^[0-9]{10}$/.test(value)) {
-          error = 'Mobile number must be 10 digits';
-        }
-        break;
-        
-      case 'dob':
-        if (!value) {
-          error = 'Date of birth is required';
-        } else if (!/^\d{2}-\d{2}-\d{4}$/.test(value)) {
-          error = 'Date must be in DD-MM-YYYY format';
-        } else {
-          // Additional date validation
-          const [day, month, year] = value.split('-').map(num => parseInt(num, 10));
-          
-          // Check if date parts are valid numbers
-          if (isNaN(day) || isNaN(month) || isNaN(year)) {
-            error = 'Invalid date format';
-          } else if (day < 1 || day > 31) {
-            error = 'Day must be between 1 and 31';
-          } else if (month < 1 || month > 12) {
-            error = 'Month must be between 1 and 12';
-          } else if (year < 1900 || year > new Date().getFullYear()) {
-            error = `Year must be between 1900 and ${new Date().getFullYear()}`;
-          } else {
-            // Check for valid day-month combinations
-            const daysInMonth = new Date(year, month, 0).getDate();
-            if (day > daysInMonth) {
-              error = `Invalid date: ${month} has only ${daysInMonth} days`;
+    // Skip detailed validation unless submitting, just do basic required checks
+    // This lets users complete the form before seeing errors
+    if (!isSubmitting) {
+      // Only set required errors if the field is completely empty and the user has submitted once
+      if (formSubmitted && !value.trim()) {
+        switch (field) {
+          case 'name': errorMessage = 'First name is required'; break;
+          case 'lastName': errorMessage = 'Last name is required'; break;
+          case 'mobileNo': errorMessage = 'Mobile number is required'; break;
+          case 'dob': errorMessage = 'Date of birth is required'; break;
+          case 'documentNumber': errorMessage = 'Document number is required'; break;
+          case 'expiryDate': 
+            if ((documentType === 'DL' || documentType === 'PASS')) {
+              errorMessage = 'Expiry date is required for this document type';
             }
+            break;
+        }
+      }
+      
+      // For PAN card, only validate the format if all 10 characters are entered
+      if (field === 'documentNumber' && documentType === 'PAN' && value.length === 10) {
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase())) {
+          errorMessage = 'Invalid PAN format (e.g., ABCDE1234F)';
+        }
+      }
+    } else {
+      // Full validation only on submit
+      switch (field) {
+        case 'name':
+          if (!value) {
+            errorMessage = 'First name is required';
+          } else if (!/^[A-Za-z\s]+$/.test(value.trim())) {
+            errorMessage = 'First Name should contain only letters';
+            showAlert = true;
+          }
+          break;
+          
+        case 'lastName':
+          if (!value) {
+            errorMessage = 'Last name is required';
+          } else if (!/^[A-Za-z\s]+$/.test(value.trim())) {
+            errorMessage = 'Last Name should contain only letters';
+            showAlert = true;
+          }
+          break;
+          
+        case 'mobileNo':
+          if (!value) {
+            errorMessage = 'Mobile number is required';
+          } else if (!/^[0-9]{10}$/.test(value)) {
+            errorMessage = 'Mobile number must be 10 digits';
+            showAlert = true;
+          }
+          break;
+          
+        case 'dob':
+          if (!value) {
+            errorMessage = 'Date of birth is required';
+          } else if (!/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+            errorMessage = 'Date must be in DD-MM-YYYY format';
+            showAlert = true;
+          } else {
+            // Additional date validation
+            const [day, month, year] = value.split('-').map(num => parseInt(num, 10));
             
-            // Check if user is at least 18 years old
-            const birthDate = new Date(year, month - 1, day);
-            const today = new Date();
-            const age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            if (age < 18 || (age === 18 && (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())))) {
-              error = 'You must be at least 18 years old';
+            // Check if date parts are valid numbers
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+              errorMessage = 'Invalid date format';
+              showAlert = true;
+            } else if (day < 1 || day > 31) {
+              errorMessage = 'Day must be between 1 and 31';
+              showAlert = true;
+            } else if (month < 1 || month > 12) {
+              errorMessage = 'Month must be between 1 and 12';
+              showAlert = true;
+            } else if (year < 1900 || year > new Date().getFullYear()) {
+              errorMessage = `Year must be between 1900 and ${new Date().getFullYear()}`;
+              showAlert = true;
+            } else {
+              // Check for valid day-month combinations
+              const daysInMonth = new Date(year, month, 0).getDate();
+              if (day > daysInMonth) {
+                errorMessage = `Invalid date: ${month} has only ${daysInMonth} days`;
+                showAlert = true;
+              }
+              
+              // Check if user is at least 18 years old
+              const birthDate = new Date(year, month - 1, day);
+              const today = new Date();
+              const age = today.getFullYear() - birthDate.getFullYear();
+              const monthDiff = today.getMonth() - birthDate.getMonth();
+              if (age < 18 || (age === 18 && (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())))) {
+                errorMessage = 'You must be at least 18 years old';
+                showAlert = true;
+              }
             }
           }
-        }
-        break;
-        
-      case 'documentNumber':
-        if (!value) {
-          error = 'Document number is required';
-        } else {
-          // Validate based on document type
-          switch (documentType) {
-            case 'PAN':
-              if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase())) {
-                error = 'Invalid PAN format (e.g., ABCDE1234F)';
-              }
-              break;
-            case 'DL':
-              if (value.length < 8) {
-                error = 'Invalid Driving License number';
-              }
-              break;
-            case 'VID':
-              if (!/^\d{10,16}$/.test(value)) {
-                error = 'Invalid Voter ID format';
-              }
-              break;
-            case 'PASS':
-              if (!/^[A-Z0-9]{8,12}$/.test(value.toUpperCase())) {
-                error = 'Invalid Passport number format';
-              }
-              break;
-          }
-        }
-        break;
-        
-      case 'expiryDate':
-        if ((documentType === 'DL' || documentType === 'PASS') && !value) {
-          error = 'Expiry date is required for this document type';
-        } else if (value && !/^\d{2}-\d{2}-\d{4}$/.test(value)) {
-          error = 'Date must be in DD-MM-YYYY format';
-        } else if (value) {
-          // Additional expiry date validation
-          const [day, month, year] = value.split('-').map(num => parseInt(num, 10));
+          break;
           
-          // Check if date parts are valid numbers
-          if (isNaN(day) || isNaN(month) || isNaN(year)) {
-            error = 'Invalid date format';
-          } else if (day < 1 || day > 31) {
-            error = 'Day must be between 1 and 31';
-          } else if (month < 1 || month > 12) {
-            error = 'Month must be between 1 and 12';
-          } else if (year < new Date().getFullYear()) {
-            error = 'Expiry date cannot be in the past';
-          } else if (year === new Date().getFullYear() && 
-                    (month < new Date().getMonth() + 1 || 
-                    (month === new Date().getMonth() + 1 && day < new Date().getDate()))) {
-            error = 'Expiry date cannot be in the past';
+        case 'documentNumber':
+          if (!value) {
+            errorMessage = 'Document number is required';
           } else {
-            // Check for valid day-month combinations
-            const daysInMonth = new Date(year, month, 0).getDate();
-            if (day > daysInMonth) {
-              error = `Invalid date: ${month} has only ${daysInMonth} days`;
+            // Validate based on document type
+            switch (documentType) {
+              case 'PAN':
+                if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase())) {
+                  errorMessage = 'Invalid PAN format (e.g., ABCDE1234F)';
+                  showAlert = true;
+                }
+                break;
+              case 'DL':
+                if (value.length < 8) {
+                  errorMessage = 'Invalid Driving License number';
+                  showAlert = true;
+                }
+                break;
+              case 'VID':
+                if (!/^\d{10,16}$/.test(value)) {
+                  errorMessage = 'Invalid Voter ID format';
+                  showAlert = true;
+                }
+                break;
+              case 'PASS':
+                if (!/^[A-Z0-9]{8,12}$/.test(value.toUpperCase())) {
+                  errorMessage = 'Invalid Passport number format';
+                  showAlert = true;
+                }
+                break;
             }
           }
-        }
-        break;
+          break;
+          
+        case 'expiryDate':
+          if ((documentType === 'DL' || documentType === 'PASS') && !value) {
+            errorMessage = 'Expiry date is required for this document type';
+            showAlert = true;
+          } else if (value && !/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+            errorMessage = 'Date must be in DD-MM-YYYY format';
+            showAlert = true;
+          } else if (value) {
+            // Additional expiry date validation
+            const [day, month, year] = value.split('-').map(num => parseInt(num, 10));
+            
+            // Check if date parts are valid numbers
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+              errorMessage = 'Invalid date format';
+              showAlert = true;
+            } else if (day < 1 || day > 31) {
+              errorMessage = 'Day must be between 1 and 31';
+              showAlert = true;
+            } else if (month < 1 || month > 12) {
+              errorMessage = 'Month must be between 1 and 12';
+              showAlert = true;
+            } else if (year < new Date().getFullYear()) {
+              errorMessage = 'Expiry date cannot be in the past';
+              showAlert = true;
+            } else if (year === new Date().getFullYear() && 
+                      (month < new Date().getMonth() + 1 || 
+                      (month === new Date().getMonth() + 1 && day < new Date().getDate()))) {
+              errorMessage = 'Expiry date cannot be in the past';
+              showAlert = true;
+            } else {
+              // Check for valid day-month combinations
+              const daysInMonth = new Date(year, month, 0).getDate();
+              if (day > daysInMonth) {
+                errorMessage = `Invalid date: ${month} has only ${daysInMonth} days`;
+                showAlert = true;
+              }
+            }
+          }
+          break;
+      }
     }
     
+    // Update the errors state
     setErrors(prev => ({
       ...prev,
-      [field]: error
+      [field]: errorMessage
     }));
     
-    return !error;
+    // Show alert for critical validation errors, but only when submitting
+    if (isSubmitting && showAlert && errorMessage) {
+      ErrorHandler.showErrorAlert(
+        'Validation Error',
+        errorMessage,
+        null,
+        false
+      );
+    }
+    
+    return !errorMessage;
+  };
+
+  // Helper function to get a fresh session if needed
+  const getFreshSession = async () => {
+    try {
+      // Use the validateCustomer API to get fresh session IDs
+      console.log('Getting fresh session for wallet creation...');
+      const response = await bajajApi.validateCustomerAndSendOtp(
+        mobileNo,
+        vehicleNo || null,
+        chassisNo || null,
+        engineNo || null,
+        reqType || 'REG'
+      );
+      
+      if (response?.response?.status === 'success' && response?.validateCustResp) {
+        const newRequestId = response.validateCustResp.requestId;
+        const newSessionId = response.validateCustResp.sessionId;
+        
+        console.log('Got fresh session IDs:', newRequestId, newSessionId);
+        setRequestId(newRequestId);
+        setSessionId(newSessionId);
+        return { requestId: newRequestId, sessionId: newSessionId };
+      } else {
+        console.error('Failed to get fresh session:', response?.response?.errorDesc);
+        throw new Error(response?.response?.errorDesc || 'Failed to get fresh session');
+      }
+    } catch (error) {
+      console.error('Error getting fresh session:', error);
+      throw error;
+    }
   };
 
   const handleCreateWallet = async () => {
-    // Validate all required fields
-    const validName = validateField('name', name);
-    const validLastName = validateField('lastName', lastName);
-    const validMobile = validateField('mobileNo', mobileNo);
-    const validDob = validateField('dob', dob);
-    const validDocumentNumber = validateField('documentNumber', documentNumber);
-    const validExpiryDate = validateField('expiryDate', expiryDate);
+    if (isSubmitting.current) return; // Prevent duplicate submissions
+    isSubmitting.current = true;
     
-    if (!(validName && validLastName && validMobile && validDob && validDocumentNumber && validExpiryDate)) {
-      Alert.alert('Validation Error', 'Please correct the errors in the form.');
+    // Mark that the form has been submitted once
+    setFormSubmitted(true);
+    
+    // Validate all required fields with full validation
+    const validName = validateField('name', name, true);
+    const validLastName = validateField('lastName', lastName, true);
+    const validMobile = validateField('mobileNo', mobileNo, true);
+    const validDob = validateField('dob', dob, true);
+    const validDocumentNumber = validateField('documentNumber', documentNumber, true);
+    const validExpiryDate = validateField('expiryDate', expiryDate, true);
+    
+    const hasErrors = !(validName && validLastName && validMobile && 
+                      validDob && validDocumentNumber && validExpiryDate);
+    
+    if (hasErrors) {
+      ErrorHandler.showErrorAlert(
+        'Validation Error',
+        'Please correct the errors in the form before continuing.',
+        null,
+        false
+      );
+      isSubmitting.current = false;
       return;
     }
     
     setLoading(true);
     
     try {
+      // Check if we need a fresh session
+      let currentRequestId = requestId;
+      let currentSessionId = sessionId;
+      
+      if (!currentRequestId || !currentSessionId || vrnAlreadyExists) {
+        try {
+          const { requestId: newRequestId, sessionId: newSessionId } = await getFreshSession();
+          currentRequestId = newRequestId;
+          currentSessionId = newSessionId;
+        } catch (sessionError) {
+          console.error('Failed to get fresh session:', sessionError);
+          ErrorHandler.showErrorAlert(
+            'Session Error',
+            'Unable to create a new session. Please try again.',
+            null,
+            false
+          );
+          setLoading(false);
+          isSubmitting.current = false;
+          return;
+        }
+      }
+      
+      // Log session information
+      console.log('Creating wallet with request ID:', currentRequestId);
+      console.log('Creating wallet with session ID:', currentSessionId);
+      
       // Prepare user data according to API requirements
       const userData = {
         firstName: name,
@@ -247,14 +442,12 @@ const CreateWalletScreen = ({ navigation, route }) => {
         documentType: documentType,
         documentNumber: documentNumber,
         expiryDate: (documentType === 'DL' || documentType === 'PASS') ? expiryDate : null,
-        // Pass the original requestId and sessionId from OTP verification
-        requestId: requestId,
-        sessionId: sessionId
+        // Use our session values
+        requestId: currentRequestId,
+        sessionId: currentSessionId
       };
       
       console.log('Creating wallet with data:', JSON.stringify(userData, null, 2));
-      console.log('Using original requestId:', requestId);
-      console.log('Using original sessionId:', sessionId);
       
       // Call the API through bajajApi service
       const response = await bajajApi.registerUser(userData);
@@ -276,7 +469,7 @@ const CreateWalletScreen = ({ navigation, route }) => {
         // According to the documentation, after successful wallet creation, 
         // we need to upload all required documents before FasTag registration
         if (vehicleNo && engineNo) {
-          // Navigate to ValidateCustomer screen instead of Document Upload
+          // Navigate to ValidateCustomer screen
           navigation.navigate('ValidateCustomer', {
             mobileNo: mobileNo,
             vehicleNo: vehicleNo,
@@ -289,20 +482,82 @@ const CreateWalletScreen = ({ navigation, route }) => {
         }
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to create wallet';
-        throw new Error(errorMsg);
+        const errorCode = response?.response?.errorCode || '';
+        
+        // Special handling for session errors
+        if (errorCode === 'A028' || errorMsg.includes('Invalid session')) {
+          // Try again with a new session
+          ErrorHandler.showErrorAlert(
+            'Session Expired',
+            'Your session has expired. Would you like to try again with a new session?',
+            () => {
+              // Mark that we're not submitting anymore and reset loading
+              setLoading(false);
+              isSubmitting.current = false;
+              
+              // Get a fresh session and try again
+              getFreshSession()
+                .then(({ requestId: newRequestId, sessionId: newSessionId }) => {
+                  setRequestId(newRequestId);
+                  setSessionId(newSessionId);
+                  
+                  // Wait a moment then retry
+                  setTimeout(() => {
+                    handleCreateWallet();
+                  }, 500);
+                })
+                .catch(sessionError => {
+                  ErrorHandler.showErrorAlert(
+                    'Session Error',
+                    'Unable to create a new session. Please try again later.',
+                    null,
+                    false
+                  );
+                });
+            },
+            true
+          );
+          return;
+        } else {
+          // Regular error handling for non-session errors
+          ErrorHandler.showErrorAlert(
+            'Wallet Creation Failed',
+            errorMsg,
+            null,
+            true
+          );
+        }
       }
     } catch (error) {
       console.error('Create Wallet Error:', error);
-      Alert.alert(
-        'Error',
-        `Failed to create wallet: ${error.message}`,
-        [{ text: 'OK' }]
+      
+      // Use our error handler for consistent error alerts
+      await ErrorHandler.handleApiError(
+        error,
+        'Create Wallet',
+        {
+          mobileNo,
+          documentType,
+          firstName: name,
+          lastName: lastName
+        },
+        FORM_TYPES.CREATE_WALLET,
+        'create_wallet'
       );
     } finally {
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 
+  // Document types
+  const documentTypes = [
+    { label: 'PAN Card', value: 'PAN', code: '1' },
+    { label: 'Driving License', value: 'DL', code: '2' },
+    { label: 'Voter ID', value: 'VID', code: '3' },
+    { label: 'Passport', value: 'PASS', code: '4' }
+  ];
+  
   // Determine if expiry date field should be shown based on document type
   const showExpiryDate = documentType === 'DL' || documentType === 'PASS';
   
