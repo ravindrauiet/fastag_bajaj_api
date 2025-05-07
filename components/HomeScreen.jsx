@@ -1,12 +1,12 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import DebugConsole from './DebugConsole';
 
 const HomeScreen = ({ navigation }) => {
   // Access the notification context
-  const { addScreenCompletionNotification, addNotification } = useContext(NotificationContext);
+  const { addScreenCompletionNotification, addNotification, notifications } = useContext(NotificationContext);
   
   // Access auth context to get user data
   const { userInfo, userProfile, isLoading } = useAuth();
@@ -17,6 +17,18 @@ const HomeScreen = ({ navigation }) => {
   // Debug console state
   const [debugVisible, setDebugVisible] = useState(false);
   
+  // Message center state
+  const [messageModalVisible, setMessageModalVisible] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Calculate unread notifications
+  useEffect(() => {
+    if (notifications) {
+      const count = notifications.filter(notification => !notification.read).length;
+      setUnreadCount(count);
+    }
+  }, [notifications]);
+  
   // Add a navigation listener to track screen changes
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -24,12 +36,40 @@ const HomeScreen = ({ navigation }) => {
       console.log('HomeScreen focused');
     });
     
+    // Add header right button for messages
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity 
+          style={styles.headerMessageButton}
+          onPress={() => setMessageModalVisible(true)}
+        >
+          <Text style={styles.messageIcon}>📩</Text>
+          {unreadCount > 0 && (
+            <View style={styles.badgeContainer}>
+              <Text style={styles.badgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      ),
+    });
+    
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, unreadCount]);
   
   // Toggle debug console
   const toggleDebugConsole = () => {
     setDebugVisible(!debugVisible);
+  };
+  
+  // Mark notification as read
+  const markAsRead = (id) => {
+    // This function should be implemented in the NotificationContext
+    if (addNotification) {
+      // For now we'll just close the modal
+      setMessageModalVisible(false);
+    }
   };
   
   // Add navigation enhancers to track screen completion
@@ -104,6 +144,52 @@ const HomeScreen = ({ navigation }) => {
         visible={debugVisible}
         onClose={() => setDebugVisible(false)}
       />
+      
+      {/* Message Center Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={messageModalVisible}
+        onRequestClose={() => setMessageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Notifications</Text>
+              <TouchableOpacity onPress={() => setMessageModalVisible(false)}>
+                <Text style={styles.closeButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.notificationsList}>
+              {notifications && notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <TouchableOpacity 
+                    key={notification.id}
+                    style={[
+                      styles.notificationItem,
+                      !notification.read && styles.unreadNotification
+                    ]}
+                    onPress={() => markAsRead(notification.id)}
+                  >
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationMessage}>{notification.message}</Text>
+                      <Text style={styles.notificationTime}>{notification.time}</Text>
+                    </View>
+                    {!notification.read && (
+                      <View style={styles.unreadIndicator} />
+                    )}
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <View style={styles.emptyNotifications}>
+                  <Text style={styles.emptyText}>No notifications</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
       
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header removed and replaced with default React Navigation header */}
@@ -385,7 +471,111 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#777777',
   },
-  // Header styles removed as we're now using the default React Navigation header
+  // Header styles for message center
+  headerMessageButton: {
+    marginRight: 16,
+    padding: 8,
+    position: 'relative',
+  },
+  messageIcon: {
+    fontSize: 24,
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FF5252',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  
+  // Message Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40, // Extra padding for bottom area
+    maxHeight: '80%', // Limited height to prevent full screen takeover
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  closeButton: {
+    fontSize: 20,
+    color: '#777777',
+    padding: 8,
+  },
+  notificationsList: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    maxHeight: '100%',
+  },
+  notificationItem: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  unreadNotification: {
+    backgroundColor: 'rgba(0, 172, 193, 0.05)',
+  },
+  notificationContent: {
+    flex: 1,
+    paddingRight: 16,
+  },
+  notificationMessage: {
+    fontSize: 16,
+    color: '#333333',
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 12,
+    color: '#777777',
+  },
+  unreadIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#00ACC1',
+  },
+  emptyNotifications: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#777777',
+    textAlign: 'center',
+  },
   
   // Balance Card
   balanceCard: {

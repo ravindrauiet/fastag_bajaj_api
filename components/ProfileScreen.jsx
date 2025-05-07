@@ -414,53 +414,6 @@ const ProfileScreen = ({ navigation }) => {
           </>
         )}
       </ScrollView>
-      
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNavContainer}>
-        <View style={styles.bottomNav}>
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => navigation.navigate('Home')}
-          >
-            <View style={styles.navIconContainer}>
-              <Text style={styles.navIcon}>💳</Text>
-            </View>
-            <Text style={styles.navLabel}>Cards</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.navItem}>
-            <View style={styles.navIconContainer}>
-              <Text style={styles.navIcon}>📊</Text>
-            </View>
-            <Text style={styles.navLabel}>Analytics</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.navItemCenter} 
-            onPress={() => navigation.navigate('BarcodeScanner')}
-          >
-            <View style={styles.navCenterButton}>
-              <View style={styles.navCenterIcon}>
-                <Text style={styles.centerButtonIcon}>▶</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.navItem}>
-            <View style={styles.navIconContainer}>
-              <Text style={styles.navIcon}>💰</Text>
-            </View>
-            <Text style={styles.navLabel}>Wallet</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.navItem}>
-            <View style={[styles.navIconContainer, styles.activeNavIcon]}>
-              <Text style={styles.navIcon}>👤</Text>
-            </View>
-            <Text style={[styles.navLabel, styles.activeNavLabel]}>Profile</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </SafeAreaView>
   );
 };
