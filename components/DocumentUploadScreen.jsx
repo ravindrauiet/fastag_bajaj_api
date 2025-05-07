@@ -122,7 +122,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
+        // aspect: [4, 3],
         quality: 0.8,
         base64: true,
       });
@@ -387,7 +387,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     const isCurrentlyUploading = currentUploadType === imageType && loading;
     
     // Determine if this is a camera-only document type
-    const isCameraOnly = ['VEHICLEFRONT', 'VEHICLESIDE', 'TAGAFFIX'].includes(imageType);
+    const isCameraOnly = [''].includes(imageType);
     
     return (
       <View style={styles.documentCard} key={imageType}>
@@ -432,7 +432,14 @@ const DocumentUploadScreen = ({ navigation, route }) => {
             <View style={styles.imageOptions}>
               <TouchableOpacity 
                 style={styles.imageOptionButton}
-                onPress={() => takePhoto(imageType)}
+                // onPress={() => takePhoto(imageType)}
+                onPress={() => {
+                  Alert.alert(
+                    'Coming Soon',
+                    'Camera functionality will be available in the next update.',
+                    [{ text: 'OK' }]
+                  );
+                }}
               >
                 <Text style={styles.imageOptionIcon}>📷</Text>
                 <Text style={styles.imageOptionText}>Camera</Text>
