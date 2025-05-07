@@ -264,8 +264,7 @@ const AdminDashboard = ({ navigation }) => {
     
     switch (type) {
       case 'users':
-        // Navigate to users screen (could be implemented later)
-        alert('User management will be implemented in future updates');
+        navigation.navigate('AllUsersScreen');
         break;
         
       case 'submissions':
@@ -304,6 +303,10 @@ const AdminDashboard = ({ navigation }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleSubmissionPress = (submission) => {
+    navigation.navigate('FormDetailScreen', { submissionId: submission.id });
   };
 
   // Add this PermissionErrorCard component
@@ -523,7 +526,7 @@ const AdminDashboard = ({ navigation }) => {
                 <TouchableOpacity 
                   key={submission.id} 
                   style={styles.listItem}
-                  onPress={() => alert(`Submission details for: ${submission.formType}`)}
+                  onPress={() => handleSubmissionPress(submission)}
                 >
                   <View style={[
                     styles.listItemIconContainer,

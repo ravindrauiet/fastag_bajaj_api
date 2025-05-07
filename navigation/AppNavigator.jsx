@@ -39,7 +39,10 @@ import FeedbackForm from '../components/FeedbackForm';
 import AdminDashboard from '../components/AdminDashboard';
 import FormSubmissionsScreen from '../components/admin/FormSubmissionsScreen';
 import FormSubmissionDetailScreen from '../components/admin/FormSubmissionDetailScreen';
+import AllUsersScreen from '../components/admin/AllUsersScreen';
 import ServicesScreen from '../components/ServicesScreen';
+import UserDetailScreen from '../components/admin/UserDetailScreen';
+import FormDetailScreen from '../components/admin/FormDetailScreen';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -561,6 +564,17 @@ const MainNavigator = () => {
               }}
             />
             <Stack.Screen
+              name="AllUsersScreen"
+              component={AllUsersScreen}
+              options={{
+                headerTitle: 'All Users',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen
               name="Login"
               component={LoginScreen}
               options={{
@@ -584,6 +598,22 @@ const MainNavigator = () => {
             <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
             <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
             <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
+            <Stack.Screen
+              name="UserDetailScreen"
+              component={UserDetailScreen}
+              options={{
+                headerTitle: 'User Details',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen
+              name="FormDetailScreen"
+              component={FormDetailScreen}
+              options={{ headerTitle: 'Form Details' }}
+            />
           </Stack.Navigator>
         ) : (
           // User is authenticated, show main app flow
