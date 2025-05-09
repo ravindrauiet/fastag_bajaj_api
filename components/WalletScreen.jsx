@@ -147,6 +147,11 @@ const WalletScreen = ({ navigation, route }) => {
     }
   };
   
+  // Navigate to wallet top-up screen (new UPI-based method)
+  const handleWalletTopup = () => {
+    navigation.navigate('WalletTopup');
+  };
+  
   // Navigate to transaction history
   const handleViewAllTransactions = () => {
     navigation.navigate('TransactionHistory');
@@ -249,24 +254,30 @@ const WalletScreen = ({ navigation, route }) => {
               style={styles.actionButton}
               onPress={handleRecharge}
             >
-              <View style={styles.actionButtonIconContainer}>
-                <Icon name="wallet-plus-outline" size={24} color="#333333" />
+              <View style={styles.buttonIconContainer}>
+                <Icon name="cash-plus" size={22} color="#00ACC1" />
               </View>
               <Text style={styles.actionButtonText}>Recharge</Text>
             </TouchableOpacity>
             
-            <View style={styles.buttonDivider} />
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleWalletTopup}
+            >
+              <View style={styles.buttonIconContainer}>
+                <Icon name="bank-transfer-in" size={22} color="#00ACC1" />
+              </View>
+              <Text style={styles.actionButtonText}>UPI Top-up</Text>
+            </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => navigation.navigate('BankAccountLink')}
+              onPress={() => navigation.navigate('PaymentGateway')}
             >
-              <View style={styles.actionButtonIconContainer}>
-                <Icon name="bank-outline" size={24} color="#333333" />
+              <View style={styles.buttonIconContainer}>
+                <Icon name="credit-card-outline" size={22} color="#00ACC1" />
               </View>
-              <Text style={styles.actionButtonText}>
-                {hasBankAccount ? 'Manage Bank' : 'Link Bank'}
-              </Text>
+              <Text style={styles.actionButtonText}>Pay</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -417,7 +428,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionButtonIconContainer: {
+  buttonIconContainer: {
     backgroundColor: '#F0F0F0',
     width: 44,
     height: 44,
@@ -430,12 +441,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333333',
     fontWeight: '500',
-  },
-  buttonDivider: {
-    width: 1,
-    height: '70%',
-    backgroundColor: '#EEEEEE',
-    marginHorizontal: 10,
   },
   transactionsContainer: {
     backgroundColor: '#FFFFFF',

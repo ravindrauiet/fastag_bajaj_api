@@ -31,6 +31,7 @@ import VrnUpdateDocScreen from '../components/VrnUpdateDocScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import WalletScreen from '../components/WalletScreen';
 import WalletRechargeScreen from '../components/WalletRechargeScreen';
+import WalletTopupScreen from '../components/WalletTopupScreen';
 import PaymentGatewayScreen from '../components/PaymentGatewayScreen';
 import TransactionHistoryScreen from '../components/TransactionHistoryScreen';
 import TransactionDetailScreen from '../components/TransactionDetailScreen';
@@ -143,6 +144,7 @@ const WalletStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="WalletMain" component={WalletScreen} />
       <Stack.Screen name="WalletRecharge" component={WalletRechargeScreen} />
+      <Stack.Screen name="WalletTopup" component={WalletTopupScreen} />
       <Stack.Screen name="PaymentGateway" component={PaymentGatewayScreen} />
       <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
       <Stack.Screen name="TransactionDetail" component={TransactionDetailScreen} />
