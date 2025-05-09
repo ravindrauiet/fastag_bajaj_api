@@ -16,6 +16,7 @@ import bajajApi from '../api/bajajApi';
 import { trackFormSubmission, FORM_TYPES, SUBMISSION_STATUS } from '../utils/FormTracker';
 import FormLogger from '../utils/FormLogger';
 import ErrorHandler from './ValidationErrorHandler';
+import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 
 const ValidateCustomerScreen = ({ navigation, route }) => {
   // Get params from route if available
@@ -122,6 +123,12 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
         'initiate',
         'started'
       );
+      
+      // NEW: Also track with our FasTag registration system
+      const fastagResult = await FasTagRegistrationHelper.trackValidateCustomer(
+        formData
+      );
+      console.log('FasTag tracking for ValidateCustomer stage:', fastagResult);
       
       // Check if user has downloaded Bajaj app before sending OTP
       try {
@@ -250,6 +257,19 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           'success'
         );
         
+        // NEW: Update the FasTag tracking with successful response data
+        if (fastagResult.success) {
+          await FasTagRegistrationHelper.trackValidateCustomer(
+            {
+              ...formData,
+              requestId,
+              sessionId,
+              apiSuccess: true
+            },
+            fastagResult.registrationId
+          );
+        }
+        
         // Navigate to OTP verification screen with necessary params
         navigation.navigate('ValidateOtp', {
           requestId: response.validateCustResp.requestId,
@@ -259,7 +279,8 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           chassisNo: chassisNo,
           engineNo: engineNo,
           reqType: reqType,
-          formSubmissionId: trackingResult.submissionId // Pass the submission ID to next screen
+          formSubmissionId: trackingResult.submissionId, // Pass the submission ID to next screen
+          fastagRegistrationId: fastagResult.registrationId // NEW: Pass the fastag registration ID
         });
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to send OTP';
@@ -279,18 +300,17 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           );
         }
         
-        // Log error with FormLogger
-        await FormLogger.logFormAction(
-          FORM_TYPES.VALIDATE_CUSTOMER,
-          {
-            ...formData,
-            error: errorMsg,
-            apiSuccess: false
-          },
-          'send_otp',
-          'error',
-          new Error(errorMsg)
-        );
+        // NEW: Update FasTag tracking with error
+        if (fastagResult.success) {
+          await FasTagRegistrationHelper.trackValidateCustomer(
+            {
+              ...formData,
+              error: errorMsg,
+              apiSuccess: false
+            },
+            fastagResult.registrationId
+          );
+        }
         
         // Use error handler instead of throwing
         ErrorHandler.showErrorAlert(

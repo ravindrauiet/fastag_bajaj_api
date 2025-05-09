@@ -15,9 +15,13 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
 import ErrorHandler from './ValidationErrorHandler';
 import { FORM_TYPES } from '../utils/FormTracker';
+// Import our FasTag tracking helper
+import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
+import FormLogger from '../utils/FormLogger';
+import { trackFormSubmission, SUBMISSION_STATUS } from '../utils/FormTracker';
 
 // Development mode flag - set to true to bypass API calls
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 const ValidateOtpScreen = ({ navigation, route }) => {
   // Get params from previous screen with default values to prevent undefined errors
@@ -28,7 +32,10 @@ const ValidateOtpScreen = ({ navigation, route }) => {
     vehicleNo = '',
     chassisNo = '',
     engineNo = '',
-    reqType = 'REG'
+    reqType = 'REG',
+    // Get the form submission ID and FasTag registration ID from previous screen
+    formSubmissionId = null,
+    fastagRegistrationId = null
   } = route?.params || {};
 
   // OTP state management
@@ -176,6 +183,42 @@ const ValidateOtpScreen = ({ navigation, route }) => {
     setLoading(true);
     
     try {
+      // Create form data for tracking
+      const formData = {
+        otp: otpString,
+        requestId,
+        sessionId,
+        mobileNo,
+        vehicleNo,
+        chassisNo,
+        engineNo,
+        reqType,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Track with FormTracker - start the OTP verification process
+      const trackingResult = await trackFormSubmission(
+        FORM_TYPES.OTP_VERIFICATION,
+        formData,
+        null, // New submission for this step
+        SUBMISSION_STATUS.STARTED
+      );
+      
+      // Track with FormLogger
+      const logResult = await FormLogger.logFormAction(
+        FORM_TYPES.OTP_VERIFICATION,
+        formData,
+        'verify',
+        'started'
+      );
+      
+      // NEW: Track with FasTag registration system
+      const fastagResult = await FasTagRegistrationHelper.trackValidateOtp(
+        formData,
+        fastagRegistrationId // Use ID from previous screen
+      );
+      console.log('FasTag tracking for OTP verification:', fastagResult);
+      
       // Enhanced logging for the parameters being sent to the API
       console.log('===== OTP VERIFICATION DETAILS =====');
       console.log('OTP string entered by user:', otpString);
@@ -257,7 +300,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         
         // Set timeout for the API call - 15 seconds
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout - please try again')), 15000);
+          setTimeout(() => reject(new Error('Request timeout - please try again')), 150000);
         });
         
         // Actual API call
@@ -282,6 +325,81 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           time: 'Just now',
           read: false
         });
+        
+        // Update tracking status based on response
+        if (response.response.status === 'success') {
+          // Update FormTracker with success
+          await trackFormSubmission(
+            FORM_TYPES.OTP_VERIFICATION,
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              apiSuccess: true
+            },
+            trackingResult.id, // Use the ID from tracking result
+            SUBMISSION_STATUS.COMPLETED
+          );
+          
+          // Update FormLogger with success
+          await FormLogger.logFormAction(
+            FORM_TYPES.OTP_VERIFICATION,
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              apiSuccess: true
+            },
+            'verify',
+            'success'
+          );
+          
+          // NEW: Update FasTag tracking with success
+          await FasTagRegistrationHelper.trackValidateOtp(
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              apiSuccess: true
+            },
+            fastagResult.registrationId
+          );
+        } else {
+          // Update FormTracker with error
+          await trackFormSubmission(
+            FORM_TYPES.OTP_VERIFICATION,
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              error: response.response.errorDesc || response.response.msg,
+              apiSuccess: false
+            },
+            trackingResult.id,
+            SUBMISSION_STATUS.REJECTED
+          );
+          
+          // Update FormLogger with error
+          await FormLogger.logFormAction(
+            FORM_TYPES.OTP_VERIFICATION,
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              error: response.response.errorDesc || response.response.msg,
+              apiSuccess: false
+            },
+            'verify',
+            'error',
+            new Error(response.response.errorDesc || response.response.msg)
+          );
+          
+          // NEW: Update FasTag tracking with error
+          await FasTagRegistrationHelper.trackValidateOtp(
+            {
+              ...formData,
+              apiResponse: JSON.stringify(response),
+              error: response.response.errorDesc || response.response.msg,
+              apiSuccess: false
+            },
+            fastagResult.registrationId
+          );
+        }
         
         // Handle based on response code
         if (response.response.status === 'success' && response.response.code === '00') {
@@ -382,7 +500,11 @@ const ValidateOtpScreen = ({ navigation, route }) => {
                 udf2: response.validateOtpResp?.udf2 || '',
                 udf3: response.validateOtpResp?.udf3 || '',
                 udf4: response.validateOtpResp?.udf4 || '',
-                udf5: response.validateOtpResp?.udf5 || ''
+                udf5: response.validateOtpResp?.udf5 || '',
+
+                // Pass form submission IDs for tracking
+                formSubmissionId: trackingResult.id,
+                fastagRegistrationId: fastagResult.registrationId
               });
             } else if (reqType === 'REP') {
               // For replacement, go to FasTag replacement screen

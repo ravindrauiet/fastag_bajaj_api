@@ -38,9 +38,13 @@ export const saveFormSubmission = async (formType, formData, submissionId = null
       userId,
       data: formData,
       status: 'pending',
-      createdAt: submissionId ? undefined : timestamp,
       updatedAt: timestamp,
     };
+    
+    // Only add createdAt for new documents, not for updates
+    if (!submissionId) {
+      submissionData.createdAt = timestamp;
+    }
     
     console.log(`Saving ${formType} form data:`, submissionData);
     
