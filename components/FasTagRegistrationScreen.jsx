@@ -15,6 +15,9 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import bajajApi from '../api/bajajApi';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { FORM_TYPES, SUBMISSION_STATUS, trackFormSubmission } from '../utils/FormTracker';
+import FormLogger from '../utils/FormLogger';
+import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -23,7 +26,13 @@ const generateRequestId = () => {
 
 const FasTagRegistrationScreen = ({ navigation, route }) => {
   // Get data from ManualActivationScreen
-  const { registrationData, documentDetails, rawData } = route.params || {};
+  const { 
+    registrationData, 
+    documentDetails, 
+    rawData,
+    formSubmissionId = null,
+    fastagRegistrationId = null
+  } = route.params || {};
   
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
@@ -228,7 +237,56 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
     
     setLoading(true);
     
+    // Declare variables in broader scope for error handling
+    let trackingResult = null;
+    let fastagResult = null;
+    let formData = null;
+    let finalRegistrationData = null;
+    
     try {
+      // Create form data for tracking
+      formData = {
+        requestId,
+        sessionId,
+        mobileNo,
+        vehicleNo: vrn,
+        chassisNo: chassis,
+        engineNo: engine,
+        walletId,
+        name,
+        serialNo: serialNo.trim(),
+        tid: tid.trim(),
+        tagVehicleClassID,
+        vehicleDescriptor,
+        permitExpiryDate,
+        stateOfRegistration,
+        isNationalPermit,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Track with FormTracker - start the final registration process
+      trackingResult = await trackFormSubmission(
+        FORM_TYPES.FASTAG_REGISTRATION,
+        formData,
+        formSubmissionId, // Use ID from previous screen if available
+        SUBMISSION_STATUS.STARTED
+      );
+      
+      // Track with FormLogger
+      await FormLogger.logFormAction(
+        FORM_TYPES.FASTAG_REGISTRATION,
+        formData,
+        'register',
+        'started'
+      );
+      
+      // Track with FasTag registration system
+      fastagResult = await FasTagRegistrationHelper.trackFasTagRegistration(
+        formData,
+        fastagRegistrationId // Use ID from previous screen if available
+      );
+      console.log('FasTag tracking for registration started:', fastagResult);
+      
       // First check if user has downloaded Bajaj app and visited FasTag section
       const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
       
@@ -253,7 +311,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       };
       
       // Create the registration data object to match exact API documentation order
-      const finalRegistrationData = {
+      finalRegistrationData = {
         regDetails: {
           requestId: requestId || generateRequestId(),
           sessionId: sessionId || requestId || generateRequestId(),
@@ -312,6 +370,43 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       console.log('FasTag Registration Response:', JSON.stringify(response, null, 2));
       
       if (response && response.response && response.response.status === 'success') {
+        // Update FormTracker with success
+        await trackFormSubmission(
+          FORM_TYPES.FASTAG_REGISTRATION,
+          {
+            ...formData,
+            finalRegistrationData,
+            registrationResponse: response,
+            apiSuccess: true
+          },
+          trackingResult.id,
+          SUBMISSION_STATUS.COMPLETED
+        );
+        
+        // Log success with FormLogger
+        await FormLogger.logFormAction(
+          FORM_TYPES.FASTAG_REGISTRATION,
+          {
+            ...formData,
+            finalRegistrationData,
+            registrationResponse: response,
+            apiSuccess: true
+          },
+          'register',
+          'success'
+        );
+        
+        // Update FasTag tracking with success
+        await FasTagRegistrationHelper.trackFasTagRegistration(
+          {
+            ...formData,
+            finalRegistrationData,
+            registrationResponse: response,
+            apiSuccess: true
+          },
+          fastagResult.registrationId
+        );
+        
         // Add notification
         addNotification({
           id: Date.now(),
@@ -328,6 +423,47 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to register FasTag';
         
+        // Update FormTracker with error
+        await trackFormSubmission(
+          FORM_TYPES.FASTAG_REGISTRATION,
+          {
+            ...formData,
+            finalRegistrationData,
+            registrationResponse: response,
+            error: errorMsg,
+            apiSuccess: false
+          },
+          trackingResult.id,
+          SUBMISSION_STATUS.REJECTED
+        );
+        
+        // Log error with FormLogger
+        await FormLogger.logFormAction(
+          FORM_TYPES.FASTAG_REGISTRATION,
+          {
+            ...formData,
+            finalRegistrationData,
+            registrationResponse: response,
+            error: errorMsg,
+            apiSuccess: false
+          },
+          'register',
+          'error',
+          new Error(errorMsg)
+        );
+        
+        // Update FasTag tracking with error
+        await FasTagRegistrationHelper.trackFasTagRegistration(
+          {
+            ...formData,
+            finalRegistrationData,
+            registrationResponse: response,
+            error: errorMsg,
+            apiSuccess: false
+          },
+          fastagResult.registrationId
+        );
+        
         // Special handling for RC image errors
         if (errorMsg.includes('RCIMAGE')) {
           Alert.alert(
@@ -341,6 +477,52 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       }
     } catch (error) {
       console.error('FasTag Registration Error:', error);
+      
+      // Log exception with tracking systems
+      try {
+        if (trackingResult && trackingResult.id) {
+          await trackFormSubmission(
+            FORM_TYPES.FASTAG_REGISTRATION,
+            {
+              ...formData,
+              finalRegistrationData,
+              error: error.message,
+              apiSuccess: false
+            },
+            trackingResult.id,
+            SUBMISSION_STATUS.FAILED
+          );
+        }
+        
+        await FormLogger.logFormAction(
+          FORM_TYPES.FASTAG_REGISTRATION,
+          {
+            ...formData,
+            finalRegistrationData,
+            error: error.message,
+            apiSuccess: false
+          },
+          'register',
+          'error',
+          error
+        );
+        
+        if (fastagResult && fastagResult.registrationId) {
+          await FasTagRegistrationHelper.trackFasTagRegistration(
+            {
+              ...formData,
+              finalRegistrationData,
+              error: error.message,
+              apiSuccess: false
+            },
+            fastagResult.registrationId
+          );
+        }
+      } catch (loggingError) {
+        // Don't let logging errors affect the UI flow
+        console.error('Error during error tracking:', loggingError);
+      }
+      
       Alert.alert(
         'Registration Error',
         error.message || 'Failed to register FasTag. Please try again.',
