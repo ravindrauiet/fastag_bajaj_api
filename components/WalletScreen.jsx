@@ -15,48 +15,14 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-
-// Mock data for recent transactions
-const MOCK_TRANSACTIONS = [
-  {
-    id: '1',
-    type: 'recharge',
-    amount: 500,
-    date: '2023-06-15',
-    time: '14:30',
-    status: 'success'
-  },
-  {
-    id: '2',
-    type: 'payment',
-    amount: 88,
-    date: '2023-06-14',
-    time: '10:15',
-    status: 'success',
-    to: 'NETC Toll Payment'
-  },
-  {
-    id: '3',
-    type: 'recharge',
-    amount: 1000,
-    date: '2023-06-10',
-    time: '09:45',
-    status: 'success'
-  },
-  {
-    id: '4',
-    type: 'payment',
-    amount: 65,
-    date: '2023-06-08',
-    time: '16:22',
-    status: 'success',
-    to: 'NETC Toll Payment'
-  }
-];
+import { db } from '../services/firebase';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, query, where, getDocs, orderBy, limit, getDoc, doc } from 'firebase/firestore';
 
 const WalletScreen = ({ navigation, route }) => {
-  const [walletBalance, setWalletBalance] = useState(1247.50);
-  const [transactions, setTransactions] = useState(MOCK_TRANSACTIONS);
+  const { userInfo } = useAuth();
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
@@ -98,26 +64,125 @@ const WalletScreen = ({ navigation, route }) => {
     }, [])
   );
   
-  // Simulate fetching wallet data
+  // Fetch wallet data from Firestore
   const refreshWalletData = async () => {
+    if (!userInfo || !userInfo.uid) {
+      console.log('No user logged in');
+      return;
+    }
+    
     setRefreshing(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Fetch user wallet balance
+      const userRef = doc(db, 'users', userInfo.uid);
+      const userDoc = await getDoc(userRef);
       
-      // Simulate data update
-      setWalletBalance(prevBalance => {
-        // Random small fluctuation for demo
-        const change = Math.random() > 0.5 ? 0 : Math.floor(Math.random() * 20);
-        return prevBalance + change;
-      });
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        // If wallet field exists, use it, otherwise default to 0
+        setWalletBalance(userData.wallet || 0);
+      } else {
+        console.log('User document not found');
+        setWalletBalance(0);
+      }
+      
+      // Combined transactions array
+      let allTransactions = [];
+      
+      // Try to get transactions from the transactions collection
+      try {
+        const transactionsRef = collection(db, 'transactions');
+        const transactionsQuery = query(
+          transactionsRef,
+          where('userId', '==', userInfo.uid)
+        );
+        
+        const transactionsSnapshot = await getDocs(transactionsQuery);
+        
+        transactionsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          
+          // Skip if there's no amount or createdAt
+          if (!data.amount || !data.createdAt) return;
+          
+          allTransactions.push({
+            id: doc.id,
+            type: data.type || 'payment',
+            amount: data.amount || 0,
+            date: formatDate(data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate()),
+            time: formatTime(data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate()),
+            status: data.status || 'pending',
+            to: data.to || data.description || '',
+            createdAt: data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate()
+          });
+        });
+      } catch (transactionError) {
+        console.log('Error fetching transactions:', transactionError);
+      }
+      
+      // Try to get wallet top-ups
+      try {
+        const topupsRef = collection(db, 'wallet_topups');
+        const topupsQuery = query(
+          topupsRef,
+          where('userId', '==', userInfo.uid)
+        );
+        
+        const topupsSnapshot = await getDocs(topupsQuery);
+        
+        topupsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          
+          // Skip if there's no amount or createdAt
+          if (!data.amount || !data.createdAt) return;
+          
+          allTransactions.push({
+            id: doc.id,
+            type: 'recharge',
+            amount: data.amount || 0,
+            date: formatDate(data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate()),
+            time: formatTime(data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate()),
+            status: data.status || 'pending',
+            createdAt: data.createdAt instanceof Date ? data.createdAt : data.createdAt.toDate()
+          });
+        });
+      } catch (topupsError) {
+        console.log('Error fetching wallet top-ups:', topupsError);
+      }
+      
+      // Sort by date, most recent first
+      allTransactions.sort((a, b) => b.createdAt - a.createdAt);
+      
+      // Take only the first 5 for recent transactions
+      setTransactions(allTransactions.slice(0, 5));
       
     } catch (error) {
       console.error('Error refreshing wallet data:', error);
     } finally {
       setRefreshing(false);
     }
+  };
+  
+  // Format date to DD-MM-YYYY
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    
+    return `${day}-${month}-${year}`;
+  };
+  
+  // Format time to HH:MM
+  const formatTime = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
   };
   
   // Toggle balance visibility with animation
@@ -191,9 +256,9 @@ const WalletScreen = ({ navigation, route }) => {
           <Text style={[styles.amountText, { color: isRecharge ? '#4CAF50' : '#E53935' }]}>
             {isRecharge ? '+' : '-'} ₹{item.amount}
           </Text>
-          <View style={[styles.statusPill, { backgroundColor: item.status === 'success' ? '#E8F5E9' : '#FFEBEE' }]}>
-            <Text style={[styles.statusText, { color: item.status === 'success' ? '#4CAF50' : '#E53935' }]}>
-              {item.status === 'success' ? 'Success' : 'Failed'}
+          <View style={[styles.statusPill, { backgroundColor: item.status === 'approved' || item.status === 'success' ? '#E8F5E9' : item.status === 'pending' ? '#FFF9C4' : '#FFEBEE' }]}>
+            <Text style={[styles.statusText, { color: item.status === 'approved' || item.status === 'success' ? '#4CAF50' : item.status === 'pending' ? '#F57F17' : '#E53935' }]}>
+              {item.status === 'approved' ? 'Success' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}
             </Text>
           </View>
         </View>

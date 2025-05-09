@@ -18,13 +18,16 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../services/firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+
+// Base64 encoded QR code placeholder
+const qrCodeBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAMAAAC8EZcfAAAABlBMVEX///8AAABVwtN+AAAB7ElEQVR4nO2Z4Y6DMAxDSd7/pXeM7WgvlKP9cZO2fEIIErux03L9+jKZTCaTyWQymUwmk8n0b7q+ZZf08fPiDsBHDtfXCzjXOwDzBJ/5XiH4zOe5WdAv1wu4CgKPfALCpzwXiwG7gf7Oa37FeIcBa/UQ+JSn6L0xd+YD/J3gR47Xg/GDscCDMz3hQ5g7U3g++l5WsMfnsSNGwCf//PkwVhIkvJl8CCWEPuF2+TjubwlcE6xYLO90vkJwlw+rLCFgTdAScKdYPZ9Cz3eyHR9niYA5YFgDqm8CsAKM+Lg3vJQPoqNvmeDK/GEC3DtZ9/LFJMsKNYQdoV/vWm8HuEpAzFN/3Q6EJ/Ox2vLyxUqLgPa0z5MQNflynQzj/JCAPuHKh4S9nY4POhT0fNhKZIDfXMHfCW7yIfjLx/mNwJXPg7cShJ1uV9DzhdUFwSMfArZ8bHE9wCsJogFaCmIJXaRLPo+Gd3xrPsjnZDjCuxE+S3C9hOwNaPr4gkrQZ5kDdOsE2wvNtvJ2BiTVINaevF3CSoiA8V3WVKkj9BOE1WTfnGfyeUBOsB6D2AhxTfSIbQc7/JfxdkRcFT2iJwjr0Y7wBYOXfBnhax/nzzP5WP+YT1Pxho/1Rt9r1/dkMplMJpPJZDKZTCaTybTVL2i3KgtqZW4gAAAAAElFTkSuQmCC';
 
 const WalletTopupScreen = ({ navigation }) => {
   const { userInfo } = useAuth();
   const [amount, setAmount] = useState('');
   const [screenshot, setScreenshot] = useState(null);
+  const [screenshotName, setScreenshotName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [qrImageLoaded, setQrImageLoaded] = useState(false);
   const [upiId, setUpiId] = useState('example@upi');
@@ -50,7 +53,12 @@ const WalletTopupScreen = ({ navigation }) => {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setScreenshot(result.assets[0].uri);
+        const imageUri = result.assets[0].uri;
+        setScreenshot(imageUri);
+        
+        // Extract filename from the URI
+        const filename = imageUri.split('/').pop() || `screenshot_${Date.now()}.jpg`;
+        setScreenshotName(filename);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -73,26 +81,12 @@ const WalletTopupScreen = ({ navigation }) => {
     try {
       setIsLoading(true);
 
-      // Upload screenshot to Firebase Storage
-      const storage = getStorage();
-      const fileRef = ref(storage, `topup-screenshots/${userInfo.uid}/${Date.now()}.jpg`);
-      
-      // Convert image URI to blob
-      const response = await fetch(screenshot);
-      const blob = await response.blob();
-      
-      // Upload the blob
-      await uploadBytes(fileRef, blob);
-      
-      // Get the download URL
-      const downloadURL = await getDownloadURL(fileRef);
-
       // Add document to wallet_topups collection
       const topupData = {
         userId: userInfo.uid,
         userName: userInfo.displayName || 'User',
         amount: parseFloat(amount),
-        screenshotUrl: downloadURL,
+        screenshotName: screenshotName,
         status: 'pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -254,6 +248,9 @@ const WalletTopupScreen = ({ navigation }) => {
                 </View>
               )}
             </TouchableOpacity>
+            {screenshot && (
+              <Text style={styles.fileNameText}>Selected: {screenshotName}</Text>
+            )}
           </View>
 
           {/* Submit Button */}
@@ -465,6 +462,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  fileNameText: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 8,
+    textAlign: 'center',
   },
   submitButton: {
     backgroundColor: '#00ACC1',
