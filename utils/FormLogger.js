@@ -1,9 +1,19 @@
 import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import FasTagTracker, { STAGES } from './FasTagTracker';
+import { FORM_TYPES } from './FormTracker';
 
 // Collection name
 const FORM_LOGS_COLLECTION = 'formLogs';
+
+// Map FormTracker form types to FasTag tracker stages
+const FORM_TYPE_TO_STAGE_MAP = {
+  [FORM_TYPES.VALIDATE_CUSTOMER]: STAGES.VALIDATE_CUSTOMER,
+  [FORM_TYPES.OTP_VERIFICATION]: STAGES.VALIDATE_OTP,
+  [FORM_TYPES.DOCUMENT_UPLOAD]: STAGES.DOCUMENT_UPLOAD,
+  [FORM_TYPES.FASTAG_REGISTRATION]: STAGES.FASTAG_REGISTRATION
+};
 
 /**
  * Logs form data to Firestore with user info and timestamps
@@ -12,9 +22,10 @@ const FORM_LOGS_COLLECTION = 'formLogs';
  * @param {string} action - The action performed (e.g., 'submit', 'update', 'validate')
  * @param {string} status - The status of the form action (e.g., 'success', 'error', 'pending')
  * @param {Object} [error] - Optional error information if status is 'error'
+ * @param {string} [registrationId] - Optional ID for tracking fasTag registration stages
  * @returns {Promise<Object>} Object containing success status and log document ID
  */
-export const logFormAction = async (formType, formData, action, status, error = null) => {
+export const logFormAction = async (formType, formData, action, status, error = null, registrationId = null) => {
   try {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -51,7 +62,34 @@ export const logFormAction = async (formType, formData, action, status, error = 
     const docRef = await addDoc(collection(db, FORM_LOGS_COLLECTION), logData);
     
     console.log('Form log saved with ID:', docRef.id);
-    return { success: true, logId: docRef.id };
+    
+    // ENHANCEMENT: Also track in FasTag registration tracking system if this is
+    // a FasTag registration related form and success status
+    let fastagResult = null;
+    
+    if (status === 'success' && FORM_TYPE_TO_STAGE_MAP[formType]) {
+      try {
+        console.log(`Also tracking FasTag registration stage: ${FORM_TYPE_TO_STAGE_MAP[formType]}`);
+        
+        fastagResult = await FasTagTracker.trackRegistrationStage(
+          FORM_TYPE_TO_STAGE_MAP[formType],
+          formData,
+          registrationId,
+          formData.sessionId || null
+        );
+        
+        console.log('FasTag tracking result:', fastagResult);
+      } catch (trackingError) {
+        console.error('Error in FasTag tracking:', trackingError);
+        // Don't block the main operation if FasTag tracking fails
+      }
+    }
+    
+    return { 
+      success: true, 
+      logId: docRef.id,
+      fastagRegistrationId: fastagResult?.registrationId || null
+    };
   } catch (error) {
     console.error('Error logging form action:', error);
     return { success: false, error: String(error) };

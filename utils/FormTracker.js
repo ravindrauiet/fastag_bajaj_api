@@ -1,4 +1,5 @@
 import { saveFormSubmission } from '../api/formSubmissionsApi';
+import FasTagTracker, { STAGES } from './FasTagTracker';
 
 /**
  * Form Types in the FasTag Registration Flow
@@ -28,19 +29,31 @@ export const SUBMISSION_STATUS = {
 };
 
 /**
+ * Map FormTracker form types to FasTag tracker stages
+ */
+const FORM_TYPE_TO_STAGE_MAP = {
+  [FORM_TYPES.VALIDATE_CUSTOMER]: STAGES.VALIDATE_CUSTOMER,
+  [FORM_TYPES.OTP_VERIFICATION]: STAGES.VALIDATE_OTP,
+  [FORM_TYPES.DOCUMENT_UPLOAD]: STAGES.DOCUMENT_UPLOAD,
+  [FORM_TYPES.FASTAG_REGISTRATION]: STAGES.FASTAG_REGISTRATION
+};
+
+/**
  * Save form data at each step of the registration flow
  * 
  * @param {string} formType - Type of form from FORM_TYPES
  * @param {Object} formData - Form data to save
  * @param {string} submissionId - Optional ID to update existing submission
  * @param {string} status - Status from SUBMISSION_STATUS
+ * @param {string} fastagRegistrationId - Optional ID for FasTag registration tracking
  * @returns {Promise<Object>} Result with submission ID
  */
 export const trackFormSubmission = async (
   formType,
   formData,
   submissionId = null,
-  status = SUBMISSION_STATUS.IN_PROGRESS
+  status = SUBMISSION_STATUS.IN_PROGRESS,
+  fastagRegistrationId = null
 ) => {
   try {
     // Add status to the form data
@@ -55,10 +68,32 @@ export const trackFormSubmission = async (
     
     console.log(`Tracking form submission for ${formType}`, enrichedData);
     
-    // Save to Firestore
+    // Save to Firestore using existing method
     const result = await saveFormSubmission(formType, enrichedData, submissionId);
     
-    return result;
+    // For completed FasTag registration steps, also track in our new system
+    let fastagResult = null;
+    if (status === SUBMISSION_STATUS.COMPLETED && FORM_TYPE_TO_STAGE_MAP[formType]) {
+      try {
+        console.log(`Also tracking in FasTag registration system: ${formType}`);
+        fastagResult = await FasTagTracker.trackRegistrationStage(
+          FORM_TYPE_TO_STAGE_MAP[formType],
+          enrichedData,
+          fastagRegistrationId, // Use provided ID if available
+          enrichedData.sessionId || null // Include session ID if available
+        );
+        
+        console.log('FasTag tracking result:', fastagResult);
+      } catch (trackingError) {
+        console.error('Error in FasTag tracking:', trackingError);
+        // Don't fail the whole operation if this fails
+      }
+    }
+    
+    return {
+      ...result,
+      fastagRegistrationId: fastagResult?.registrationId || fastagRegistrationId || null
+    };
   } catch (error) {
     console.error('Form tracking error:', error);
     return {

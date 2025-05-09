@@ -1,59 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is admin
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'admin@gmail.com';
-    }
-    
-    // Admin access rule - grant full access to all documents if admin
+    // Allow read/write access on all documents to all users
     match /{document=**} {
-      allow read, write: if isAdmin();
-    }
-    
-    // User collection rules
-    match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Submissions collection rules
-    match /submissions/{document} {
-      allow create: if request.auth != null;
-      allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    // Form submissions collection rules - CORRECTED COLLECTION NAME
-    match /formSubmissions/{document} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    // Form logs collection rules - CORRECTED COLLECTION NAME
-    match /formLogs/{document} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    // Add explicit rules for other collections your dashboard accesses
-    match /vehicle-details/{document} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    match /user-details/{document} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    match /payment-info/{document} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    match /fastag-registrations/{document} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
-    }
-    
-    match /kyc-documents/{document} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read, write: if true;
     }
   }
-}
+} 
