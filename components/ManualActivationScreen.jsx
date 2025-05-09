@@ -22,6 +22,7 @@ import ErrorHandler from './ValidationErrorHandler';
 import { FORM_TYPES, SUBMISSION_STATUS, trackFormSubmission } from '../utils/FormTracker';
 import FormLogger from '../utils/FormLogger';
 import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
+import FastagManager from '../utils/FastagManager';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -184,6 +185,29 @@ const ManualActivationScreen = ({ route, navigation }) => {
         timestamp: new Date().toISOString()
       };
       
+      // Add FasTag to the database inventory
+      const fastagInventoryResult = await FastagManager.addFastag({
+        serialNo: serialNo.trim(),
+        tid: tid.trim(),
+        mobileNo,
+        vehicleNo,
+        name,
+        walletId,
+        chassisNo,
+        engineNo,
+        status: 'pending'  // Will be set to 'active' after registration completes
+      });
+      
+      if (!fastagInventoryResult.success && !fastagInventoryResult.existingId) {
+        console.error('Error adding FasTag to inventory:', fastagInventoryResult.error);
+        // Continue with registration process even if FastTag DB addition fails
+        // This ensures backward compatibility
+      } else {
+        console.log('FasTag added to inventory with ID:', fastagInventoryResult.fastagId || fastagInventoryResult.existingId);
+        // Store the FastTag ID for later use
+        formData.fastagDbId = fastagInventoryResult.fastagId || fastagInventoryResult.existingId;
+      }
+      
       // Track with FormTracker - start the manual activation process
       const trackingResult = await trackFormSubmission(
         FORM_TYPES.FASTAG_REGISTRATION,
@@ -338,6 +362,8 @@ const ManualActivationScreen = ({ route, navigation }) => {
         // Also pass the form submission IDs for tracking
         formSubmissionId: trackingResult.id,
         fastagRegistrationId: fastagResult.registrationId,
+        // Pass the FastTag database ID if we have one
+        fastagDbId: formData.fastagDbId || null,
         // Also pass the raw data in case it's needed
         rawData: {
           requestId,

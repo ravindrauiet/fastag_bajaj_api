@@ -18,6 +18,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { FORM_TYPES, SUBMISSION_STATUS, trackFormSubmission } from '../utils/FormTracker';
 import FormLogger from '../utils/FormLogger';
 import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
+import FastagManager from '../utils/FastagManager';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -31,7 +32,8 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
     documentDetails, 
     rawData,
     formSubmissionId = null,
-    fastagRegistrationId = null
+    fastagRegistrationId = null,
+    fastagDbId = null
   } = route.params || {};
   
   // Access notification context
@@ -406,6 +408,76 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           },
           fastagResult.registrationId
         );
+        
+        // Update FasTag in the inventory database if we have an ID
+        if (fastagDbId) {
+          try {
+            await FastagManager.updateFastag(fastagDbId, {
+              status: 'active',
+              mobileNo: finalRegistrationData.custDetails.mobileNo,
+              vehicleNo: finalRegistrationData.vrnDetails.vrn,
+              name: finalRegistrationData.custDetails.name,
+              walletId: finalRegistrationData.custDetails.walletId,
+              chassisNo: finalRegistrationData.vrnDetails.chassis,
+              engineNo: finalRegistrationData.vrnDetails.engine,
+              activationDetails: {
+                registrationId: response.response?.registrationId || null,
+                apiResponse: response.response || null,
+                timestamp: new Date().toISOString()
+              }
+            });
+            console.log('FasTag inventory updated successfully');
+          } catch (dbError) {
+            console.error('Error updating FasTag in inventory:', dbError);
+            // Do not stop the flow if this fails
+          }
+        } else if (finalRegistrationData.fasTagDetails?.serialNo) {
+          // If we don't have fastagDbId but we have the serial number, try to find and update by serial number
+          try {
+            const serialNo = finalRegistrationData.fasTagDetails.serialNo;
+            const existingTag = await FastagManager.getTagBySerialNo(serialNo);
+            
+            if (existingTag.success && existingTag.fastag) {
+              await FastagManager.updateFastag(existingTag.fastag.id, {
+                status: 'active',
+                mobileNo: finalRegistrationData.custDetails.mobileNo,
+                vehicleNo: finalRegistrationData.vrnDetails.vrn,
+                name: finalRegistrationData.custDetails.name,
+                walletId: finalRegistrationData.custDetails.walletId,
+                chassisNo: finalRegistrationData.vrnDetails.chassis,
+                engineNo: finalRegistrationData.vrnDetails.engine,
+                activationDetails: {
+                  registrationId: response.response?.registrationId || null,
+                  apiResponse: response.response || null,
+                  timestamp: new Date().toISOString()
+                }
+              });
+              console.log('FasTag inventory updated by serial number');
+            } else {
+              // If the tag doesn't exist yet, add it now
+              await FastagManager.addFastag({
+                serialNo,
+                tid: finalRegistrationData.fasTagDetails.tid || null,
+                status: 'active',
+                mobileNo: finalRegistrationData.custDetails.mobileNo,
+                vehicleNo: finalRegistrationData.vrnDetails.vrn,
+                name: finalRegistrationData.custDetails.name,
+                walletId: finalRegistrationData.custDetails.walletId,
+                chassisNo: finalRegistrationData.vrnDetails.chassis,
+                engineNo: finalRegistrationData.vrnDetails.engine,
+                activationDetails: {
+                  registrationId: response.response?.registrationId || null,
+                  apiResponse: response.response || null,
+                  timestamp: new Date().toISOString()
+                }
+              });
+              console.log('FasTag added to inventory during registration');
+            }
+          } catch (dbError) {
+            console.error('Error updating/adding FasTag by serial number:', dbError);
+            // Do not stop the flow if this fails
+          }
+        }
         
         // Add notification
         addNotification({
