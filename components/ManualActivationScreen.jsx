@@ -19,7 +19,9 @@ import { AntDesign } from '@expo/vector-icons';
 import bajajApi from '../api/bajajApi';
 import { API_URL, API_ENDPOINTS } from '../config';
 import ErrorHandler from './ValidationErrorHandler';
-import { FORM_TYPES } from '../utils/FormTracker';
+import { FORM_TYPES, SUBMISSION_STATUS, trackFormSubmission } from '../utils/FormTracker';
+import FormLogger from '../utils/FormLogger';
+import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -86,7 +88,11 @@ const ManualActivationScreen = ({ route, navigation }) => {
     udf3 = "",
     udf4 = "",
     udf5 = "",
-    debitAmt = "400.00"
+    debitAmt = "400.00",
+
+    // Form tracking IDs from previous screens
+    formSubmissionId = null,
+    fastagRegistrationId = null
   } = route.params || {};
   
   // Animation effect on component mount
@@ -161,6 +167,45 @@ const ManualActivationScreen = ({ route, navigation }) => {
       console.log('Starting FasTag registration process...');
       console.log('Document details status:', JSON.stringify(documentDetails));
       console.log('Using session ID:', sessionId);
+      
+      // Create form data for tracking
+      const formData = {
+        requestId,
+        sessionId,
+        mobileNo,
+        vehicleNo,
+        chassisNo,
+        engineNo,
+        customerId,
+        walletId,
+        name,
+        serialNo: serialNo.trim(),
+        tid: tid.trim(),
+        timestamp: new Date().toISOString()
+      };
+      
+      // Track with FormTracker - start the manual activation process
+      const trackingResult = await trackFormSubmission(
+        FORM_TYPES.FASTAG_REGISTRATION,
+        formData,
+        formSubmissionId, // Use ID from previous screen if available
+        SUBMISSION_STATUS.STARTED
+      );
+      
+      // Track with FormLogger
+      await FormLogger.logFormAction(
+        FORM_TYPES.FASTAG_REGISTRATION,
+        formData,
+        'manual_activation',
+        'started'
+      );
+      
+      // Track with FasTag registration system
+      const fastagResult = await FasTagRegistrationHelper.trackManualActivation(
+        formData,
+        fastagRegistrationId // Use ID from previous screen if available
+      );
+      console.log('FasTag tracking for manual activation started:', fastagResult);
       
       // First check if user has downloaded Bajaj app and visited FasTag section
       const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
@@ -249,10 +294,50 @@ const ManualActivationScreen = ({ route, navigation }) => {
 
       console.log('FasTag Registration Request:', JSON.stringify(registrationData, null, 2));
       
+      // Update FormTracker with success
+      await trackFormSubmission(
+        FORM_TYPES.FASTAG_REGISTRATION,
+        {
+          ...formData,
+          registrationData,
+          documentDetails,
+          apiSuccess: true
+        },
+        trackingResult.id,
+        SUBMISSION_STATUS.IN_PROGRESS
+      );
+      
+      // Log success with FormLogger
+      await FormLogger.logFormAction(
+        FORM_TYPES.FASTAG_REGISTRATION,
+        {
+          ...formData,
+          registrationData,
+          documentDetails,
+          apiSuccess: true
+        },
+        'manual_activation',
+        'success'
+      );
+      
+      // Update FasTag tracking with success
+      await FasTagRegistrationHelper.trackManualActivation(
+        {
+          ...formData,
+          registrationData,
+          documentDetails,
+          apiSuccess: true
+        },
+        fastagResult.registrationId
+      );
+      
       // Navigate to FasTag registration with the data
       navigation.navigate('FasTagRegistration', {
         registrationData,
         documentDetails,
+        // Also pass the form submission IDs for tracking
+        formSubmissionId: trackingResult.id,
+        fastagRegistrationId: fastagResult.registrationId,
         // Also pass the raw data in case it's needed
         rawData: {
           requestId,
