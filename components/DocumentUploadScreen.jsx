@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -19,6 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { NotificationContext } from '../contexts/NotificationContext';
 import bajajApi from '../api/bajajApi';
 import ErrorHandler from './ValidationErrorHandler';
+import FormLogger from '../utils/FormLogger';
+import { trackFormSubmission, FORM_TYPES, SUBMISSION_STATUS } from '../utils/FormTracker';
+import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 
 // Add the missing generateRequestId function
 const generateRequestId = () => {
@@ -41,7 +44,10 @@ const DocumentUploadScreen = ({ navigation, route }) => {
     customerId, 
     walletId, 
     name,
-    lastName
+    lastName,
+    otpResponse = null,
+    formSubmissionId = null,
+    fastagRegistrationId = null
   } = route.params || {};
   
   // Images with base64 data - all 5 are mandatory per documentation
@@ -266,6 +272,44 @@ const DocumentUploadScreen = ({ navigation, route }) => {
   const uploadAllDocuments = async () => {
     setLoading(true);
     
+    // Create form data for tracking
+    const formData = {
+      requestId,
+      sessionId,
+      mobileNo,
+      vehicleNo,
+      chassisNo,
+      engineNo,
+      customerId,
+      walletId,
+      name,
+      imagesUploaded: Object.keys(images).filter(type => images[type] !== null).length,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Track with FormTracker - start the document upload process
+    const trackingResult = await trackFormSubmission(
+      FORM_TYPES.DOCUMENT_UPLOAD,
+      formData,
+      null, // New submission for this step
+      SUBMISSION_STATUS.STARTED
+    );
+    
+    // Track with FormLogger
+    const logResult = await FormLogger.logFormAction(
+      FORM_TYPES.DOCUMENT_UPLOAD,
+      formData,
+      'upload',
+      'started'
+    );
+    
+    // NEW: Track with FasTag registration system
+    const fastagResult = await FasTagRegistrationHelper.trackDocumentUpload(
+      formData,
+      fastagRegistrationId // Use ID from previous screen
+    );
+    console.log('FasTag tracking for document upload started:', fastagResult);
+    
     // Check if any images are missing
     const missingTypes = Object.keys(images).filter(type => !images[type]);
     if (missingTypes.length > 0) {
@@ -285,22 +329,105 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         const success = await uploadDocument(imageType);
         if (!success) {
           allSuccess = false;
-          break;
+          // Don't break out of the loop - continue with other documents
         }
       }
     }
     
+    // After all uploads are complete, check if all were successful
     if (allSuccess && allDocumentsUploaded()) {
-      // All documents uploaded successfully
+      // Update FormTracker with success
+      await trackFormSubmission(
+        FORM_TYPES.DOCUMENT_UPLOAD,
+        {
+          ...formData,
+          uploadedDocs,
+          apiSuccess: true
+        },
+        trackingResult.id,
+        SUBMISSION_STATUS.COMPLETED
+      );
+      
+      // Update FormLogger with success
+      await FormLogger.logFormAction(
+        FORM_TYPES.DOCUMENT_UPLOAD,
+        {
+          ...formData,
+          uploadedDocs,
+          apiSuccess: true
+        },
+        'upload',
+        'success'
+      );
+      
+      // NEW: Update FasTag tracking with success
+      await FasTagRegistrationHelper.trackDocumentUpload(
+        {
+          ...formData,
+          uploadedDocs,
+          apiSuccess: true
+        },
+        fastagResult.registrationId
+      );
+      
       Alert.alert(
-        'Success',
-        'All required documents uploaded successfully!',
+        'Documents Uploaded',
+        'All documents have been uploaded successfully! You can now proceed with the FasTag registration.',
         [
-          { 
-            text: 'Continue', 
-            onPress: () => proceedToRegistration()
+          {
+            text: 'Proceed',
+            onPress: proceedToRegistration
           }
         ]
+      );
+    } else {
+      // Some document uploads failed
+      const failedDocs = Object.keys(uploadedDocs)
+        .filter(type => !uploadedDocs[type])
+        .map(type => documentDescriptions[type]);
+      
+      // Update FormTracker with partial success
+      await trackFormSubmission(
+        FORM_TYPES.DOCUMENT_UPLOAD,
+        {
+          ...formData,
+          uploadedDocs,
+          failedDocs,
+          apiSuccess: false
+        },
+        trackingResult.id,
+        SUBMISSION_STATUS.IN_PROGRESS
+      );
+      
+      // Update FormLogger with partial success
+      await FormLogger.logFormAction(
+        FORM_TYPES.DOCUMENT_UPLOAD,
+        {
+          ...formData,
+          uploadedDocs,
+          failedDocs,
+          apiSuccess: false
+        },
+        'upload',
+        'error',
+        new Error(`Failed to upload some documents: ${failedDocs.join(', ')}`)
+      );
+      
+      // NEW: Update FasTag tracking with partial success
+      await FasTagRegistrationHelper.trackDocumentUpload(
+        {
+          ...formData,
+          uploadedDocs,
+          failedDocs,
+          apiSuccess: false
+        },
+        fastagResult.registrationId
+      );
+      
+      Alert.alert(
+        'Processing Images',
+        `We're still processing some images. Please press OK and then click "Upload All Documents" again to complete the process.`,
+        [{ text: 'OK' }]
       );
     }
     
@@ -370,7 +497,10 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         udf5: otpResponse.validateOtpResp?.udf5 || '',
         
         // Document details
-        documentDetails
+        documentDetails,
+        // Pass form submission IDs for tracking
+        formSubmissionId: formSubmissionId,
+        fastagRegistrationId: fastagRegistrationId
       });
     } else {
       Alert.alert(
