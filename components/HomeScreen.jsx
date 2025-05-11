@@ -1,8 +1,10 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import DebugConsole from './DebugConsole';
+import { db } from '../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const HomeScreen = ({ navigation }) => {
   // Access the notification context
@@ -11,8 +13,9 @@ const HomeScreen = ({ navigation }) => {
   // Access auth context to get user data
   const { userInfo, userProfile, isLoading } = useAuth();
   
-  // State for balance (in a real app, this would come from an API)
-  const [balance, setBalance] = useState('₹ 0');
+  // State for balance
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true);
   
   // Debug console state
   const [debugVisible, setDebugVisible] = useState(false);
@@ -28,6 +31,42 @@ const HomeScreen = ({ navigation }) => {
       setUnreadCount(count);
     }
   }, [notifications]);
+  
+  // Fetch wallet balance when the screen is focused
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      if (!userInfo || !userInfo.uid) return;
+      
+      setIsLoadingBalance(true);
+      try {
+        const userRef = doc(db, 'users', userInfo.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // If wallet field exists, use it, otherwise default to 0
+          setWalletBalance(userData.wallet || 0);
+        } else {
+          setWalletBalance(0);
+        }
+      } catch (error) {
+        console.error('Error fetching wallet balance:', error);
+        setWalletBalance(0);
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+    
+    fetchWalletBalance();
+    
+    // Set up a focus listener to refresh balance when returning to this screen
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('HomeScreen focused, fetching wallet balance');
+      fetchWalletBalance();
+    });
+    
+    return unsubscribe;
+  }, [navigation, userInfo]);
   
   // Add a navigation listener to track screen changes
   useEffect(() => {
@@ -91,8 +130,28 @@ const HomeScreen = ({ navigation }) => {
     navigation.navigate('ValidateCustomer');
   };
 
-  // Start FasTag registration flow
+  // Start FasTag registration flow with balance check
   const startFasTagRegistration = () => {
+    // Check if user has sufficient balance (minimum 400)
+    if (walletBalance < 400) {
+      // Show alert for insufficient balance
+      Alert.alert(
+        "Insufficient Balance",
+        "You need a minimum balance of ₹400 to proceed with FasTag registration. Would you like to recharge your wallet?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Recharge Now",
+            onPress: () => navigateWithNotification('WalletTopup')
+          }
+        ]
+      );
+      return;
+    }
+    
     // Navigate to the ValidateCustomerScreen to start the registration process
     navigateWithNotification('ValidateCustomer');
     
@@ -198,7 +257,11 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.balanceCard}>
           <View style={styles.balanceTopSection}>
             <Text style={styles.balanceLabel}>Available Balance</Text>
-            <Text style={styles.balanceAmount}>{balance}</Text>
+            {isLoadingBalance ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.balanceAmount}>₹ {walletBalance.toLocaleString('en-IN')}</Text>
+            )}
           </View>
           
           <View style={styles.barcodeSection}>
@@ -280,12 +343,12 @@ const HomeScreen = ({ navigation }) => {
             
             <TouchableOpacity 
               style={styles.serviceItem}
-              onPress={() => navigateWithNotification('WalletRecharge')}
+              onPress={() => navigateWithNotification('WalletTopup')}
             >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>💰</Text>
               </View>
-              <Text style={styles.serviceText}>Request{'\n'}Money</Text>
+              <Text style={styles.serviceText}>Recharge{'\n'}Wallet</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
