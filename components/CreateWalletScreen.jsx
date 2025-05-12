@@ -80,16 +80,22 @@ const CreateWalletScreen = ({ navigation, route }) => {
         // For VRN already exists case, we start fresh with validate customer
         if (vrnAlreadyExists && mobileNo && (vehicleNo || engineNo)) {
           console.log('VRN already exists, initializing fresh session...');
-          // We don't need to make a real API call here, just wait for form submission
+          // Instead of waiting for form submission, get a session and redirect to OTP
+          if (mobileNo.length === 10) {
+            // Only try to get a session if we have a valid mobile number
+            getFreshSession();
+            return; // Stop execution here as we're redirecting
+          }
+          // Otherwise just wait for form submission
           setSessionInitialized(true);
           return;
         }
         
         // If no session provided but we have mobile number, we can try to get a new session
-        if (!sessionId && mobileNo) {
-          console.log('No session provided, will get fresh session during form submission');
-          setSessionInitialized(true);
-          return;
+        if (!sessionId && mobileNo && mobileNo.length === 10) {
+          console.log('No session provided, will get fresh session and redirect to OTP screen');
+          getFreshSession();
+          return; // Stop execution here as we're redirecting
         }
         
         // If we reach here, we'll use the provided session or just wait
@@ -363,7 +369,28 @@ const CreateWalletScreen = ({ navigation, route }) => {
         console.log('Got fresh session IDs:', newRequestId, newSessionId);
         setRequestId(newRequestId);
         setSessionId(newSessionId);
-        return { requestId: newRequestId, sessionId: newSessionId };
+        
+        // Redirect to OTP verification screen instead of continuing
+        navigation.navigate('ValidateOtpScreen', {
+          requestId: newRequestId,
+          sessionId: newSessionId,
+          mobileNo: mobileNo,
+          vehicleNo: vehicleNo || null,
+          chassisNo: chassisNo || null, 
+          engineNo: engineNo || null,
+          returnScreen: 'CreateWallet',  // Add this to know where to return after OTP validation
+          walletData: {  // Pass the form data to restore after OTP validation
+            firstName: name,
+            lastName: lastName,
+            dob: dob,
+            documentType: documentType,
+            documentNumber: documentNumber,
+            expiryDate: expiryDate
+          }
+        });
+        
+        // Return null to indicate we've redirected instead of continuing
+        return null;
       } else {
         console.error('Failed to get fresh session:', response?.response?.errorDesc);
         throw new Error(response?.response?.errorDesc || 'Failed to get fresh session');
@@ -412,9 +439,19 @@ const CreateWalletScreen = ({ navigation, route }) => {
       
       if (!currentRequestId || !currentSessionId || vrnAlreadyExists) {
         try {
-          const { requestId: newRequestId, sessionId: newSessionId } = await getFreshSession();
-          currentRequestId = newRequestId;
-          currentSessionId = newSessionId;
+          const sessionResult = await getFreshSession();
+          
+          // If getFreshSession returned null, it means it has navigated to the OTP screen
+          // So we should stop here and not continue with the wallet creation
+          if (sessionResult === null) {
+            console.log('Redirected to OTP verification, stopping wallet creation flow');
+            setLoading(false);
+            isSubmitting.current = false;
+            return;
+          }
+          
+          currentRequestId = sessionResult.requestId;
+          currentSessionId = sessionResult.sessionId;
         } catch (sessionError) {
           console.error('Failed to get fresh session:', sessionError);
           ErrorHandler.showErrorAlert(
@@ -486,26 +523,17 @@ const CreateWalletScreen = ({ navigation, route }) => {
         
         // Special handling for session errors
         if (errorCode === 'A028' || errorMsg.includes('Invalid session')) {
-          // Try again with a new session
+          // Instead of trying again with a new session directly, redirect to OTP verification
           ErrorHandler.showErrorAlert(
             'Session Expired',
-            'Your session has expired. Would you like to try again with a new session?',
+            'Your session has expired. We need to verify your mobile number again.',
             () => {
               // Mark that we're not submitting anymore and reset loading
               setLoading(false);
               isSubmitting.current = false;
               
-              // Get a fresh session and try again
+              // Get a fresh session which will redirect to OTP screen
               getFreshSession()
-                .then(({ requestId: newRequestId, sessionId: newSessionId }) => {
-                  setRequestId(newRequestId);
-                  setSessionId(newSessionId);
-                  
-                  // Wait a moment then retry
-                  setTimeout(() => {
-                    handleCreateWallet();
-                  }, 500);
-                })
                 .catch(sessionError => {
                   ErrorHandler.showErrorAlert(
                     'Session Error',
