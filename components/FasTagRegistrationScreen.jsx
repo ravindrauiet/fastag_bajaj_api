@@ -15,10 +15,12 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import bajajApi from '../api/bajajApi';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 import { FORM_TYPES, SUBMISSION_STATUS, trackFormSubmission } from '../utils/FormTracker';
 import FormLogger from '../utils/FormLogger';
 import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 import FastagManager from '../utils/FastagManager';
+import { deductFromUserWalletForFasTag } from '../services/transactionManager';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -38,6 +40,9 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
   
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
+  
+  // Access auth context to get user data
+  const { userInfo, userProfile } = useAuth();
   
   // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -409,6 +414,45 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           fastagResult.registrationId
         );
         
+        // Deduct from user wallet
+        if (userInfo && userInfo.uid) {
+          try {
+            // Get minimum balance required - use custom value if set, otherwise default to 400
+            const amount = userProfile && userProfile.minFasTagBalance 
+              ? parseFloat(userProfile.minFasTagBalance) 
+              : 400;
+              
+            console.log(`Deducting ₹${amount} from user wallet for FasTag registration`);
+            
+            const deductResult = await deductFromUserWalletForFasTag(
+              userInfo.uid,
+              amount,
+              {
+                registrationId: response.response?.registrationId || null,
+                vrn: finalRegistrationData.vrnDetails.vrn,
+                serialNo: finalRegistrationData.fasTagDetails.serialNo,
+                name: finalRegistrationData.custDetails.name
+              }
+            );
+            
+            if (!deductResult.success) {
+              console.error('Wallet deduction warning:', deductResult.error);
+              // Continue with registration despite wallet error
+            } else {
+              console.log('Wallet successfully debited:', deductResult);
+              addNotification({
+                id: Date.now() + 1,
+                message: `₹${amount} debited from your wallet for FasTag registration`,
+                time: 'Just now',
+                read: false
+              });
+            }
+          } catch (walletError) {
+            console.error('Failed to deduct from wallet:', walletError);
+            // Continue with registration despite wallet error
+          }
+        }
+        
         // Update FasTag in the inventory database if we have an ID
         if (fastagDbId) {
           try {
@@ -487,10 +531,10 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           read: false
         });
         
-        // Navigate to success screen
+        // Navigate to success screen with modified success message
         navigation.navigate('HomeScreen', {
           success: true,
-          message: 'FasTag registered successfully!'
+          message: `FasTag registered successfully! ₹${userProfile && userProfile.minFasTagBalance ? parseFloat(userProfile.minFasTagBalance) : 400} has been deducted from your wallet.`
         });
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to register FasTag';
