@@ -132,12 +132,17 @@ const HomeScreen = ({ navigation }) => {
 
   // Start FasTag registration flow with balance check
   const startFasTagRegistration = () => {
-    // Check if user has sufficient balance (minimum 400)
-    if (walletBalance < 400) {
+    // Get the minimum balance requirement - use custom value if set, otherwise default to 400
+    const minimumBalance = userProfile && userProfile.minFasTagBalance 
+      ? parseFloat(userProfile.minFasTagBalance) 
+      : 400;
+      
+    // Check if user has sufficient balance
+    if (walletBalance < minimumBalance) {
       // Show alert for insufficient balance
       Alert.alert(
         "Insufficient Balance",
-        "You need a minimum balance of ₹400 to proceed with FasTag registration. Would you like to recharge your wallet?",
+        `You need a minimum balance of ₹${minimumBalance} to proceed with FasTag registration. Would you like to recharge your wallet?`,
         [
           {
             text: "Cancel",
@@ -145,7 +150,7 @@ const HomeScreen = ({ navigation }) => {
           },
           {
             text: "Recharge Now",
-            onPress: () => navigateWithNotification('WalletTopup')
+            onPress: () => navigation.navigate('Wallet', { screen: 'WalletTopup' })
           }
         ]
       );
