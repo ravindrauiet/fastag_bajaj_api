@@ -598,15 +598,10 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         <View style={styles.documentFooter}>
           {hasImage && !isUploaded && (
             <TouchableOpacity 
-              style={styles.uploadButton}
-              onPress={() => uploadDocument(imageType)}
-              disabled={isCurrentlyUploading}
+              style={[styles.uploadButton, { opacity: 0.5 }]}
+              disabled={true}
             >
-              {isCurrentlyUploading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.uploadButtonText}>Upload</Text>
-              )}
+              <Text style={styles.uploadButtonText}>Upload Next Document</Text>
             </TouchableOpacity>
           )}
         </View>

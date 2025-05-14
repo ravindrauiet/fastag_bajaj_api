@@ -199,11 +199,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       isValid = false;
     }
     
-    // // Validate Wallet ID
-    // if (!walletId) {
-    //   newErrors.walletId = 'Wallet ID is required';
-    //   isValid = false;
-    // }
+    // Wallet ID is no longer validated as it's not shown to the user
     
     // Validate Serial Number
     if (!serialNo) {
@@ -259,7 +255,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         vehicleNo: vrn,
         chassisNo: chassis,
         engineNo: engine,
-        walletId,
+        walletId: userProfile?.walletId || userInfo?.walletId || walletId,
         name,
         serialNo: serialNo.trim(),
         tid: tid.trim(),
@@ -268,7 +264,15 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         permitExpiryDate,
         stateOfRegistration,
         isNationalPermit,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        // Add expected payment information
+        expectedPayment: {
+          amount: userProfile && userProfile.minFasTagBalance 
+            ? parseFloat(userProfile.minFasTagBalance) 
+            : 400,
+          method: 'wallet',
+          status: 'pending'
+        }
       };
       
       // Track with FormTracker - start the final registration process
@@ -440,6 +444,67 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
               // Continue with registration despite wallet error
             } else {
               console.log('Wallet successfully debited:', deductResult);
+              
+              // Update FasTag tracking with payment details
+              await FasTagRegistrationHelper.trackFasTagRegistration(
+                {
+                  ...formData,
+                  finalRegistrationData,
+                  registrationResponse: response,
+                  paymentDetails: {
+                    amount: amount,
+                    transactionId: deductResult.transactionId,
+                    previousBalance: deductResult.previousBalance,
+                    newBalance: deductResult.newBalance,
+                    paymentMethod: 'wallet',
+                    paymentStatus: 'completed',
+                    timestamp: new Date().toISOString()
+                  },
+                  apiSuccess: true
+                },
+                fastagResult.registrationId
+              );
+              
+              // Update FormTracker with payment information
+              await trackFormSubmission(
+                FORM_TYPES.FASTAG_REGISTRATION,
+                {
+                  ...formData,
+                  finalRegistrationData,
+                  registrationResponse: response,
+                  paymentDetails: {
+                    amount: amount,
+                    transactionId: deductResult.transactionId,
+                    previousBalance: deductResult.previousBalance,
+                    newBalance: deductResult.newBalance,
+                    paymentMethod: 'wallet',
+                    paymentStatus: 'completed',
+                    timestamp: new Date().toISOString()
+                  },
+                  apiSuccess: true
+                },
+                trackingResult.id,
+                SUBMISSION_STATUS.PAYMENT_COMPLETED
+              );
+              
+              // Log payment success with FormLogger
+              await FormLogger.logFormAction(
+                FORM_TYPES.FASTAG_REGISTRATION,
+                {
+                  ...formData,
+                  finalRegistrationData,
+                  paymentDetails: {
+                    amount: amount,
+                    transactionId: deductResult.transactionId,
+                    paymentMethod: 'wallet',
+                    paymentStatus: 'completed'
+                  }
+                },
+                'payment',
+                'success'
+              );
+              
+              // Add notification about payment
               addNotification({
                 id: Date.now() + 1,
                 message: `₹${amount} debited from your wallet for FasTag registration`,
@@ -456,6 +521,36 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         // Update FasTag in the inventory database if we have an ID
         if (fastagDbId) {
           try {
+            // Get the payment amount for the record
+            const paymentAmount = userProfile && userProfile.minFasTagBalance 
+              ? parseFloat(userProfile.minFasTagBalance) 
+              : 400;
+              
+            // First get the existing fastag record to access current payment data
+            const existingTagResult = await FastagManager.getFastag(fastagDbId);
+            let paymentHistory = [];
+            let totalAmountPaid = 0;
+            
+            if (existingTagResult.success && existingTagResult.fastag) {
+              // Preserve existing payment history if available
+              paymentHistory = existingTagResult.fastag.paymentHistory || [];
+              totalAmountPaid = existingTagResult.fastag.totalAmountPaid || 0;
+            }
+            
+            // Create new payment record
+            const newPayment = {
+              amount: paymentAmount,
+              method: 'wallet',
+              status: 'completed',
+              purpose: 'FasTag Registration',
+              transactionId: deductResult?.transactionId || `TR${Date.now()}`,
+              timestamp: new Date().toISOString()
+            };
+            
+            // Add to payment history and update total amount
+            paymentHistory.push(newPayment);
+            totalAmountPaid += paymentAmount;
+              
             await FastagManager.updateFastag(fastagDbId, {
               status: 'active',
               mobileNo: finalRegistrationData.custDetails.mobileNo,
@@ -464,6 +559,12 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
               walletId: finalRegistrationData.custDetails.walletId,
               chassisNo: finalRegistrationData.vrnDetails.chassis,
               engineNo: finalRegistrationData.vrnDetails.engine,
+              // Track the latest payment
+              latestPayment: newPayment,
+              // Maintain payment history
+              paymentHistory: paymentHistory,
+              // Track total amount paid
+              totalAmountPaid: totalAmountPaid,
               activationDetails: {
                 registrationId: response.response?.registrationId || null,
                 apiResponse: response.response || null,
@@ -478,10 +579,33 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         } else if (finalRegistrationData.fasTagDetails?.serialNo) {
           // If we don't have fastagDbId but we have the serial number, try to find and update by serial number
           try {
+            // Get the payment amount for the record
+            const paymentAmount = userProfile && userProfile.minFasTagBalance 
+              ? parseFloat(userProfile.minFasTagBalance) 
+              : 400;
+               
             const serialNo = finalRegistrationData.fasTagDetails.serialNo;
             const existingTag = await FastagManager.getTagBySerialNo(serialNo);
             
             if (existingTag.success && existingTag.fastag) {
+              // Retrieve existing payment data
+              let paymentHistory = existingTag.fastag.paymentHistory || [];
+              let totalAmountPaid = existingTag.fastag.totalAmountPaid || 0;
+              
+              // Create new payment record
+              const newPayment = {
+                amount: paymentAmount,
+                method: 'wallet',
+                status: 'completed',
+                purpose: 'FasTag Registration',
+                transactionId: deductResult?.transactionId || `TR${Date.now()}`,
+                timestamp: new Date().toISOString()
+              };
+              
+              // Add to payment history and update total amount
+              paymentHistory.push(newPayment);
+              totalAmountPaid += paymentAmount;
+              
               await FastagManager.updateFastag(existingTag.fastag.id, {
                 status: 'active',
                 mobileNo: finalRegistrationData.custDetails.mobileNo,
@@ -490,6 +614,12 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
                 walletId: finalRegistrationData.custDetails.walletId,
                 chassisNo: finalRegistrationData.vrnDetails.chassis,
                 engineNo: finalRegistrationData.vrnDetails.engine,
+                // Track the latest payment
+                latestPayment: newPayment,
+                // Maintain payment history
+                paymentHistory: paymentHistory,
+                // Track total amount paid
+                totalAmountPaid: totalAmountPaid,
                 activationDetails: {
                   registrationId: response.response?.registrationId || null,
                   apiResponse: response.response || null,
@@ -499,6 +629,16 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
               console.log('FasTag inventory updated by serial number');
             } else {
               // If the tag doesn't exist yet, add it now
+              // For new tags, initialize the payment history with the first payment
+              const newPayment = {
+                amount: paymentAmount,
+                method: 'wallet',
+                status: 'completed',
+                purpose: 'FasTag Registration',
+                transactionId: deductResult?.transactionId || `TR${Date.now()}`,
+                timestamp: new Date().toISOString()
+              };
+              
               await FastagManager.addFastag({
                 serialNo,
                 tid: finalRegistrationData.fasTagDetails.tid || null,
@@ -509,6 +649,12 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
                 walletId: finalRegistrationData.custDetails.walletId,
                 chassisNo: finalRegistrationData.vrnDetails.chassis,
                 engineNo: finalRegistrationData.vrnDetails.engine,
+                // Track the latest payment
+                latestPayment: newPayment,
+                // Initialize payment history
+                paymentHistory: [newPayment],
+                // Initialize total amount paid
+                totalAmountPaid: paymentAmount,
                 activationDetails: {
                   registrationId: response.response?.registrationId || null,
                   apiResponse: response.response || null,
@@ -831,18 +977,26 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
               ) : null}
             </View>
             
-            {/* Wallet ID */}
+            {/* Wallet Balance */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Wallet ID<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.walletId ? styles.inputError : null]}
-                placeholder="Enter wallet ID"
-                value={walletId}
-                onChangeText={setWalletId}
-              />
-              {errors.walletId ? (
-                <Text style={styles.errorText}>{errors.walletId}</Text>
-              ) : null}
+              <Text style={styles.label}>Wallet Balance</Text>
+              <View style={styles.balanceContainer}>
+                <View style={styles.balanceCard}>
+                  <Text style={styles.balanceAmount}>₹ {userInfo?.wallet || userProfile?.wallet || 0}</Text>
+                  <Text style={styles.balanceLabel}>Available Balance</Text>
+                </View>
+                <View style={styles.requiredCard}>
+                  <Text style={styles.requiredAmount}>
+                    ₹ {userProfile && userProfile.minFasTagBalance ? userProfile.minFasTagBalance : 400}
+                  </Text>
+                  <Text style={styles.requiredLabel}>Required Amount</Text>
+                </View>
+              </View>
+              {(userInfo?.wallet || userProfile?.wallet || 0) < (userProfile?.minFasTagBalance || 400) && (
+                <Text style={styles.insufficientBalanceText}>
+                  Insufficient balance. Registration will still proceed, but you may need to recharge your wallet.
+                </Text>
+              )}
             </View>
             
             {/* Serial Number */}
@@ -997,6 +1151,53 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  balanceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  balanceCard: {
+    flex: 1,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    padding: 12,
+    marginRight: 8,
+    alignItems: 'center',
+  },
+  balanceAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D47A1',
+    marginBottom: 4,
+  },
+  balanceLabel: {
+    fontSize: 12,
+    color: '#555555',
+  },
+  requiredCard: {
+    flex: 1,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 8,
+    padding: 12,
+    marginLeft: 8,
+    alignItems: 'center',
+  },
+  requiredAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#E65100',
+    marginBottom: 4,
+  },
+  requiredLabel: {
+    fontSize: 12,
+    color: '#555555',
+  },
+  insufficientBalanceText: {
+    color: '#D32F2F',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
   },
 });
 

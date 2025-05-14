@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal, Alert, Linking } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import DebugConsole from './DebugConsole';
@@ -329,11 +329,16 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.serviceText}>FasTag{'\n'}Replacement</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.serviceItem}>
+            <TouchableOpacity 
+              style={styles.serviceItem}
+              onPress={() => {
+                Linking.openURL('https://rc-check-final.vercel.app/register');
+              }}
+            >
               <View style={styles.serviceIconContainer}>
-                <Text style={styles.serviceIcon}>💳</Text>
+                <Text style={styles.serviceIcon}>🚗</Text>
               </View>
-              <Text style={styles.serviceText}>FasTag{'\n'}Insurance</Text>
+              <Text style={styles.serviceText}>RC{'\n'}Verification</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -388,6 +393,19 @@ const HomeScreen = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.servicesRow}
           >
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => {
+                Linking.openURL('https://rc-check-final.vercel.app/register');
+              }}
+            >
+              <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E1F5FE'}]}>
+                <Text style={styles.serviceCardIcon}>🔍</Text>
+              </View>
+              <Text style={styles.serviceCardText}>RC Verification</Text>
+              <Text style={styles.serviceCardDescription}>Verify vehicle documents</Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity 
               style={styles.serviceCard}
               onPress={() => navigateWithNotification('NETCFastagScreen')}
