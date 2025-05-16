@@ -44,6 +44,7 @@ import AllUsersScreen from '../components/admin/AllUsersScreen';
 import ServicesScreen from '../components/ServicesScreen';
 import UserDetailScreen from '../components/admin/UserDetailScreen';
 import FormDetailScreen from '../components/admin/FormDetailScreen';
+import AllocatedFasTagsScreen from '../components/AllocatedFasTagsScreen';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -91,6 +92,7 @@ const HomeStack = () => {
       <Stack.Screen name="FasTagRekyc" component={FasTagRekycScreen} />
       <Stack.Screen name="FeedbackForm" component={FeedbackForm} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
+      <Stack.Screen name="AllocatedFasTags" component={AllocatedFasTagsScreen} />
       
       {/* Add FASTag Flow Screens */}
       <Stack.Screen name="EnterDetails" component={EnterDetailsScreen} />
@@ -120,6 +122,7 @@ const NETCStack = () => {
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
       <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
+      <Stack.Screen name="AllocatedFasTags" component={AllocatedFasTagsScreen} />
     </Stack.Navigator>
   );
 };
@@ -134,6 +137,7 @@ const InventoryStack = () => {
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
       <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
       <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
+      <Stack.Screen name="AllocatedFasTags" component={AllocatedFasTagsScreen} />
     </Stack.Navigator>
   );
 };
