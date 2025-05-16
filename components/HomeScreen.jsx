@@ -482,7 +482,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.fabContainer}>
         <TouchableOpacity 
           style={styles.fab}
-          onPress={() => navigateWithNotification('BarcodeScanner')}
+          onPress={() => navigateWithNotification('AllocatedFasTags')}
         >
           <Text style={styles.fabIcon}>▶</Text>
         </TouchableOpacity>
@@ -508,7 +508,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.navLabel}>History</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.navItemCenter} onPress={() => navigateWithNotification('BarcodeScanner')}>
+          <TouchableOpacity style={styles.navItemCenter} onPress={() => navigateWithNotification('AllocatedFasTags')}>
             <View style={styles.navCenterButton}>
               <View style={styles.navCenterIcon}>
                 <Text style={styles.fabIcon}>▶</Text>

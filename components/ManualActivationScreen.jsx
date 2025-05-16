@@ -12,7 +12,9 @@ import {
   Animated,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  FlatList,
+  Modal
 } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { AntDesign } from '@expo/vector-icons';
@@ -23,6 +25,9 @@ import { FORM_TYPES, SUBMISSION_STATUS, trackFormSubmission } from '../utils/For
 import FormLogger from '../utils/FormLogger';
 import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 import FastagManager from '../utils/FastagManager';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -46,6 +51,14 @@ const ManualActivationScreen = ({ route, navigation }) => {
   
   // UI state
   const [loading, setLoading] = useState(false);
+  
+  // Serial number suggestions state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  
+  // Get user info for BC_Id
+  const { userProfile } = useAuth();
   
   // Extract all required data from route.params
   const { 
@@ -93,8 +106,24 @@ const ManualActivationScreen = ({ route, navigation }) => {
 
     // Form tracking IDs from previous screens
     formSubmissionId = null,
-    fastagRegistrationId = null
+    fastagRegistrationId = null,
+    
+    // Pre-selected tag from AllocatedFasTagsScreen
+    preSelectedTag = false,
+    serialNo: preSelectedSerialNo = ""
   } = route.params || {};
+  
+  // Load pre-selected serial number if provided
+  useEffect(() => {
+    if (preSelectedTag && preSelectedSerialNo) {
+      setSerialNo(preSelectedSerialNo);
+    }
+  }, [preSelectedTag, preSelectedSerialNo]);
+  
+  // Load allocated FastTags for this user
+  useEffect(() => {
+    fetchAllocatedTags();
+  }, []);
   
   // Animation effect on component mount
   useEffect(() => {
@@ -111,6 +140,61 @@ const ManualActivationScreen = ({ route, navigation }) => {
       })
     ]).start();
   }, []);
+  
+  // Fetch allocated tags for this user
+  const fetchAllocatedTags = async () => {
+    setLoadingSuggestions(true);
+    try {
+      // Get user BC_Id from profile
+      const bcId = userProfile?.bcId || userProfile?.BC_Id;
+      
+      if (!bcId) {
+        setLoadingSuggestions(false);
+        return;
+      }
+      
+      // Query Firestore for available FastTags for this user
+      const fastagRef = collection(db, "fastags");
+      const q = query(
+        fastagRef, 
+        where('assignedTo', '==', bcId),
+        where('status', '==', 'available')
+      );
+      const querySnapshot = await getDocs(q);
+      
+      const tags = [];
+      querySnapshot.forEach((doc) => {
+        tags.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      // Sort by serial number
+      tags.sort((a, b) => a.serialNo.localeCompare(b.serialNo));
+      
+      setSuggestions(tags);
+    } catch (error) {
+      console.error("Error fetching allocated tags:", error);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+  
+  // Filter suggestions based on input
+  const getFilteredSuggestions = () => {
+    if (!serialNo.trim()) return suggestions;
+    
+    return suggestions.filter(tag => 
+      tag.serialNo.toLowerCase().includes(serialNo.toLowerCase())
+    );
+  };
+  
+  // Handle suggestion selection
+  const handleSelectSuggestion = (tag) => {
+    setSerialNo(tag.serialNo);
+    setShowSuggestions(false);
+  };
   
   // Basic validation
   const validateForm = () => {
@@ -424,6 +508,28 @@ const ManualActivationScreen = ({ route, navigation }) => {
     }
   };
   
+  // Render the suggestions list
+  const renderSuggestion = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.suggestionItem}
+      onPress={() => handleSelectSuggestion(item)}
+    >
+      <Text style={styles.suggestionText}>{item.serialNo}</Text>
+    </TouchableOpacity>
+  );
+  
+  // Render empty suggestions message
+  const renderEmptySuggestions = () => (
+    <View style={styles.emptySuggestions}>
+      <Text style={styles.emptySuggestionsText}>No matching tags found</Text>
+    </View>
+  );
+  
+  // View all allocated tags
+  const viewAllAllocatedTags = () => {
+    navigation.navigate('AllocatedFasTags');
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -459,13 +565,61 @@ const ManualActivationScreen = ({ route, navigation }) => {
               {/* Serial Number */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Serial Number<Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={[styles.input, errors.serialNo ? styles.inputError : null]}
-                  placeholder="Enter FasTag Serial Number"
-                  value={serialNo}
-                  onChangeText={setSerialNo}
-                  autoCapitalize="characters"
-                />
+                <View style={styles.searchContainer}>
+                  <TextInput
+                    style={[
+                      styles.input, 
+                      errors.serialNo ? styles.inputError : null,
+                      showSuggestions && styles.activeInput
+                    ]}
+                    placeholder="Enter FasTag Serial Number"
+                    value={serialNo}
+                    onChangeText={(text) => {
+                      setSerialNo(text);
+                      setShowSuggestions(text.length > 0);
+                    }}
+                    onFocus={() => setShowSuggestions(serialNo.length > 0)}
+                    autoCapitalize="characters"
+                  />
+                  {serialNo ? (
+                    <TouchableOpacity 
+                      style={styles.clearButton}
+                      onPress={() => {
+                        setSerialNo('');
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      <Text style={styles.clearButtonText}>✕</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+                
+                {showSuggestions && (
+                  <View style={styles.suggestionsContainer}>
+                    {loadingSuggestions ? (
+                      <ActivityIndicator size="small" color="#333333" style={styles.suggestionsLoading} />
+                    ) : (
+                      <FlatList
+                        data={getFilteredSuggestions()}
+                        renderItem={renderSuggestion}
+                        keyExtractor={item => item.id}
+                        ListEmptyComponent={renderEmptySuggestions}
+                        style={styles.suggestionsList}
+                        keyboardShouldPersistTaps="handled"
+                        nestedScrollEnabled
+                        contentContainerStyle={{ flexGrow: 1 }}
+                      />
+                    )}
+                  </View>
+                )}
+                
+                <TouchableOpacity 
+                  style={styles.viewAllButton}
+                  onPress={viewAllAllocatedTags}
+                >
+                  <Text style={styles.viewAllText}>View all allocated FastTags</Text>
+                </TouchableOpacity>
+                
                 {errors.serialNo ? (
                   <Text style={styles.errorText}>{errors.serialNo}</Text>
                 ) : null}
@@ -617,6 +771,9 @@ const styles = StyleSheet.create({
     color: '#FF0000',
     marginLeft: 4,
   },
+  searchContainer: {
+    position: 'relative',
+  },
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -625,6 +782,21 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
   },
+  activeInput: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    padding: 4,
+  },
+  clearButtonText: {
+    fontSize: 16,
+    color: '#999999',
+  },
   inputError: {
     borderColor: '#FF0000',
   },
@@ -632,6 +804,48 @@ const styles = StyleSheet.create({
     color: '#FF0000',
     fontSize: 12,
     marginTop: 4,
+  },
+  suggestionsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: '#DDDDDD',
+    maxHeight: 200,
+    marginTop: 0,
+    zIndex: 1000,
+  },
+  suggestionsList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  suggestionText: {
+    fontSize: 16,
+  },
+  emptySuggestions: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  emptySuggestionsText: {
+    color: '#999999',
+    fontSize: 14,
+  },
+  suggestionsLoading: {
+    padding: 16,
+  },
+  viewAllButton: {
+    marginTop: 8,
+    alignSelf: 'flex-end',
+  },
+  viewAllText: {
+    color: '#666666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   summaryContainer: {
     backgroundColor: '#F9F9F9',
