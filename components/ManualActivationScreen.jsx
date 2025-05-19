@@ -153,11 +153,11 @@ const ManualActivationScreen = ({ route, navigation }) => {
         return;
       }
       
-      // Query Firestore for available FastTags for this user
-      const fastagRef = collection(db, "fastags");
+      // Query Firestore for available FastTags for this user from allocatedFasTags collection
+      const fastagRef = collection(db, "allocatedFasTags");
       const q = query(
         fastagRef, 
-        where('assignedTo', '==', bcId),
+        where('bcId', '==', bcId),
         where('status', '==', 'available')
       );
       const querySnapshot = await getDocs(q);
@@ -166,13 +166,16 @@ const ManualActivationScreen = ({ route, navigation }) => {
       querySnapshot.forEach((doc) => {
         tags.push({
           id: doc.id,
-          ...doc.data()
+          serialNo: doc.data().serialNumber,  // Changed from serialNo to serialNumber to match admin dashboard
+          status: doc.data().status,
+          allocatedAt: doc.data().allocatedAt
         });
       });
       
       // Sort by serial number
-      tags.sort((a, b) => a.serialNo.localeCompare(b.serialNo));
+      tags.sort((a, b) => (a.serialNo || '').localeCompare(b.serialNo || ''));
       
+      console.log("Loaded allocated tags:", tags.length);
       setSuggestions(tags);
     } catch (error) {
       console.error("Error fetching allocated tags:", error);
@@ -514,14 +517,36 @@ const ManualActivationScreen = ({ route, navigation }) => {
       style={styles.suggestionItem}
       onPress={() => handleSelectSuggestion(item)}
     >
-      <Text style={styles.suggestionText}>{item.serialNo}</Text>
+      <View style={styles.suggestionContent}>
+        <Text style={styles.suggestionText}>{item.serialNo}</Text>
+        {item.allocatedAt && (
+          <Text style={styles.suggestionDate}>
+            Allocated: {item.allocatedAt.toDate ? item.allocatedAt.toDate().toLocaleDateString() : 'Recently'}
+          </Text>
+        )}
+      </View>
+      <View style={styles.suggestionSelect}>
+        <Text style={styles.suggestionSelectText}>Select</Text>
+      </View>
     </TouchableOpacity>
   );
   
   // Render empty suggestions message
   const renderEmptySuggestions = () => (
     <View style={styles.emptySuggestions}>
-      <Text style={styles.emptySuggestionsText}>No matching tags found</Text>
+      {suggestions.length > 0 ? (
+        <Text style={styles.emptySuggestionsText}>No matching FasTags found</Text>
+      ) : (
+        <>
+          <Text style={styles.emptySuggestionsTitle}>No FasTags Allocated</Text>
+          <Text style={styles.emptySuggestionsText}>
+            You don't have any FasTags allocated to you yet. Please contact your administrator to get FasTags allocated.
+          </Text>
+          <TouchableOpacity style={styles.emptyRefreshButton} onPress={fetchAllocatedTags}>
+            <Text style={styles.emptyRefreshText}>Refresh</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
   
@@ -599,26 +624,66 @@ const ManualActivationScreen = ({ route, navigation }) => {
                     {loadingSuggestions ? (
                       <ActivityIndicator size="small" color="#333333" style={styles.suggestionsLoading} />
                     ) : (
-                      <FlatList
-                        data={getFilteredSuggestions()}
-                        renderItem={renderSuggestion}
-                        keyExtractor={item => item.id}
-                        ListEmptyComponent={renderEmptySuggestions}
-                        style={styles.suggestionsList}
-                        keyboardShouldPersistTaps="handled"
-                        nestedScrollEnabled
-                        contentContainerStyle={{ flexGrow: 1 }}
-                      />
+                      <>
+                        <View style={styles.suggestionsHeader}>
+                          <Text style={styles.suggestionsTitle}>
+                            {suggestions.length > 0 ? 'Your Allocated FasTags' : 'No Allocated FasTags'}
+                          </Text>
+                          <TouchableOpacity 
+                            style={styles.viewAllButtonInline}
+                            onPress={viewAllAllocatedTags}
+                          >
+                            <Text style={styles.viewAllButtonInlineText}>View All</Text>
+                          </TouchableOpacity>
+                        </View>
+                        
+                        <ScrollView 
+                          style={styles.suggestionsList}
+                          keyboardShouldPersistTaps="handled"
+                          nestedScrollEnabled
+                        >
+                          {getFilteredSuggestions().length > 0 ? (
+                            getFilteredSuggestions().map(item => (
+                              <TouchableOpacity 
+                                key={item.id}
+                                style={styles.suggestionItem}
+                                onPress={() => handleSelectSuggestion(item)}
+                              >
+                                <View style={styles.suggestionContent}>
+                                  <Text style={styles.suggestionText}>{item.serialNo}</Text>
+                                  {item.allocatedAt && (
+                                    <Text style={styles.suggestionDate}>
+                                      Allocated: {item.allocatedAt.toDate ? item.allocatedAt.toDate().toLocaleDateString() : 'Recently'}
+                                    </Text>
+                                  )}
+                                </View>
+                                <View style={styles.suggestionSelect}>
+                                  <Text style={styles.suggestionSelectText}>Select</Text>
+                                </View>
+                              </TouchableOpacity>
+                            ))
+                          ) : (
+                            <View style={styles.emptySuggestions}>
+                              {suggestions.length > 0 ? (
+                                <Text style={styles.emptySuggestionsText}>No matching FasTags found</Text>
+                              ) : (
+                                <>
+                                  <Text style={styles.emptySuggestionsTitle}>No FasTags Allocated</Text>
+                                  <Text style={styles.emptySuggestionsText}>
+                                    You don't have any FasTags allocated to you yet. Please contact your administrator to get FasTags allocated.
+                                  </Text>
+                                  <TouchableOpacity style={styles.emptyRefreshButton} onPress={fetchAllocatedTags}>
+                                    <Text style={styles.emptyRefreshText}>Refresh</Text>
+                                  </TouchableOpacity>
+                                </>
+                              )}
+                            </View>
+                          )}
+                        </ScrollView>
+                      </>
                     )}
                   </View>
                 )}
-                
-                <TouchableOpacity 
-                  style={styles.viewAllButton}
-                  onPress={viewAllAllocatedTags}
-                >
-                  <Text style={styles.viewAllText}>View all allocated FastTags</Text>
-                </TouchableOpacity>
                 
                 {errors.serialNo ? (
                   <Text style={styles.errorText}>{errors.serialNo}</Text>
@@ -812,39 +877,106 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderTopWidth: 0,
     borderColor: '#DDDDDD',
-    maxHeight: 200,
+    maxHeight: 300,
     marginTop: 0,
     zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   suggestionsList: {
-    maxHeight: 200,
+    maxHeight: 250,
   },
   suggestionItem: {
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  suggestionContent: {
+    flex: 1,
   },
   suggestionText: {
     fontSize: 16,
+    fontWeight: '500',
+    color: '#333333',
+    marginBottom: 2,
+  },
+  suggestionDate: {
+    fontSize: 12,
+    color: '#999999',
+  },
+  suggestionSelect: {
+    backgroundColor: '#F0F0F0',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  suggestionSelectText: {
+    fontSize: 14,
+    color: '#333333',
+    fontWeight: '500',
   },
   emptySuggestions: {
-    padding: 16,
+    padding: 24,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 150,
+  },
+  emptySuggestionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   emptySuggestionsText: {
-    color: '#999999',
+    color: '#666666',
     fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  emptyRefreshButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#333333',
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  emptyRefreshText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   suggestionsLoading: {
     padding: 16,
   },
-  viewAllButton: {
-    marginTop: 8,
-    alignSelf: 'flex-end',
+  suggestionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+    backgroundColor: '#F9F9F9',
   },
-  viewAllText: {
-    color: '#666666',
+  suggestionsTitle: {
     fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  viewAllButtonInline: {
+    padding: 4,
+  },
+  viewAllButtonInlineText: {
+    color: '#666666',
+    fontSize: 13,
     textDecorationLine: 'underline',
   },
   summaryContainer: {
