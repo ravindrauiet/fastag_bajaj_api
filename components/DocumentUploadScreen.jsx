@@ -562,14 +562,14 @@ const DocumentUploadScreen = ({ navigation, route }) => {
             <View style={styles.imageOptions}>
               <TouchableOpacity 
                 style={styles.imageOptionButton}
-                // onPress={() => takePhoto(imageType)}
-                onPress={() => {
-                  Alert.alert(
-                    'Coming Soon',
-                    'Camera functionality will be available in the next update.',
-                    [{ text: 'OK' }]
-                  );
-                }}
+                onPress={() => takePhoto(imageType)}
+                // onPress={() => {
+                //   Alert.alert(
+                //     'Coming Soon',
+                //     'Camera functionality will be available in the next update.',
+                //     [{ text: 'OK' }]
+                //   );
+                // }}
               >
                 <Text style={styles.imageOptionIcon}>📷</Text>
                 <Text style={styles.imageOptionText}>Camera</Text>
