@@ -569,15 +569,12 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               'This vehicle is already registered in the system. You may proceed to create a wallet or check your existing account.',
               () => {
                 // Navigate to create wallet but use a special flag to handle this case
-                navigation.navigate('CreateWallet', {
-                  mobileNo,
-                  vehicleNo,
-                  chassisNo,
-                  engineNo,
-                  reqType,
-                  vrnAlreadyExists: true,
-                  // We won't use the sessionId from OTP at all in this case
-                  // The CreateWallet screen will get fresh IDs from a new API call
+                navigation.navigate('ValidateCustomer', {
+                  mobileNo: mobileNo,
+                  vehicleNo: vehicleNo,
+                  chassisNo: chassisNo,
+                  engineNo: engineNo,
+                  reqType: reqType
                 });
               },
               true

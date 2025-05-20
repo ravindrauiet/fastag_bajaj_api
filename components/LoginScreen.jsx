@@ -25,11 +25,19 @@ const LoginScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+  
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
   
   // Access auth context
   const { login, error: authError } = useAuth();
+  
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
   
   // Validate form
   const validateForm = () => {
@@ -138,13 +146,28 @@ const LoginScreen = ({ navigation }) => {
             {/* Password Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={[styles.input, errors.password ? styles.inputError : null]}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.passwordInput, errors.password ? styles.inputError : null]}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeButton}
+                  onPress={togglePasswordVisibility}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.eyeIconContainer}>
+                    {showPassword ? (
+                      <Text style={styles.eyeIcon}>👁️</Text>
+                    ) : (
+                      <Text style={styles.eyeIcon}>🔒</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
               {errors.password ? (
                 <Text style={styles.errorText}>{errors.password}</Text>
               ) : null}
@@ -262,6 +285,39 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    borderRadius: 8,
+    height: 48,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    height: '100%',
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    fontSize: 16,
+    opacity: 0.7,
   },
   inputError: {
     borderColor: '#FF3B30',

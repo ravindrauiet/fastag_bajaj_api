@@ -23,17 +23,33 @@ const SignUpScreen = ({ navigation }) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [aadharCard, setAadharCard] = useState('');
+  const [panCard, setPanCard] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   
+  // Password visibility states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   // Access notification context
   const { addNotification } = useContext(NotificationContext);
   
   // Access auth context
   const { register, error: authError } = useAuth();
+  
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  
+  // Toggle confirm password visibility
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
   
   // Validate form
   const validateForm = () => {
@@ -61,6 +77,16 @@ const SignUpScreen = ({ navigation }) => {
       newErrors.phone = 'Phone number is required';
     } else if (!/^\d{10}$/.test(phone)) {
       newErrors.phone = 'Phone number must be 10 digits';
+    }
+    
+    // Aadhar card validation
+    if (aadharCard && !/^\d{12}$/.test(aadharCard)) {
+      newErrors.aadharCard = 'Aadhar Card must be 12 digits';
+    }
+    
+    // PAN card validation
+    if (panCard && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCard)) {
+      newErrors.panCard = 'Invalid PAN Card format (e.g., ABCDE1234F)';
     }
     
     // Password validation
@@ -99,6 +125,8 @@ const SignUpScreen = ({ navigation }) => {
         lastName,
         email,
         phone,
+        aadharCard,
+        panCard,
         password
       };
       
@@ -236,16 +264,63 @@ const SignUpScreen = ({ navigation }) => {
               ) : null}
             </View>
             
+            {/* Aadhar Card */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Aadhar Card<Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={[styles.input, errors.aadharCard ? styles.inputError : null]}
+                placeholder="Enter your 12-digit Aadhar number"
+                value={aadharCard}
+                onChangeText={setAadharCard}
+                keyboardType="number-pad"
+                maxLength={12}
+              />
+              {errors.aadharCard ? (
+                <Text style={styles.errorText}>{errors.aadharCard}</Text>
+              ) : null}
+            </View>
+            
+            {/* PAN Card */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>PAN Card<Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={[styles.input, errors.panCard ? styles.inputError : null]}
+                placeholder="Enter your PAN Card number"
+                value={panCard}
+                onChangeText={setPanCard}
+                autoCapitalize="characters"
+                maxLength={10}
+              />
+              {errors.panCard ? (
+                <Text style={styles.errorText}>{errors.panCard}</Text>
+              ) : null}
+            </View>
+            
             {/* Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.password ? styles.inputError : null]}
-                placeholder="Create a password (min. 6 characters)"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.passwordInput, errors.password ? styles.inputError : null]}
+                  placeholder="Create a password (min. 6 characters)"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeButton}
+                  onPress={togglePasswordVisibility}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.eyeIconContainer}>
+                    {showPassword ? (
+                      <Text style={styles.eyeIcon}>👁️</Text>
+                    ) : (
+                      <Text style={styles.eyeIcon}>🔒</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
               {errors.password ? (
                 <Text style={styles.errorText}>{errors.password}</Text>
               ) : null}
@@ -254,13 +329,28 @@ const SignUpScreen = ({ navigation }) => {
             {/* Confirm Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.confirmPassword ? styles.inputError : null]}
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.passwordInput, errors.confirmPassword ? styles.inputError : null]}
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeButton}
+                  onPress={toggleConfirmPasswordVisibility}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.eyeIconContainer}>
+                    {showConfirmPassword ? (
+                      <Text style={styles.eyeIcon}>👁️</Text>
+                    ) : (
+                      <Text style={styles.eyeIcon}>🔒</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
               {errors.confirmPassword ? (
                 <Text style={styles.errorText}>{errors.confirmPassword}</Text>
               ) : null}
@@ -391,6 +481,39 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontSize: 12,
     marginTop: 4,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+    borderRadius: 8,
+    height: 48,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    height: '100%',
+  },
+  eyeButton: {
+    paddingHorizontal: 12,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    fontSize: 16,
+    opacity: 0.7,
   },
   termsContainer: {
     flexDirection: 'row',

@@ -28,6 +28,8 @@ const ProfileScreen = ({ navigation }) => {
     phone: '',
     email: '',
     address: '',
+    aadharCard: '',
+    panCard: '',
   });
   const [loading, setLoading] = useState(false);
   
@@ -47,6 +49,8 @@ const ProfileScreen = ({ navigation }) => {
         phone: userProfile.phone || '',
         email: userProfile.email || '',
         address: userProfile.address || '',
+        aadharCard: userProfile.aadharCard || '',
+        panCard: userProfile.panCard || '',
       });
     }
   }, [userProfile]);
@@ -81,6 +85,22 @@ const ProfileScreen = ({ navigation }) => {
     return 'Not Verified';
   };
 
+  // Get minimum FasTag balance if set by admin
+  const getMinFasTagBalance = () => {
+    if (userProfile && userProfile.minFasTagBalance) {
+      return userProfile.minFasTagBalance;
+    }
+    return '400'; // Default value
+  };
+
+  // Get user wallet balance
+  const getWalletBalance = () => {
+    if (userProfile && userProfile.walletBalance) {
+      return userProfile.walletBalance.toFixed(2);
+    }
+    return '0.00';
+  };
+
   // Handle form input changes
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -104,6 +124,8 @@ const ProfileScreen = ({ navigation }) => {
         displayName,
         phone: formData.phone,
         address: formData.address,
+        aadharCard: formData.aadharCard,
+        panCard: formData.panCard,
       });
       
       if (success) {
@@ -211,12 +233,24 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.walletCard}>
                 <View style={styles.walletInfo}>
                   <Text style={styles.walletLabel}>Available Balance</Text>
-                  <Text style={styles.walletBalance}>₹0</Text>
+                  <Text style={styles.walletBalance}>₹{getWalletBalance()}</Text>
                 </View>
-                <TouchableOpacity style={styles.addMoneyButton}>
+                <TouchableOpacity 
+                  style={styles.addMoneyButton}
+                  onPress={() => navigation.navigate('WalletTopup')}
+                >
                   <Text style={styles.addMoneyButtonText}>Add Money</Text>
                 </TouchableOpacity>
               </View>
+              
+              {/* Show Minimum FasTag Balance if set by admin */}
+              {userProfile && userProfile.minFasTagBalance && (
+                <View style={styles.minBalanceContainer}>
+                  <Text style={styles.minBalanceText}>
+                    Minimum FasTag Balance: ₹{getMinFasTagBalance()}
+                  </Text>
+                </View>
+              )}
             </View>
             
             {/* Personal Information */}
@@ -286,6 +320,34 @@ const ProfileScreen = ({ navigation }) => {
                       numberOfLines={3}
                     />
                   </View>
+                  
+                  <View style={styles.separator} />
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Aadhar Card</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.aadharCard}
+                      onChangeText={(text) => handleInputChange('aadharCard', text)}
+                      placeholder="Enter your 12-digit Aadhar number"
+                      keyboardType="number-pad"
+                      maxLength={12}
+                    />
+                  </View>
+                  
+                  <View style={styles.separator} />
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>PAN Card</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={formData.panCard}
+                      onChangeText={(text) => handleInputChange('panCard', text)}
+                      placeholder="Enter your PAN Card number"
+                      autoCapitalize="characters"
+                      maxLength={10}
+                    />
+                  </View>
                 </View>
               ) : (
                 // Display Info
@@ -303,6 +365,16 @@ const ProfileScreen = ({ navigation }) => {
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Address</Text>
                     <Text style={styles.infoValue}>{userProfile?.address || 'Not provided'}</Text>
+                  </View>
+                  <View style={styles.separator} />
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Aadhar Card</Text>
+                    <Text style={styles.infoValue}>{userProfile?.aadharCard || 'Not provided'}</Text>
+                  </View>
+                  <View style={styles.separator} />
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>PAN Card</Text>
+                    <Text style={styles.infoValue}>{userProfile?.panCard || 'Not provided'}</Text>
                   </View>
                 </View>
               )}
@@ -565,6 +637,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  minBalanceContainer: {
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  minBalanceText: {
+    color: '#777777',
+    fontSize: 14,
+    fontStyle: 'italic',
   },
   
   // Info Card
