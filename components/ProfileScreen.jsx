@@ -237,7 +237,7 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
                 <TouchableOpacity 
                   style={styles.addMoneyButton}
-                  onPress={() => navigation.navigate('WalletTopup')}
+                  onPress={() => navigation.navigate('Wallet')}
                 >
                   <Text style={styles.addMoneyButtonText}>Add Money</Text>
                 </TouchableOpacity>

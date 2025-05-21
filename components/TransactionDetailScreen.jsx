@@ -65,6 +65,150 @@ Status: ${transaction.status}
     alert('Receipt download feature will be implemented by backend team.');
   };
 
+  // Helper to check if a value exists and is not null or undefined
+  const hasValue = (value) => value !== null && value !== undefined;
+  
+  // Format the date if it's in string format
+  const formatDateString = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(dateString).toLocaleDateString('en-IN', options);
+    } catch (error) {
+      return dateString;
+    }
+  };
+  
+  // Format a regular date object
+  const formatDate = (date) => {
+    if (!date) return '';
+    
+    try {
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      return date.toLocaleDateString('en-IN', options);
+    } catch (error) {
+      return date.toString();
+    }
+  };
+  
+  // Format time
+  const formatTime = (date) => {
+    if (!date) return '';
+    
+    try {
+      const options = { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      return date.toLocaleTimeString('en-IN', options);
+    } catch (error) {
+      return date.toString();
+    }
+  };
+  
+  // Helper to format full transaction date
+  const getFullDate = () => {
+    try {
+      if (transaction.date && transaction.time) {
+        return `${transaction.date} at ${transaction.time}`;
+      } else {
+        const date = new Date(`${transaction.date} ${transaction.time}`);
+        return formatDateString(date);
+      }
+    } catch (error) {
+      return `${transaction.date || ''} ${transaction.time || ''}`;
+    }
+  };
+  
+  // Get status color based on transaction status
+  const getStatusColor = (status) => {
+    if (!status) return '#FB8C00';
+    
+    const lowercaseStatus = status.toLowerCase();
+    if (lowercaseStatus === 'completed' || lowercaseStatus === 'success' || lowercaseStatus === 'approved') {
+      return '#2E7D32'; // Green
+    } else if (lowercaseStatus === 'pending' || lowercaseStatus === 'processing') {
+      return '#FB8C00'; // Orange
+    } else if (lowercaseStatus === 'failed' || lowercaseStatus === 'declined' || lowercaseStatus === 'rejected') {
+      return '#C62828'; // Red
+    } else {
+      return '#757575'; // Gray for other statuses
+    }
+  };
+
+  // Empty state component
+  const renderEmptyState = () => (
+    <View style={styles.container}>
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>No transaction details available</Text>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Check if the transaction is a FasTag registration
+  const isFasTagRegistration = transaction && 
+    (transaction.purpose === 'FasTag Registration' || 
+     transaction.description === 'FasTag Registration' ||
+     (transaction.details && transaction.details.serialNo));
+  
+  // Render FasTag details section if this is a FasTag registration
+  const renderFasTagDetails = () => {
+    if (!isFasTagRegistration) return null;
+    
+    return (
+      <View style={styles.detailsCard}>
+        <Text style={styles.sectionTitle}>FasTag Details</Text>
+        
+        {transaction.details && transaction.details.serialNo && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Serial Number</Text>
+            <Text style={styles.detailValue}>{transaction.details.serialNo}</Text>
+          </View>
+        )}
+        
+        {transaction.details && transaction.details.vehicleNo && (
+          <>
+            <View style={styles.detailDivider} />
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Vehicle Number</Text>
+              <Text style={styles.detailValue}>{transaction.details.vehicleNo}</Text>
+            </View>
+          </>
+        )}
+        
+        {transaction.details && transaction.details.name && (
+          <>
+            <View style={styles.detailDivider} />
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Customer Name</Text>
+              <Text style={styles.detailValue}>{transaction.details.name}</Text>
+            </View>
+          </>
+        )}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -95,13 +239,13 @@ Status: ${transaction.status}
           <View style={styles.statusContainer}>
             <View style={[
               styles.statusDot,
-              { backgroundColor: transaction.status === 'Completed' ? '#4CAF50' : '#FB8C00' }
+              { backgroundColor: getStatusColor(transaction.status) }
             ]} />
             <Text style={[
               styles.statusText,
-              { color: transaction.status === 'Completed' ? '#4CAF50' : '#FB8C00' }
+              { color: getStatusColor(transaction.status) }
             ]}>
-              {transaction.status}
+              {transaction.status?.charAt(0).toUpperCase() + transaction.status?.slice(1) || 'Status Unknown'}
             </Text>
           </View>
         </View>
@@ -112,29 +256,38 @@ Status: ${transaction.status}
           
           <View style={styles.detailsCard}>
             <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Transaction ID</Text>
+              <Text style={styles.detailValue}>{transaction.transactionId || transaction.id || 'N/A'}</Text>
+            </View>
+            
+            <View style={styles.detailDivider} />
+            
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Date & Time</Text>
+              <Text style={styles.detailValue}>{getFullDate()}</Text>
+            </View>
+            
+            <View style={styles.detailDivider} />
+            
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Type</Text>
+              <Text style={styles.detailValue}>
+                {transaction.type === 'credit' ? 'Credit (Money In)' : 'Debit (Money Out)'}
+              </Text>
+            </View>
+            
+            <View style={styles.detailDivider} />
+            
+            <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Description</Text>
-              <Text style={styles.detailValue}>{transaction.description}</Text>
-            </View>
-            
-            <View style={styles.detailDivider} />
-            
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Date</Text>
-              <Text style={styles.detailValue}>{transaction.date}</Text>
-            </View>
-            
-            <View style={styles.detailDivider} />
-            
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Time</Text>
-              <Text style={styles.detailValue}>{transaction.time}</Text>
+              <Text style={styles.detailValue}>{transaction.description || 'N/A'}</Text>
             </View>
             
             <View style={styles.detailDivider} />
             
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Payment Method</Text>
-              <Text style={styles.detailValue}>{transaction.paymentMethod}</Text>
+              <Text style={styles.detailValue}>{transaction.paymentMethod || 'N/A'}</Text>
             </View>
             
             <View style={styles.detailDivider} />
@@ -151,18 +304,66 @@ Status: ${transaction.status}
               <View style={styles.statusContainer}>
                 <View style={[
                   styles.statusDot,
-                  { backgroundColor: transaction.status === 'Completed' ? '#4CAF50' : '#FB8C00' }
+                  { backgroundColor: getStatusColor(transaction.status) }
                 ]} />
                 <Text style={[
                   styles.statusText,
-                  { color: transaction.status === 'Completed' ? '#4CAF50' : '#FB8C00' }
+                  { color: getStatusColor(transaction.status) }
                 ]}>
-                  {transaction.status}
+                  {transaction.status?.charAt(0).toUpperCase() + transaction.status?.slice(1) || 'Status Unknown'}
                 </Text>
               </View>
             </View>
           </View>
         </View>
+        
+        {/* FasTag Details (if applicable) */}
+        {renderFasTagDetails()}
+        
+        {/* Amount Details */}
+        <View style={styles.amountDetailsContainer}>
+          <Text style={styles.amountDetailsTitle}>Amount Details</Text>
+          
+          <View style={styles.amountDetailsCard}>
+            <View style={styles.amountDetailsRow}>
+              <Text style={styles.amountDetailsLabel}>Amount</Text>
+              <Text style={styles.amountDetailsValue}>₹{transaction.amount.toLocaleString('en-IN')}</Text>
+            </View>
+            
+            {hasValue(transaction.previousBalance) && (
+              <View style={styles.amountDetailsRow}>
+                <Text style={styles.amountDetailsLabel}>Previous Balance</Text>
+                <Text style={styles.amountDetailsValue}>₹{transaction.previousBalance.toLocaleString('en-IN')}</Text>
+              </View>
+            )}
+            
+            {hasValue(transaction.newBalance) && (
+              <View style={styles.amountDetailsRow}>
+                <Text style={styles.amountDetailsLabel}>New Balance</Text>
+                <Text style={styles.amountDetailsValue}>₹{transaction.newBalance.toLocaleString('en-IN')}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        
+        {/* Additional Details */}
+        {transaction.details && Object.keys(transaction.details).length > 0 && (
+          <View style={styles.additionalDetailsContainer}>
+            <Text style={styles.additionalDetailsTitle}>Additional Details</Text>
+            
+            {Object.entries(transaction.details).map(([key, value]) => {
+              // Skip null or undefined values
+              if (value === null || value === undefined) return null;
+              
+              return (
+                <View style={styles.additionalDetailsRow} key={key}>
+                  <Text style={styles.additionalDetailsLabel}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}</Text>
+                  <Text style={styles.additionalDetailsValue}>{value.toString()}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
         
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
@@ -327,6 +528,37 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#EEEEEE',
   },
+  amountDetailsContainer: {
+    marginBottom: 30,
+  },
+  amountDetailsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 15,
+  },
+  amountDetailsCard: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    padding: 20,
+  },
+  amountDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  amountDetailsLabel: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  amountDetailsValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    maxWidth: '60%',
+    textAlign: 'right',
+  },
   actionButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -371,6 +603,50 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  additionalDetailsContainer: {
+    marginBottom: 30,
+  },
+  additionalDetailsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 15,
+  },
+  additionalDetailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  additionalDetailsLabel: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  additionalDetailsValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333333',
+    maxWidth: '60%',
+    textAlign: 'right',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 15,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 

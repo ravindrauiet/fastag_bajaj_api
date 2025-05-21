@@ -315,7 +315,7 @@ const WalletScreen = ({ navigation, route }) => {
           </View>
           
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.actionButton}
               onPress={handleRecharge}
             >
@@ -323,7 +323,7 @@ const WalletScreen = ({ navigation, route }) => {
                 <Icon name="cash-plus" size={22} color="#00ACC1" />
               </View>
               <Text style={styles.actionButtonText}>Recharge</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             
             <TouchableOpacity 
               style={styles.actionButton}
@@ -335,7 +335,7 @@ const WalletScreen = ({ navigation, route }) => {
               <Text style={styles.actionButtonText}>UPI Top-up</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               style={styles.actionButton}
               onPress={() => navigation.navigate('PaymentGateway')}
             >
@@ -343,7 +343,7 @@ const WalletScreen = ({ navigation, route }) => {
                 <Icon name="credit-card-outline" size={22} color="#00ACC1" />
               </View>
               <Text style={styles.actionButtonText}>Pay</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </Animated.View>
         

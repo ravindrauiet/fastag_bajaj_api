@@ -2,7 +2,7 @@
 import { masterAgentWallet } from '../api/masterAgentWallet';
 import { upiPayment } from '../api/upiPayment';
 import { registerFastag } from '../api/bajajApi';
-import { doc, getDoc, updateDoc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, serverTimestamp, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Add a new function to deduct from user wallet
@@ -153,17 +153,110 @@ export const transactionManager = {
 
 // These functions would interact with your database
 async function storeTransactionDetails(details) {
-  // Store in database
+  try {
+    // Create a reference to the transactions collection
+    const transactionsRef = collection(db, 'transactions');
+    
+    // Add timestamp
+    const transactionData = {
+      ...details,
+      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp()
+    };
+    
+    // Add the transaction to Firestore
+    const docRef = await addDoc(transactionsRef, transactionData);
+    console.log("Transaction stored with ID:", docRef.id);
+    return { success: true, id: docRef.id };
+  } catch (error) {
+    console.error("Error storing transaction details:", error);
+    return { success: false, error: error.message };
+  }
 }
 
 async function getTransactionByOrderId(orderId) {
-  // Retrieve from database
+  try {
+    // Query transactions collection for documents where orderId matches
+    const transactionsRef = collection(db, 'transactions');
+    const q = query(transactionsRef, where('orderId', '==', orderId));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log(`No transaction found with orderId: ${orderId}`);
+      return null;
+    }
+    
+    // Return the first matching transaction
+    const transaction = {
+      id: querySnapshot.docs[0].id,
+      ...querySnapshot.docs[0].data()
+    };
+    
+    console.log(`Found transaction with orderId: ${orderId}`, transaction);
+    return transaction;
+  } catch (error) {
+    console.error(`Error getting transaction with orderId ${orderId}:`, error);
+    throw error;
+  }
 }
 
 async function updateTransactionStatus(orderId, status, additionalData = {}) {
-  // Update in database
+  try {
+    // Find the transaction by orderId
+    const transaction = await getTransactionByOrderId(orderId);
+    
+    if (!transaction) {
+      throw new Error(`Transaction with orderId ${orderId} not found`);
+    }
+    
+    // Create reference to the transaction document
+    const transactionRef = doc(db, 'transactions', transaction.id);
+    
+    // Prepare update data
+    const updateData = {
+      status,
+      updatedAt: serverTimestamp(),
+      ...additionalData
+    };
+    
+    // Update the transaction
+    await updateDoc(transactionRef, updateData);
+    console.log(`Transaction status updated to ${status} for orderId: ${orderId}`);
+    
+    return { success: true, id: transaction.id, status };
+  } catch (error) {
+    console.error(`Error updating transaction status for orderId ${orderId}:`, error);
+    throw error;
+  }
 }
 
 async function getUserAndVehicleData(userId) {
-  // Retrieve from database
+  try {
+    // Get user data
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    const userData = userDoc.data();
+    
+    // Get vehicle data if available
+    let vehicleData = null;
+    
+    if (userData.vehicleId) {
+      const vehicleRef = doc(db, 'vehicles', userData.vehicleId);
+      const vehicleDoc = await getDoc(vehicleRef);
+      
+      if (vehicleDoc.exists()) {
+        vehicleData = vehicleDoc.data();
+      }
+    }
+    
+    return { userData, vehicleData };
+  } catch (error) {
+    console.error(`Error getting user and vehicle data for userId ${userId}:`, error);
+    throw error;
+  }
 }
