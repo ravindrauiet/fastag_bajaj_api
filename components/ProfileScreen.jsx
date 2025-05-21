@@ -95,8 +95,8 @@ const ProfileScreen = ({ navigation }) => {
 
   // Get user wallet balance
   const getWalletBalance = () => {
-    if (userProfile && userProfile.walletBalance) {
-      return userProfile.walletBalance.toFixed(2);
+    if (userProfile && userProfile.wallet) {
+      return userProfile.wallet.toFixed(2);
     }
     return '0.00';
   };
@@ -221,9 +221,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>{getFullName()}</Text>
                 <Text style={styles.profileId}>{getCustomerId()}</Text>
-                <View style={styles.kycBadge}>
+                {/* <View style={styles.kycBadge}>
                   <Text style={styles.kycText}>KYC {getKycStatus()}</Text>
-                </View>
+                </View> */}
               </View>
             </View>
             
