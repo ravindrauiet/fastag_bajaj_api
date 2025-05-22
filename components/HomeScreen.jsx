@@ -326,7 +326,7 @@ const HomeScreen = ({ navigation }) => {
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>▶</Text>
               </View>
-              <Text style={styles.serviceText}>FasTag{'\n'}Replacement</Text>
+              <Text style={styles.serviceText}>Replacement</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
   },
   serviceText: {
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 11,
     color: '#333333',
   },
   

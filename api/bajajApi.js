@@ -1043,81 +1043,58 @@ const bajajApi = {
   },
 
   // 7. FasTag Replacement
-  replaceFastag: async (walletId, vehicleNo, debitAmt, reason, reasonDesc = '', serialNo, chassisNo, engineNo, isNationalPermit, permitExpiryDate, stateOfRegistration, vehicleDescriptor) => {
+  replaceFastag: async (payload) => {
     try {
-      const requestId = generateRequestId();
-      const sessionId = requestId;
-      const reqDateTime = getCurrentDateTime();
-      const mobileNo = ''; // This should be provided if needed
-
+      console.log('=== REPLACE FASTAG REQUEST ===');
+      console.log(payload);
+      
+      // Ensure we're using the data directly from the payload without nesting
       const requestData = {
         tagReplaceReq: {
-          mobileNo,
-          walletId,
-          vehicleNo,
-          channel: CHANNEL,
-          agentId: AGENT_ID,
-          reqDateTime,
-          debitAmt,
-          requestId,
-          sessionId,
-          serialNo,
-          reason,
-          reasonDesc,
-          chassisNo,
-          engineNo,
-          isNationalPermit,
-          permitExpiryDate,
-          stateOfRegistration,
-          vehicleDescriptor,
-          udf1: "PK1",
-          udf2: "value2",
-          udf3: "value3",
-          udf4: "value4",
-          udf5: "value5"
+          ...payload.tagReplaceReq,
+          // Make sure reqDateTime is in ISO format for consistency
+          reqDateTime: payload.tagReplaceReq.reqDateTime,
+          // Ensure debitAmt is included and valid
+          debitAmt: payload.tagReplaceReq.debitAmt || "0"
         }
       };
-
-      // Console log the original request data
-      console.log('=== REPLACE FASTAG REQUEST ===');
-      console.log(JSON.stringify(requestData, null, 2));
-
-      const encryptedData = encrypt(JSON.stringify(requestData));
       
-      // Console log the encrypted request
+      // Encrypt the request data
+      const encryptedRequest = encrypt(JSON.stringify(requestData));
+      
       console.log('=== REPLACE FASTAG ENCRYPTED REQUEST ===');
-      console.log(encryptedData);
-
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/replaceFastag`, encryptedData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'aggr_channel': CHANNEL,
-          'ocp-apim-subscription-key': API_SUBSCRIPTION_KEY
+      console.log(encryptedRequest);
+      
+      // Call the API with correct headers exactly as in the documentation
+      const response = await axios.post(
+        `${BASE_URL}/ftAggregatorService/v2/replaceFastag`,
+        encryptedRequest,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'channel': CHANNEL,
+            'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
+          }
         }
-      });
-
-      // Console log the encrypted response
+      );
+      
       console.log('=== REPLACE FASTAG ENCRYPTED RESPONSE ===');
       console.log(response.data);
-
-      if (response.data) {
-        const decryptedResponse = decrypt(response.data);
-        
-        // Console log the decrypted response
-        console.log('=== REPLACE FASTAG DECRYPTED RESPONSE ===');
-        console.log(decryptedResponse);
-        
-        const parsedResponse = JSON.parse(decryptedResponse);
-        console.log('=== REPLACE FASTAG PARSED RESPONSE ===');
-        console.log(JSON.stringify(parsedResponse, null, 2));
-        
-        return parsedResponse;
-      }
-
-      return response.data;
+      
+      // Decrypt the response
+      const decryptedData = decrypt(response.data);
+      console.log('=== REPLACE FASTAG DECRYPTED RESPONSE ===');
+      console.log(decryptedData);
+      
+      // Parse the decrypted response
+      const parsedResponse = JSON.parse(decryptedData);
+      console.log('=== REPLACE FASTAG PARSED RESPONSE ===');
+      console.log(parsedResponse);
+      
+      return parsedResponse;
     } catch (error) {
-      console.error('FasTag Replacement API Error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to replace FasTag');
+      console.error('Error replacing FasTag:', error);
+      throw new Error(error.message || 'Failed to replace FasTag');
     }
   },
 

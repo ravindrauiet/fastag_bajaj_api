@@ -51,6 +51,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
   const [walletId, setWalletId] = useState(initialWallet);
   const [vehicleNo, setVehicleNo] = useState(initialVehicle);
   const [serialNo, setSerialNo] = useState('');
+  const [debitAmt, setDebitAmt] = useState('');
   const [chassisNo, setChassisNo] = useState(initialChassis);
   const [engineNo, setEngineNo] = useState(initialEngine);
   const [udf1, setUdf1] = useState(initialUdf1);
@@ -67,7 +68,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
   const [reasonDesc, setReasonDesc] = useState('');
 
   // Dropdown items
-  const [reasonItems] = useState([
+  const [reasonItems, setReasonItems] = useState([
     {label: 'Tag Damaged', value: '1'},
     {label: 'Lost Tag', value: '2'},
     {label: 'Tag Not Working', value: '3'},
@@ -177,6 +178,14 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
         }
         break;
         
+      case 'debitAmt':
+        if (!value) {
+          error = 'Amount is required';
+        } else if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+          error = 'Enter a valid amount';
+        }
+        break;
+        
       case 'reasonId':
         if (!value) {
           error = 'Please select a reason';
@@ -221,43 +230,80 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
   
   // Handle form submission
   const handleSubmit = async () => {
+    // Validate required fields
+    const isValid = 
+      validateField('mobileNo', mobileNo) &
+      validateField('walletId', walletId) &
+      validateField('vehicleNo', vehicleNo) &
+      validateField('serialNo', serialNo) &
+      validateField('debitAmt', debitAmt) &
+      validateField('reasonId', reasonId);
+    
+    if (reasonId === '99') {
+      validateField('reasonDesc', reasonDesc);
+    }
+    
+    if (!isValid) {
+      Alert.alert('Validation Error', 'Please fill all required fields correctly');
+      return;
+    }
+    
+    // Correct ISO format for reqDateTime
+    const isoDateTime = new Date().toISOString();
+    
+    // Correctly structure the payload with no nested objects
     const payload = {
       tagReplaceReq: {
-        mobileNo,
-        walletId,
-        vehicleNo,
-        channel,
-        agentId,
-        reqDateTime: new Date().toISOString(),
-        requestId,
-        sessionId,
-        serialNo,
+        mobileNo: mobileNo,
+        walletId: walletId,
+        vehicleNo: vehicleNo,
+        channel: channel,
+        agentId: agentId,
+        reqDateTime: isoDateTime,
+        debitAmt: debitAmt,
+        requestId: requestId,
+        sessionId: sessionId,
+        serialNo: serialNo,
         reason: reasonId,
-        reasonDesc: reasonId === '99' ? reasonDesc : "",
-        chassisNo,
-        engineNo,
-        isNationalPermit,
-        permitExpiryDate,
-        stateOfRegistration,
-        vehicleDescriptor,
-        udf1,
-        udf2,
-        udf3,
-        udf4,
-        udf5
+        // reasonDesc: reasonId === '99' ? reasonDesc : "",
+        chassisNo: chassisNo || "",
+        engineNo: engineNo || "",
+        isNationalPermit: isNationalPermit || "0",
+        permitExpiryDate: permitExpiryDate || "",
+        stateOfRegistration: stateOfRegistration || "",
+        vehicleDescriptor: vehicleDescriptor || "",
+        udf1: udf1 || "",
+        udf2: udf2 || "",
+        udf3: udf3 || "",
+        udf4: udf4 || "",
+        udf5: udf5 || ""
       }
     };
 
     try {
+      console.log('Sending FasTag replacement request:', JSON.stringify(payload, null, 2));
       const response = await bajajApi.replaceFastag(payload);
+      
       if (response?.response?.status === 'success') {
+        // Show success message
+        addNotification({
+          type: 'success',
+          message: 'FasTag replacement request submitted successfully',
+          autoClose: true
+        });
+        
         navigation.navigate('Confirmation', {
           type: 'replacement',
-          data: response.tagReplaceResp
+          data: response.tagReplaceResp || response.tagRepalceResp // Handle both possible response field names
         });
+      } else {
+        // Show error message
+        const errorMsg = response?.response?.msg || 'Failed to process replacement request';
+        Alert.alert('Error', errorMsg);
       }
     } catch (error) {
-      Alert.alert('Error', error.message);
+      console.error('Error submitting replacement request:', error);
+      Alert.alert('Error', error.message || 'An unexpected error occurred');
     }
   };
   
@@ -359,6 +405,24 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
               />
               {errors.serialNo ? (
                 <Text style={styles.errorText}>{errors.serialNo}</Text>
+              ) : null}
+            </View>
+            
+            {/* Debit Amount */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Debit Amount<Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={[styles.input, errors.debitAmt ? styles.inputError : null]}
+                placeholder="Enter amount"
+                value={debitAmt}
+                onChangeText={(text) => {
+                  setDebitAmt(text);
+                  validateField('debitAmt', text);
+                }}
+                keyboardType="numeric"
+              />
+              {errors.debitAmt ? (
+                <Text style={styles.errorText}>{errors.debitAmt}</Text>
               ) : null}
             </View>
             
