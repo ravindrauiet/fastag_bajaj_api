@@ -33,8 +33,8 @@ const ProfileScreen = ({ navigation }) => {
   });
   const [loading, setLoading] = useState(false);
   
-  // Toggle states
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  // Toggle states - set default to false
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   
   // Access notification context
@@ -176,6 +176,15 @@ const ProfileScreen = ({ navigation }) => {
           }
         }
       ]
+    );
+  };
+  
+  // Handle settings toggle with coming soon message
+  const handleSettingsToggle = (setting) => {
+    Alert.alert(
+      'Coming Soon',
+      `This feature will be available in the next update. Stay tuned!`,
+      [{ text: 'OK' }]
     );
   };
   
@@ -418,7 +427,7 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={styles.settingLabel}>Push Notifications</Text>
                   <Switch
                     value={notificationsEnabled}
-                    onValueChange={setNotificationsEnabled}
+                    onValueChange={() => handleSettingsToggle('notifications')}
                     trackColor={{ false: '#DDDDDD', true: '#00ACC1' }}
                     thumbColor="#FFFFFF"
                   />
@@ -428,7 +437,7 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={styles.settingLabel}>Biometric Authentication</Text>
                   <Switch
                     value={biometricEnabled}
-                    onValueChange={setBiometricEnabled}
+                    onValueChange={() => handleSettingsToggle('biometric')}
                     trackColor={{ false: '#DDDDDD', true: '#00ACC1' }}
                     thumbColor="#FFFFFF"
                   />
@@ -440,7 +449,10 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Support & Help</Text>
               <View style={styles.supportCard}>
-                <TouchableOpacity style={styles.supportRow}>
+                <TouchableOpacity 
+                  style={styles.supportRow}
+                  onPress={() => navigation.navigate('ContactSupport')}
+                >
                   <View style={styles.supportIconContainer}>
                     <Text style={styles.supportIcon}>📞</Text>
                   </View>
@@ -448,7 +460,10 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={styles.supportArrow}>→</Text>
                 </TouchableOpacity>
                 <View style={styles.separator} />
-                <TouchableOpacity style={styles.supportRow}>
+                <TouchableOpacity 
+                  style={styles.supportRow}
+                  onPress={() => navigation.navigate('FAQ')}
+                >
                   <View style={styles.supportIconContainer}>
                     <Text style={styles.supportIcon}>❓</Text>
                   </View>
@@ -456,7 +471,10 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={styles.supportArrow}>→</Text>
                 </TouchableOpacity>
                 <View style={styles.separator} />
-                <TouchableOpacity style={styles.supportRow}>
+                <TouchableOpacity 
+                  style={styles.supportRow}
+                  onPress={() => navigation.navigate('TermsConditions')}
+                >
                   <View style={styles.supportIconContainer}>
                     <Text style={styles.supportIcon}>📄</Text>
                   </View>

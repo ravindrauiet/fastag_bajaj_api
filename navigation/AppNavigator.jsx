@@ -45,6 +45,10 @@ import ServicesScreen from '../components/ServicesScreen';
 import UserDetailScreen from '../components/admin/UserDetailScreen';
 import FormDetailScreen from '../components/admin/FormDetailScreen';
 import AllocatedFasTagsScreen from '../components/AllocatedFasTagsScreen';
+// Import Support Screens
+import ContactSupportScreen from '../components/ContactSupportScreen';
+import FAQScreen from '../components/FAQScreen';
+import TermsConditionsScreen from '../components/TermsConditionsScreen';
 
 // Import Authentication Screens
 import LoginScreen from '../components/LoginScreen';
@@ -93,6 +97,10 @@ const HomeStack = () => {
       <Stack.Screen name="FeedbackForm" component={FeedbackForm} />
       <Stack.Screen name="ServicesScreen" component={ServicesScreen} />
       <Stack.Screen name="AllocatedFasTags" component={AllocatedFasTagsScreen} />
+      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
+      <Stack.Screen name="FAQ" component={FAQScreen} />
+      <Stack.Screen name="TermsConditions" component={TermsConditionsScreen} />
       
       {/* Add FASTag Flow Screens */}
       <Stack.Screen name="EnterDetails" component={EnterDetailsScreen} />
@@ -485,6 +493,21 @@ const AppStack = ({ navigation }) => {
         component={ServicesScreen}
         options={{ headerTitle: 'All Services' }}
       />
+      <Drawer.Screen
+        name="ContactSupport"
+        component={ContactSupportScreen}
+        options={{ headerTitle: 'Contact Support' }}
+      />
+      <Drawer.Screen
+        name="FAQ"
+        component={FAQScreen}
+        options={{ headerTitle: 'FAQ' }}
+      />
+      <Drawer.Screen
+        name="TermsConditions"
+        component={TermsConditionsScreen}
+        options={{ headerTitle: 'Terms & Conditions' }}
+      />
     </Drawer.Navigator>
   );
 };
@@ -547,11 +570,33 @@ const MainNavigator = () => {
                 headerTintColor: '#fff',
               }}
             />
-            <Stack.Screen
-              name="FormSubmissionsScreen"
-              component={FormSubmissionsScreen}
+            <Stack.Screen 
+              name="ContactSupport" 
+              component={ContactSupportScreen}
               options={{
-                headerTitle: 'Form Submissions',
+                headerTitle: 'Contact Support',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen 
+              name="FAQ" 
+              component={FAQScreen}
+              options={{
+                headerTitle: 'FAQ',
+                headerStyle: {
+                  backgroundColor: '#333333',
+                },
+                headerTintColor: '#fff',
+              }}
+            />
+            <Stack.Screen 
+              name="TermsConditions" 
+              component={TermsConditionsScreen}
+              options={{
+                headerTitle: 'Terms & Conditions',
                 headerStyle: {
                   backgroundColor: '#333333',
                 },
@@ -559,10 +604,10 @@ const MainNavigator = () => {
               }}
             />
             <Stack.Screen
-              name="FormSubmissionDetailScreen"
-              component={FormSubmissionDetailScreen}
+              name="FormSubmissionsScreen"
+              component={FormSubmissionsScreen}
               options={{
-                headerTitle: 'Submission Details',
+                headerTitle: 'Form Submissions',
                 headerStyle: {
                   backgroundColor: '#333333',
                 },
@@ -678,6 +723,21 @@ const MainNavigator = () => {
               name="ServicesScreen"
               component={ServicesScreen}
               options={{ headerTitle: 'All Services' }}
+            />
+            <Drawer.Screen
+              name="ContactSupport"
+              component={ContactSupportScreen}
+              options={{ headerTitle: 'Contact Support' }}
+            />
+            <Drawer.Screen
+              name="FAQ"
+              component={FAQScreen}
+              options={{ headerTitle: 'FAQ' }}
+            />
+            <Drawer.Screen
+              name="TermsConditions"
+              component={TermsConditionsScreen}
+              options={{ headerTitle: 'Terms & Conditions' }}
             />
           </Drawer.Navigator>
         )

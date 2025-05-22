@@ -408,68 +408,100 @@ const HomeScreen = ({ navigation }) => {
             
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigateWithNotification('NETCFastagScreen')}
+              onPress={() => {
+                Linking.openURL('https://www.npci.org.in/what-we-do/netc-fastag/check-your-netc-fastag-status');
+              }}
             >
               <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E3F2FD'}]}>
                 <Text style={styles.serviceCardIcon}>📋</Text>
               </View>
               <Text style={styles.serviceCardText}>NETC FasTag</Text>
-              <Text style={styles.serviceCardDescription}>Manage your NETC account</Text>
+              <Text style={styles.serviceCardDescription}>Check your FasTag status</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigateWithNotification('VrnUpdateScreen')}
+              onPress={() => {
+                Alert.alert(
+                  "Feature in Development",
+                  "The VRN Update feature is currently in development and will be available soon.",
+                  [{ text: "OK" }]
+                );
+              }}
             >
               <View style={[styles.serviceCardIconContainer, {backgroundColor: '#FFF8E1'}]}>
                 <Text style={styles.serviceCardIcon}>🚗</Text>
               </View>
               <Text style={styles.serviceCardText}>VRN Update</Text>
-              <Text style={styles.serviceCardDescription}>Update vehicle registration</Text>
+              <Text style={styles.serviceCardDescription}>Coming soon</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigateWithNotification('FasTagRekycScreen')}
+              onPress={() => {
+                Alert.alert(
+                  "Feature in Development",
+                  "The Re-KYC feature is currently in development and will be available soon.",
+                  [{ text: "OK" }]
+                );
+              }}
             >
               <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E8F5E9'}]}>
                 <Text style={styles.serviceCardIcon}>📷</Text>
               </View>
               <Text style={styles.serviceCardText}>Re-KYC</Text>
-              <Text style={styles.serviceCardDescription}>Update your KYC documents</Text>
+              <Text style={styles.serviceCardDescription}>Coming soon</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigateWithNotification('BarcodeScanner')}
+              onPress={() => {
+                Alert.alert(
+                  "Feature in Development",
+                  "The Scanner feature is currently in development and will be available soon.",
+                  [{ text: "OK" }]
+                );
+              }}
             >
               <View style={[styles.serviceCardIconContainer, {backgroundColor: '#F3E5F5'}]}>
                 <Text style={styles.serviceCardIcon}>📱</Text>
               </View>
               <Text style={styles.serviceCardText}>Scanner</Text>
-              <Text style={styles.serviceCardDescription}>Scan FasTag barcodes</Text>
+              <Text style={styles.serviceCardDescription}>Coming soon</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigateWithNotification('ManualActivation')}
+              onPress={() => {
+                Alert.alert(
+                  "Feature in Development",
+                  "The Activation feature is currently in development and will be available soon.",
+                  [{ text: "OK" }]
+                );
+              }}
             >
               <View style={[styles.serviceCardIconContainer, {backgroundColor: '#FFEBEE'}]}>
                 <Text style={styles.serviceCardIcon}>🔄</Text>
               </View>
               <Text style={styles.serviceCardText}>Activation</Text>
-              <Text style={styles.serviceCardDescription}>Manually activate your tag</Text>
+              <Text style={styles.serviceCardDescription}>Coming soon</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.serviceCard}
-              onPress={() => navigateWithNotification('DocumentUpload')}
+              onPress={() => {
+                Alert.alert(
+                  "Feature in Development",
+                  "The Documents feature is currently in development and will be available soon.",
+                  [{ text: "OK" }]
+                );
+              }}
             >
               <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E0F7FA'}]}>
                 <Text style={styles.serviceCardIcon}>📄</Text>
               </View>
               <Text style={styles.serviceCardText}>Documents</Text>
-              <Text style={styles.serviceCardDescription}>Upload required documents</Text>
+              <Text style={styles.serviceCardDescription}>Coming soon</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
