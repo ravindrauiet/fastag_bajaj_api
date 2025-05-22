@@ -30,6 +30,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
     permitExpiryDate: initialPermitDate,
     stateOfRegistration: initialState,
     vehicleDescriptor: initialDescriptor,
+    repTagCost: initialRepTagCost,
     channel,
     agentId,
     udf1: initialUdf1,
@@ -51,7 +52,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
   const [walletId, setWalletId] = useState(initialWallet);
   const [vehicleNo, setVehicleNo] = useState(initialVehicle);
   const [serialNo, setSerialNo] = useState('');
-  const [debitAmt, setDebitAmt] = useState('');
+  const [debitAmt, setDebitAmt] = useState(initialRepTagCost);
   const [chassisNo, setChassisNo] = useState(initialChassis);
   const [engineNo, setEngineNo] = useState(initialEngine);
   const [udf1, setUdf1] = useState(initialUdf1);
@@ -166,11 +167,11 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
         }
         break;
         
-      case 'walletId':
-        if (!value) {
-          error = 'Wallet ID is required';
-        }
-        break;
+      // case 'walletId':
+      //   if (!value) {
+      //     error = 'Wallet ID is required';
+      //   }
+      //   break;
         
       case 'serialNo':
         if (!value) {
@@ -233,7 +234,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
     // Validate required fields
     const isValid = 
       validateField('mobileNo', mobileNo) &
-      validateField('walletId', walletId) &
+      // validateField('walletId', walletId) &
       validateField('vehicleNo', vehicleNo) &
       validateField('serialNo', serialNo) &
       validateField('debitAmt', debitAmt) &
@@ -265,7 +266,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
         sessionId: sessionId,
         serialNo: serialNo,
         reason: reasonId,
-        // reasonDesc: reasonId === '99' ? reasonDesc : "",
+        reasonDesc: reasonId === '99' ? reasonDesc : "",
         chassisNo: chassisNo || "",
         engineNo: engineNo || "",
         isNationalPermit: isNationalPermit || "0",
@@ -356,7 +357,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
             </View>
             
             {/* Wallet ID */}
-            <View style={styles.inputGroup}>
+            {/* <View style={styles.inputGroup}>
               <Text style={styles.label}>Wallet ID<Text style={styles.required}>*</Text></Text>
               <TextInput
                 style={[styles.input, errors.walletId ? styles.inputError : null]}
@@ -370,7 +371,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
               {errors.walletId ? (
                 <Text style={styles.errorText}>{errors.walletId}</Text>
               ) : null}
-            </View>
+            </View> */}
             
             {/* Vehicle Number */}
             <View style={styles.inputGroup}>
@@ -415,10 +416,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
                 style={[styles.input, errors.debitAmt ? styles.inputError : null]}
                 placeholder="Enter amount"
                 value={debitAmt}
-                onChangeText={(text) => {
-                  setDebitAmt(text);
-                  validateField('debitAmt', text);
-                }}
+                editable={false}
                 keyboardType="numeric"
               />
               {errors.debitAmt ? (

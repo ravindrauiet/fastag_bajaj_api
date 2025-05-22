@@ -1052,20 +1052,27 @@ const bajajApi = {
       const requestData = {
         tagReplaceReq: {
           ...payload.tagReplaceReq,
-          // Make sure reqDateTime is in ISO format for consistency
-          reqDateTime: payload.tagReplaceReq.reqDateTime,
+          // Convert ISO date to the format expected by the API: YYYY-MM-DD HH:MM:SS.SSS
+          reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23),
           // Ensure debitAmt is included and valid
-          debitAmt: payload.tagReplaceReq.debitAmt || "0"
+          debitAmt: payload.tagReplaceReq.debitAmt || "0",
+          // Ensure required fields are included
+          channel: CHANNEL,
+          agentId: AGENT_ID
         }
       };
       
-      // Encrypt the request data
+      console.log('=== REPLACE FASTAG REQUEST ===');
+      console.log(JSON.stringify(requestData, null, 2));
+      
+      // Use the standard encrypt function - same as registerFasTag
       const encryptedRequest = encrypt(JSON.stringify(requestData));
       
       console.log('=== REPLACE FASTAG ENCRYPTED REQUEST ===');
       console.log(encryptedRequest);
       
       // Call the API with correct headers exactly as in the documentation
+      // Note: For replaceFastag, the header is 'channel' not 'aggr_channel'
       const response = await axios.post(
         `${BASE_URL}/ftAggregatorService/v2/replaceFastag`,
         encryptedRequest,
@@ -1081,17 +1088,32 @@ const bajajApi = {
       console.log('=== REPLACE FASTAG ENCRYPTED RESPONSE ===');
       console.log(response.data);
       
-      // Decrypt the response
-      const decryptedData = decrypt(response.data);
-      console.log('=== REPLACE FASTAG DECRYPTED RESPONSE ===');
-      console.log(decryptedData);
+      // Check if there's data to decrypt
+      if (!response.data) {
+        console.error('Empty response received from server');
+        throw new Error('Empty response received from server');
+      }
       
-      // Parse the decrypted response
-      const parsedResponse = JSON.parse(decryptedData);
-      console.log('=== REPLACE FASTAG PARSED RESPONSE ===');
-      console.log(parsedResponse);
-      
-      return parsedResponse;
+      try {
+        // Use the standard decrypt function - same as registerFasTag
+        const decryptedData = decrypt(response.data);
+        console.log('=== REPLACE FASTAG DECRYPTED RESPONSE ===');
+        console.log(decryptedData);
+        
+        if (!decryptedData) {
+          console.error('Decryption resulted in empty data');
+          return response.data;
+        }
+        
+        const parsedResponse = JSON.parse(decryptedData);
+        console.log('=== REPLACE FASTAG PARSED RESPONSE ===');
+        console.log(JSON.stringify(parsedResponse, null, 2));
+        
+        return parsedResponse;
+      } catch (decryptError) {
+        console.error('Error decrypting/parsing response:', decryptError);
+        return response.data;
+      }
     } catch (error) {
       console.error('Error replacing FasTag:', error);
       throw new Error(error.message || 'Failed to replace FasTag');

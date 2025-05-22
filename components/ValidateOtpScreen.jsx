@@ -520,6 +520,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
                 otpResponse: response,
                 vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
                 model: response.validateOtpResp?.vrnDetails?.model,
+                repTagCost: response.validateOtpResp?.vrnDetails?.repTagCost,
                 isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
                 permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
                 stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
