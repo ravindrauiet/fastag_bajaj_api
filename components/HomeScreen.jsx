@@ -321,7 +321,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.frequentlyUsedGrid}>
             <TouchableOpacity 
               style={styles.serviceItem}
-              onPress={() => navigateWithNotification('FasTagReplacementScreen')}
+              onPress={() => navigateWithNotification('ValidateCustomer', { reqType: 'REP' })}
             >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>▶</Text>
