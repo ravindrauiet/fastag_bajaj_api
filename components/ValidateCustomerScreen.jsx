@@ -385,23 +385,21 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Request Type<Text style={styles.required}>*</Text></Text>
             <View style={styles.optionsContainer}>
-              <TouchableOpacity
-                style={[styles.optionButton, reqType === 'REG' ? styles.selectedOption : null]}
-                onPress={() => setReqType('REG')}
+              <View
+                style={[styles.optionButton, reqType === 'REG' ? styles.selectedOption : styles.disabledOption]}
               >
-                <Text style={[styles.optionText, reqType === 'REG' ? styles.selectedOptionText : null]}>
+                <Text style={[styles.optionText, reqType === 'REG' ? styles.selectedOptionText : styles.disabledOptionText]}>
                   Registration
                 </Text>
-              </TouchableOpacity>
+              </View>
               
-              <TouchableOpacity
-                style={[styles.optionButton, reqType === 'REP' ? styles.selectedOption : null]}
-                onPress={() => setReqType('REP')}
+              <View
+                style={[styles.optionButton, reqType === 'REP' ? styles.selectedOption : styles.disabledOption]}
               >
-                <Text style={[styles.optionText, reqType === 'REP' ? styles.selectedOptionText : null]}>
+                <Text style={[styles.optionText, reqType === 'REP' ? styles.selectedOptionText : styles.disabledOptionText]}>
                   Replacement
                 </Text>
-              </TouchableOpacity>
+              </View>
             </View>
           </View>
           
@@ -575,10 +573,6 @@ const styles = StyleSheet.create({
   selectedOption: {
     backgroundColor: '#333333',
   },
-  optionText: {
-    color: '#333333',
-    fontWeight: '500',
-  },
   selectedOptionText: {
     color: '#FFFFFF',
   },
@@ -607,6 +601,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  disabledOption: {
+    backgroundColor: '#F5F5F5',
+    opacity: 0.7,
+  },
+  disabledOptionText: {
+    color: '#999999',
   },
 });
 
