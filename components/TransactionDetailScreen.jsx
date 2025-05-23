@@ -385,7 +385,7 @@ Status: ${transaction.status}
           
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Support', { referenceNumber })}
+            onPress={() => navigation.navigate('ContactSupport')}
           >
             <Text style={styles.actionButtonIcon}>❓</Text>
             <Text style={styles.actionButtonText}>Help</Text>

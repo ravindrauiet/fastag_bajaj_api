@@ -395,7 +395,7 @@ const WalletScreen = ({ navigation, route }) => {
           <View style={styles.quickActionGrid}>
             <TouchableOpacity 
               style={styles.quickActionItem}
-              onPress={() => navigation.navigate('Support')}
+              onPress={() => navigation.navigate('ContactSupport')}
             >
               <View style={styles.quickActionIconContainer}>
                 <Icon name="face-agent" size={24} color="#333333" />
@@ -415,7 +415,7 @@ const WalletScreen = ({ navigation, route }) => {
             
             <TouchableOpacity 
               style={styles.quickActionItem}
-              onPress={() => navigation.navigate('Settings')}
+              onPress={() => navigation.navigate('ProfileScreen')}
             >
               <View style={styles.quickActionIconContainer}>
                 <Icon name="cog-outline" size={24} color="#333333" />
