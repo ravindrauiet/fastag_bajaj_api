@@ -7,7 +7,8 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
-  Share
+  Share,
+  Linking
 } from 'react-native';
 
 const TransactionDetailScreen = ({ navigation, route }) => {
@@ -35,20 +36,19 @@ const TransactionDetailScreen = ({ navigation, route }) => {
   // Generate reference number if not available
   const referenceNumber = transaction.referenceNumber || `REF${Math.floor(Math.random() * 10000000)}`;
   
-  // Handle share transaction
+  // Handle share transaction - Simple sharing to any app
   const handleShareTransaction = async () => {
     try {
       const shareMessage = `
-Transaction Details
-------------------
-Type: ${transaction.type === 'credit' ? 'Credit' : 'Debit'}
+Transaction Details from TM SQUARE
+--------------------------------
 Amount: ₹${transaction.amount.toLocaleString('en-IN')}
-Description: ${transaction.description}
-Date & Time: ${transaction.date} ${transaction.time}
-Payment Method: ${transaction.paymentMethod}
-Reference Number: ${referenceNumber}
-Status: ${transaction.status}
-      `;
+Type: ${transaction.type === 'credit' ? 'Money Received' : 'Money Sent'}
+Date: ${transaction.date}
+Time: ${transaction.time}
+Status: ${transaction.status?.toUpperCase() || 'N/A'}
+Reference: ${referenceNumber}
+`;
       
       await Share.share({
         message: shareMessage.trim(),
@@ -56,13 +56,52 @@ Status: ${transaction.status}
       });
     } catch (error) {
       console.error('Error sharing transaction:', error);
+      alert('Could not share the transaction details. Please try again.');
     }
   };
   
-  // Handle downloading receipt (just a placeholder action)
+  // Handle downloading receipt - Detailed receipt sharing via WhatsApp
   const handleDownloadReceipt = () => {
-    // In a real app, this would trigger the generation and download of a PDF receipt
-    alert('Receipt download feature will be implemented by backend team.');
+    try {
+      // Create a detailed receipt text
+      const receiptText = `
+*TM SQUARE - Official Transaction Receipt*
+----------------------------------------
+🏷️ *Transaction Details*
+Transaction ID: ${transaction.transactionId || transaction.id || 'N/A'}
+Reference No: ${referenceNumber}
+
+💰 *Amount Details*
+Amount: ₹${transaction.amount.toLocaleString('en-IN')}
+Type: ${transaction.type === 'credit' ? 'Credit (Money In)' : 'Debit (Money Out)'}
+${transaction.description ? `Purpose: ${transaction.description}` : ''}
+
+📅 *Date & Time*
+Date: ${transaction.date}
+Time: ${transaction.time}
+
+✅ *Status*: ${transaction.status?.toUpperCase() || 'N/A'}
+
+📞 *Need Help?*
+Contact: support@tmsquare.co.in
+Helpline: +91-XXXXXXXXXX
+
+_This is a system generated receipt._
+© ${new Date().getFullYear()} TM SQUARE
+----------------------------------------`;
+
+      // Prepare WhatsApp sharing
+      const whatsappMsg = encodeURIComponent(receiptText);
+      const whatsappUrl = `whatsapp://send?text=${whatsappMsg}`;
+
+      // Open WhatsApp with the receipt
+      Linking.openURL(whatsappUrl).catch(err => {
+        alert('Please make sure WhatsApp is installed on your device');
+      });
+    } catch (error) {
+      console.error('Error sharing receipt:', error);
+      alert('Could not share the receipt. Please try again.');
+    }
   };
 
   // Helper to check if a value exists and is not null or undefined
