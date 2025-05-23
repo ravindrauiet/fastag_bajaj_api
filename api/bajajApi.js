@@ -1045,46 +1045,74 @@ const bajajApi = {
   // 7. FasTag Replacement
   replaceFastag: async (payload) => {
     try {
-      console.log('=== REPLACE FASTAG REQUEST ===');
-      console.log(payload);
+      console.log('Sending FasTag replacement request:', payload);
       
-      // Ensure we're using the data directly from the payload without nesting
+      // Create a properly formatted date as per Bajaj API requirements (YYYY-MM-DD HH:MM:SS.SSS)
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+      const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+      
+      // Ensure the request structure matches exactly what the API expects
+      // Based on the documentation specifications
       const requestData = {
         tagReplaceReq: {
-          ...payload.tagReplaceReq,
-          // Convert ISO date to the format expected by the API: YYYY-MM-DD HH:MM:SS.SSS
-          reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23),
-          // Ensure debitAmt is included and valid
-          debitAmt: payload.tagReplaceReq.debitAmt || "0",
-          // Ensure required fields are included
+          requestId: payload.tagReplaceReq.requestId || generateRequestId(),
+          sessionId: payload.tagReplaceReq.sessionId || generateRequestId(),
+          mobileNo: payload.tagReplaceReq.mobileNo,
+          walletId: payload.tagReplaceReq.walletId || "",
+          vehicleNo: payload.tagReplaceReq.vehicleNo,
           channel: CHANNEL,
-          agentId: AGENT_ID
+          agentId: AGENT_ID,
+          reqDateTime: formattedDate,
+          debitAmt: payload.tagReplaceReq.debitAmt || "100.0",
+          serialNo: payload.tagReplaceReq.serialNo,
+          reason: payload.tagReplaceReq.reason,
+          reasonDesc: payload.tagReplaceReq.reasonDesc || "",
+          chassisNo: payload.tagReplaceReq.chassisNo || "",
+          engineNo: payload.tagReplaceReq.engineNo || "",
+          isNationalPermit: payload.tagReplaceReq.isNationalPermit || "1",
+          permitExpiryDate: payload.tagReplaceReq.permitExpiryDate || "",
+          stateOfRegistration: payload.tagReplaceReq.stateOfRegistration || "",
+          vehicleDescriptor: payload.tagReplaceReq.vehicleDescriptor || "",
+          udf1: payload.tagReplaceReq.udf1 || "",
+          udf2: payload.tagReplaceReq.udf2 || "",
+          udf3: payload.tagReplaceReq.udf3 || "",
+          udf4: payload.tagReplaceReq.udf4 || "",
+          udf5: payload.tagReplaceReq.udf5 || ""
         }
       };
       
       console.log('=== REPLACE FASTAG REQUEST ===');
       console.log(JSON.stringify(requestData, null, 2));
       
-      // Use the standard encrypt function - same as registerFasTag
-      const encryptedRequest = encrypt(JSON.stringify(requestData));
+      // Use the standard encrypt function
+      const encryptedData = encrypt(JSON.stringify(requestData));
       
       console.log('=== REPLACE FASTAG ENCRYPTED REQUEST ===');
-      console.log(encryptedRequest);
+      console.log(encryptedData);
       
       // Call the API with correct headers exactly as in the documentation
-      // Note: For replaceFastag, the header is 'channel' not 'aggr_channel'
       const response = await axios.post(
         `${BASE_URL}/ftAggregatorService/v2/replaceFastag`,
-        encryptedRequest,
+        encryptedData,
         {
           headers: {
             'Content-Type': 'application/json',
-            'channel': CHANNEL,
+            'aggr_channel': CHANNEL,
             'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY
           }
         }
       );
       
+      console.log('=== REPLACE FASTAG RESPONSE ===');
+      console.log(response);
+
       console.log('=== REPLACE FASTAG ENCRYPTED RESPONSE ===');
       console.log(response.data);
       
@@ -1095,7 +1123,7 @@ const bajajApi = {
       }
       
       try {
-        // Use the standard decrypt function - same as registerFasTag
+        // Use the standard decrypt function
         const decryptedData = decrypt(response.data);
         console.log('=== REPLACE FASTAG DECRYPTED RESPONSE ===');
         console.log(decryptedData);

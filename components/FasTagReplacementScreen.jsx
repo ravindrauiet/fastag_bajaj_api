@@ -249,21 +249,22 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
       return;
     }
     
-    // Correct ISO format for reqDateTime
-    const isoDateTime = new Date().toISOString();
+    // Generate request and session IDs if not provided
+    const generatedRequestId = requestId || `REQ${Date.now()}`;
+    const generatedSessionId = sessionId || `SES${Date.now()}`;
     
-    // Correctly structure the payload with no nested objects
+    // Correctly structure the payload as per Bajaj API documentation
     const payload = {
       tagReplaceReq: {
         mobileNo: mobileNo,
-        walletId: walletId,
+        walletId: walletId || "",
         vehicleNo: vehicleNo,
-        channel: channel,
-        agentId: agentId,
-        reqDateTime: isoDateTime,
+        channel: channel || "CBPL",
+        agentId: agentId || "70003",
+        // Don't set reqDateTime here, it will be set in the API function
         debitAmt: debitAmt,
-        requestId: requestId,
-        sessionId: sessionId,
+        requestId: generatedRequestId,
+        sessionId: generatedSessionId,
         serialNo: serialNo,
         reason: reasonId,
         reasonDesc: reasonId === '99' ? reasonDesc : "",
