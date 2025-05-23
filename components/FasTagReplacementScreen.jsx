@@ -104,11 +104,11 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
   // Vehicle descriptor dropdown
   const [openVehicleDescriptor, setOpenVehicleDescriptor] = useState(false);
   const [vehicleDescriptorItems, setVehicleDescriptorItems] = useState([
-    {label: 'Petrol', value: 'Petrol'},
-    {label: 'Diesel', value: 'Diesel'},
+    {label: 'Petrol', value: 'PETROL'},
+    {label: 'Diesel', value: 'DIESEL'},
     {label: 'CNG', value: 'CNG'},
-    {label: 'Electric', value: 'Electric'},
-    {label: 'Hybrid', value: 'Hybrid'}
+    {label: 'Electric', value: 'ELECTRIC'},
+    {label: 'Hybrid', value: 'HYBRID'}
   ]);
   
   // Validation errors
@@ -333,7 +333,7 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
         <View style={{ width: 40 }} />
       </View>
       
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
         <Animated.View 
           style={[styles.content, {
             opacity: fadeAnim,
@@ -453,6 +453,8 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
                 style={[styles.dropdown, errors.reasonId ? styles.inputError : null]}
                 dropDownContainerStyle={styles.dropdownContainer}
                 zIndex={3000}
+                listMode="SCROLLVIEW"
+                maxHeight={150}
               />
               {errors.reasonId ? (
                 <Text style={styles.errorText}>{errors.reasonId}</Text>
@@ -515,6 +517,8 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
                 zIndex={2000}
+                listMode="SCROLLVIEW"
+                maxHeight={150}
               />
             </View>
             
@@ -547,6 +551,8 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
                 zIndex={1500}
+                listMode="SCROLLVIEW"
+                maxHeight={150}
               />
             </View>
             
@@ -563,6 +569,8 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
                 zIndex={1000}
+                listMode="SCROLLVIEW"
+                maxHeight={150}
               />
             </View>
           </View>

@@ -236,9 +236,9 @@ const NotificationBell = () => {
             </View>
           ) : (
             <View style={styles.notificationList}>
-              {notifications.map(notification => (
+              {notifications.map((notification, index) => (
                 <TouchableOpacity 
-                  key={notification.id} 
+                  key={notification.id || index} 
                   style={[
                     styles.notificationItem,
                     !notification.read ? styles.unreadNotification : null
@@ -250,6 +250,7 @@ const NotificationBell = () => {
                     <Text style={styles.notificationTime}>{notification.time}</Text>
                   </View>
                   <TouchableOpacity 
+                    key={`delete-${notification.id || index}`}
                     style={styles.deleteButton}
                     onPress={(e) => {
                       e.stopPropagation();
