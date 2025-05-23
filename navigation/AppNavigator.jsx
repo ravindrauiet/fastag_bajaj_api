@@ -348,22 +348,22 @@ const CustomDrawerContent = (props) => {
           <Text style={styles.drawerSectionTitle}>MAIN</Text>
           {renderMenuItem('Home', '🏠', 'Home', true)}
           {renderMenuItem('NETC Fastag', '🔄', 'NETC', true)}
-          {renderMenuItem('Fastag Inventory', '📦', 'Inventory', true)}
+          {renderMenuItem('User Inventory', '📦', 'Inventory', true)}
         </View>
         
         <View style={styles.drawerDivider} />
         
         <View style={styles.drawerSection}>
           <Text style={styles.drawerSectionTitle}>SERVICES</Text>
-          {renderMenuItem('Barcode Scanner', '📷', 'BarcodeScanner')}
-          {renderMenuItem('Manual Activation', '🔧', 'ManualActivation')}
-          {renderMenuItem('Create Wallet', '💳', 'CreateWallet')}
-          {renderMenuItem('Document Upload', '📄', 'DocumentUpload')}
-          {renderMenuItem('FasTag Registration', '📝', 'FasTagRegistration')}
-          {renderMenuItem('FasTag Replacement', '🔄', 'FasTagReplacement')}
+          {/* {renderMenuItem('Barcode Scanner', '📷', 'BarcodeScanner')} */}
+          {/* {renderMenuItem('Manual Activation', '🔧', 'ManualActivation')} */}
+          {/* {renderMenuItem('Create Wallet', '💳', 'CreateWallet')} */}
+          {/* {renderMenuItem('Document Upload', '📄', 'DocumentUpload')} */}
+          {/* {renderMenuItem('FasTag Registration', '📝', 'FasTagRegistration')} */}
+          {/* {renderMenuItem('FasTag Replacement', '🔄', 'FasTagReplacement')} */}
           {renderMenuItem('VRN Update', '🚗', 'VrnUpdate')}
           {renderMenuItem('FasTag Re-KYC', '🔐', 'FasTagRekyc')}
-          {renderMenuItem('OTP Verification', '📱', 'ValidateOtp')}
+          {/* {renderMenuItem('OTP Verification', '📱', 'ValidateOtp')} */}
           {renderMenuItem('Validate Customer', '👤', 'ValidateCustomer')}
           {renderMenuItem('Vehicle KYC Screen', '🚘', 'VehicleKYCScreen')}
         </View>

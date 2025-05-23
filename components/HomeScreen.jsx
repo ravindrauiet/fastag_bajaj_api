@@ -181,7 +181,9 @@ const HomeScreen = ({ navigation }) => {
 
   // Get user ID from Firestore or Firebase Auth
   const getUserId = () => {
-    if (userProfile && userProfile.id) {
+    if (userProfile && userProfile.bcId) {
+      return `ID ${userProfile.bcId}`;
+    } else if (userProfile && userProfile.id) {
       return `ID ${userProfile.id.substring(0, 8)}`;
     } else if (userInfo && userInfo.uid) {
       return `ID ${userInfo.uid.substring(0, 8)}`;

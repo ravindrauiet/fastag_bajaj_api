@@ -67,7 +67,9 @@ const ProfileScreen = ({ navigation }) => {
 
   // Get customer ID from profile
   const getCustomerId = () => {
-    if (userProfile && userProfile.id) {
+    if (userProfile && userProfile.bcId) {
+      return `ID ${userProfile.bcId}`;
+    } else if (userProfile && userProfile.id) {
       return `CUST${userProfile.id.substring(0, 8)}`;
     } else if (userInfo && userInfo.uid) {
       return `CUST${userInfo.uid.substring(0, 8)}`;
