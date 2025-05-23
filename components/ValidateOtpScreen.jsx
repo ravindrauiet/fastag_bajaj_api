@@ -584,23 +584,14 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           }
           
           // For other error codes, we might need to create a new wallet
-          console.log(`Navigating to CreateWallet due to error: ${errorCode} - ${errorDesc}`);
+          console.log(`Navigating to Home due to error: ${errorCode} - ${errorDesc}`);
           
-          // Show warning about possible errors
+          // Show warning about the error
           ErrorHandler.showErrorAlert(
-            'Wallet Creation Required',
-            `${errorDesc}. You'll need to create a wallet to continue.`,
+            'Verification Failed',
+            `${errorDesc}. Please try again later.`,
             () => {
-              navigation.navigate('CreateWallet', {
-                mobileNo,
-                vehicleNo,
-                chassisNo,
-                engineNo,
-                reqType,
-                // We won't pass the sessionId from a failed OTP verification
-                errorCode: errorCode,
-                errorDesc: errorDesc
-              });
+              navigation.navigate('Home');
             },
             true
           );
