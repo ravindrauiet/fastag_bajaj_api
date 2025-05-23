@@ -294,10 +294,21 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
           autoClose: true
         });
         
-        navigation.navigate('Confirmation', {
-          type: 'replacement',
-          data: response.tagReplaceResp || response.tagRepalceResp // Handle both possible response field names
-        });
+        // Show success alert before navigating
+        Alert.alert(
+          'Success',
+          'Your FasTag replacement request has been submitted successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate to HomeScreen instead of Confirmation
+                navigation.navigate('Home');
+              }
+            }
+          ],
+          { cancelable: false }
+        );
       } else {
         // Show error message
         const errorMsg = response?.response?.msg || 'Failed to process replacement request';
