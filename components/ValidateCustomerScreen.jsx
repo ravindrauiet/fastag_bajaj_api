@@ -133,6 +133,9 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
       // Check if user has downloaded Bajaj app before sending OTP
       try {
         const appStatusResponse = await bajajApi.checkBajajAppStatus(mobileNo);
+
+        console.log('App Status Response:', appStatusResponse);
+        console.log('App Status Response:', appStatusResponse.response);
         
         if (appStatusResponse && appStatusResponse.response && appStatusResponse.response.status === 'success') {
           if (!appStatusResponse.appInstalled) {
