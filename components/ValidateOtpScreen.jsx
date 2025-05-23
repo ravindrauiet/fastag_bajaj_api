@@ -567,7 +567,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           else if (errorCode === 'A100' || errorDesc.includes('VRN is already available')) {
             ErrorHandler.showErrorAlert(
               'Registration Already Exists',
-              'This vehicle is already registered in the system. You may proceed to create a wallet or check your existing account.',
+              'This vehicle is already registered in the system.',
               () => {
                 // Navigate to create wallet but use a special flag to handle this case
                 navigation.navigate('ValidateCustomer', {

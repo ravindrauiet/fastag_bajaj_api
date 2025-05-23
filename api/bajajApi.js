@@ -1551,6 +1551,22 @@ const bajajApi = {
         console.log('Decrypted response:', decryptedData);
         
         const parsedData = JSON.parse(decryptedData);
+        console.log('Parsed response data:', JSON.stringify(parsedData, null, 2));
+        
+        // If app is not installed, set code to "11" to match expected error code
+        if (parsedData.appInstalled === false && (!parsedData.response.code || parsedData.response.code === "00")) {
+          console.log('App not installed, setting code to "11"');
+          return {
+            response: {
+              status: 'failed',
+              code: "11", // Special code for app not installed
+              errorCode: "11",
+              errorDesc: "Bajaj app not installed or FasTag section not visited",
+              msg: "App check failed"
+            },
+            appInstalled: false
+          };
+        }
         
         return {
           response: parsedData.response || { status: 'success' },

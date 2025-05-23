@@ -137,13 +137,17 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
         console.log('App Status Response:', appStatusResponse);
         console.log('App Status Response:', appStatusResponse.response);
         
-        if (appStatusResponse && appStatusResponse.response && appStatusResponse.response.status === 'success') {
-          if (!appStatusResponse.appInstalled) {
+        if (appStatusResponse && appStatusResponse.response) {
+          // Check if response code is "11", which means app is not installed or user hasn't visited FasTag section
+          if (appStatusResponse.response.code === "11" || !appStatusResponse.appInstalled) {
             // Use our error handler for consistent UI
             ErrorHandler.showErrorAlert(
               'Bajaj App Required',
               'Please install the Bajaj Finserv App and visit the FasTag section before continuing with registration.',
-              null,
+              () => {
+                // Navigate to Home screen after user acknowledges the alert
+                navigation.navigate('Home');
+              },
               false
             );
             
@@ -183,9 +187,12 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
         // Show popup with error handler
         ErrorHandler.showErrorAlert(
           'App Check Warning',
-          'Could not verify Bajaj app installation. You may continue, but the app is required for completing FasTag registration.',
-          null,
-          true
+          'Could not verify Bajaj app installation. For your safety, you will be redirected to the home screen. Please try again later.',
+          () => {
+            // Navigate to Home screen after user acknowledges the alert
+            navigation.navigate('Home');
+          },
+          false
         );
         
         // Log the error with FormLogger
