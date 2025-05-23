@@ -55,6 +55,32 @@ const ProfileScreen = ({ navigation }) => {
     }
   }, [userProfile]);
 
+  // Calculate profile completion percentage
+  const getProfileCompletionPercentage = () => {
+    if (!userProfile) return 0;
+    
+    // Fields to check for completion
+    const fields = [
+      'firstName', 
+      'lastName', 
+      'phone', 
+      'email', 
+      'address', 
+      'aadharCard', 
+      'panCard'
+    ];
+    
+    // Count filled fields
+    let filledFields = 0;
+    fields.forEach(field => {
+      if (userProfile[field] && userProfile[field].trim() !== '') {
+        filledFields++;
+      }
+    });
+    
+    return Math.round((filledFields / fields.length) * 100);
+  };
+
   // Get full name from profile
   const getFullName = () => {
     if (userProfile && userProfile.displayName) {
@@ -77,11 +103,9 @@ const ProfileScreen = ({ navigation }) => {
     return 'GUEST000000';
   };
 
-  // Get KYC status from profile
+  // Get KYC status from profile - now checks for aadharCard
   const getKycStatus = () => {
-    if (userProfile && userProfile.kycStatus) {
-      return userProfile.kycStatus;
-    } else if (userInfo && userInfo.emailVerified) {
+    if (userProfile && userProfile.aadharCard && userProfile.aadharCard.trim() !== '') {
       return 'Verified';
     }
     return 'Not Verified';
@@ -190,6 +214,56 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
   
+  // Render profile completion circle
+  const renderProfileCompletionCircle = () => {
+    const completionPercentage = getProfileCompletionPercentage();
+    const strokeWidth = 5;
+    const radius = 35;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference * (1 - completionPercentage / 100);
+    
+    // Calculate color based on completion percentage
+    let color = '#FF5252'; // Red for low completion
+    if (completionPercentage >= 80) {
+      color = '#4CAF50'; // Green for high completion
+    } else if (completionPercentage >= 40) {
+      color = '#FFC107'; // Yellow for medium completion
+    }
+    
+    return (
+      <View style={styles.completionCircleContainer}>
+        <View style={styles.completionCircle}>
+          {/* Background circle */}
+          <View style={[styles.circleBackground, { width: radius * 2, height: radius * 2, borderRadius: radius }]} />
+          
+          {/* SVG-like progress circle using border */}
+          <View 
+            style={[
+              styles.circleProgress, 
+              { 
+                width: radius * 2, 
+                height: radius * 2, 
+                borderRadius: radius,
+                borderWidth: strokeWidth,
+                borderColor: color,
+                // This is a trick to show partial circle using border and transform
+                // We can only show a full border, so we overlay two half-circles
+                // and rotate them to create the effect of a progress circle
+                transform: [
+                  { rotate: `${360 * (completionPercentage / 100)}deg` }
+                ]
+              }
+            ]} 
+          />
+          
+          {/* Percentage text */}
+          <Text style={styles.completionText}>{completionPercentage}%</Text>
+        </View>
+        <Text style={styles.completionLabel}>Profile complete</Text>
+      </View>
+    );
+  };
+  
   // If auth is still loading, show loading spinner
   if (isLoading) {
     return (
@@ -232,10 +306,12 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>{getFullName()}</Text>
                 <Text style={styles.profileId}>{getCustomerId()}</Text>
-                {/* <View style={styles.kycBadge}>
+                <View style={styles.kycBadge}>
                   <Text style={styles.kycText}>KYC {getKycStatus()}</Text>
-                </View> */}
+                </View>
               </View>
+              {/* Profile Completion Circle */}
+              {renderProfileCompletionCircle()}
             </View>
             
             {/* Wallet Section */}
@@ -936,6 +1012,36 @@ const styles = StyleSheet.create({
   centerButtonIcon: {
     color: '#FFFFFF',
     fontSize: 22,
+  },
+  completionCircleContainer: {
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  completionCircle: {
+    width: 70,
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circleBackground: {
+    position: 'absolute',
+    backgroundColor: '#F5F5F5',
+  },
+  circleProgress: {
+    position: 'absolute',
+    borderLeftColor: 'transparent',
+    borderBottomColor: 'transparent',
+  },
+  completionText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  completionLabel: {
+    fontSize: 10,
+    color: '#777777',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
 

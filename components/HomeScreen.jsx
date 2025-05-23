@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, SafeAreaView, ScrollView, ActivityIndicator, Modal, Alert, Linking, FlatList } from 'react-native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import DebugConsole from './DebugConsole';
@@ -218,43 +218,67 @@ const HomeScreen = ({ navigation }) => {
         visible={messageModalVisible}
         onRequestClose={() => setMessageModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Notifications</Text>
-              <TouchableOpacity onPress={() => setMessageModalVisible(false)}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.notificationsList}>
-              {notifications && notifications.length > 0 ? (
-                notifications.map((notification) => (
-                  <TouchableOpacity 
-                    key={notification.id}
-                    style={[
-                      styles.notificationItem,
-                      !notification.read && styles.unreadNotification
-                    ]}
-                    onPress={() => markAsRead(notification.id)}
-                  >
-                    <View style={styles.notificationContent}>
-                      <Text style={styles.notificationMessage}>{notification.message}</Text>
-                      <Text style={styles.notificationTime}>{notification.time}</Text>
-                    </View>
-                    {!notification.read && (
-                      <View style={styles.unreadIndicator} />
+        <SafeAreaView style={styles.modalSafeArea}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Notifications</Text>
+                <TouchableOpacity 
+                  style={styles.closeButtonContainer}
+                  onPress={() => setMessageModalVisible(false)}
+                >
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Fixed height container for the notifications list */}
+              <View style={styles.notificationsContainer}>
+                {notifications && notifications.length > 0 ? (
+                  <FlatList
+                    data={notifications}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity 
+                        style={[
+                          styles.notificationItem,
+                          !item.read && styles.unreadNotification
+                        ]}
+                        onPress={() => markAsRead(item.id)}
+                      >
+                        <View style={styles.notificationContent}>
+                          <Text style={styles.notificationMessage}>{item.message}</Text>
+                          <Text style={styles.notificationTime}>{item.time}</Text>
+                        </View>
+                        {!item.read && (
+                          <View style={styles.unreadIndicator} />
+                        )}
+                      </TouchableOpacity>
                     )}
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <View style={styles.emptyNotifications}>
-                  <Text style={styles.emptyText}>No notifications</Text>
-                </View>
-              )}
-            </ScrollView>
+                    keyExtractor={item => item.id.toString()}
+                    showsVerticalScrollIndicator={true}
+                    contentContainerStyle={styles.notificationsListContent}
+                  />
+                ) : (
+                  <View style={styles.emptyNotifications}>
+                    <Text style={styles.emptyText}>No notifications</Text>
+                  </View>
+                )}
+              </View>
+              
+              {/* Optional footer */}
+              <View style={styles.modalFooter}>
+                <TouchableOpacity 
+                  style={styles.markAllReadButton}
+                  onPress={() => {
+                    Alert.alert("Info", "Mark all as read feature coming soon");
+                    // Future functionality to mark all as read
+                  }}
+                >
+                  <Text style={styles.markAllReadText}>Mark all as read</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
+        </SafeAreaView>
       </Modal>
       
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -355,7 +379,7 @@ const HomeScreen = ({ navigation }) => {
             
             <TouchableOpacity 
               style={styles.serviceItem}
-              onPress={() => navigateWithNotification('WalletTopup')}
+              onPress={() => navigateWithNotification('Wallet', { screen: 'WalletTopup' })}
             >
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIcon}>💰</Text>
@@ -621,6 +645,9 @@ const styles = StyleSheet.create({
   },
   
   // Message Modal Styles
+  modalSafeArea: {
+    flex: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -630,8 +657,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 40, // Extra padding for bottom area
-    maxHeight: '80%', // Limited height to prevent full screen takeover
+    paddingBottom: 20,
+    height: '70%', // Fixed height for the modal
+    display: 'flex',
+    flexDirection: 'column',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -646,15 +675,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333333',
   },
+  closeButtonContainer: {
+    padding: 5,
+  },
   closeButton: {
     fontSize: 20,
     color: '#777777',
-    padding: 8,
   },
-  notificationsList: {
+  notificationsContainer: {
+    flex: 1, // This allows the FlatList to scroll properly
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  notificationsListContent: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    maxHeight: '100%',
   },
   notificationItem: {
     paddingVertical: 16,
@@ -695,6 +730,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#777777',
     textAlign: 'center',
+  },
+  modalFooter: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  markAllReadButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  markAllReadText: {
+    color: '#00ACC1',
+    fontSize: 14,
+    fontWeight: '600',
   },
   
   // Balance Card
