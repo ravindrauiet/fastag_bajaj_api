@@ -30,7 +30,7 @@ const WalletTopupScreen = ({ navigation }) => {
   const [screenshotName, setScreenshotName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [qrImageLoaded, setQrImageLoaded] = useState(false);
-  const [upiId, setUpiId] = useState('example@upi');
+  const [upiId, setUpiId] = useState('tarun1360@ybl');
 
   // Predefined amounts for quick selection
   const quickAmounts = [100, 200, 500, 1000, 2000];
