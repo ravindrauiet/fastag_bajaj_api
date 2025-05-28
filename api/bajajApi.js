@@ -5,12 +5,14 @@ import { Alert, Platform } from 'react-native';
 // Constants for API integration
 const BASE_URL = 'https://pay-api-uat.bajajfinserv.in/'; // UAT URL
 const PROD_URL = 'https://pay-pgapi.bajajfinserv.in/'; // Production URL
-const ENCRYPTION_KEY = 'dmdkgehajqc87net3lzgcirsgao2yy8f'; // Production Encryption Key
-const API_SUBSCRIPTION_KEY = 'b9f873ec7376470dad2609d2d200f621'; // Production Subscription Key
-const ENCRYPTION_KEY_new = 'tmsqkjsdjfklsvy673bgs9edu0cssjv0'; // Production Encryption Key
-const API_SUBSCRIPTION_KEY_new = 'da0b62a0884b435488b72f1cb14f89e7'; // Production Subscription Key
-const CHANNEL = 'CBPL'; // Channel
-const AGENT_ID = '70003'; // Agent ID
+const ENCRYPTION_KEY_old = 'dmdkgehajqc87net3lzgcirsgao2yy8f'; // UAT Encryption Key
+const API_SUBSCRIPTION_KEY_old = 'b9f873ec7376470dad2609d2d200f621'; // UAT Subscription Key
+const ENCRYPTION_KEY = 'tmsqkjsdjfklsvy673bgs9edu0cssjv0'; // Production Encryption Key
+const API_SUBSCRIPTION_KEY = 'da0b62a0884b435488b72f1cb14f89e7'; // Production Subscription Key
+const CHANNEL_old = 'CBPL'; // UAT Channel
+const AGENT_ID_old = '70003'; // UAT Agent ID
+const CHANNEL = 'TMSQ'; // Production Channel
+const AGENT_ID = '70043'; // Production Agent ID
 
 // Utility functions for encryption and decryption
 const generateIv = (keyString) => {
@@ -19,6 +21,7 @@ const generateIv = (keyString) => {
 
 const encrypt = (value) => {
   try {
+    console.log('ENCRYPTION_KEY', ENCRYPTION_KEY);
     const iv = generateIv(ENCRYPTION_KEY);
     const key = CryptoJS.enc.Utf8.parse(ENCRYPTION_KEY);
     const encrypted = CryptoJS.AES.encrypt(value, key, {
@@ -89,7 +92,7 @@ const generateTokenInternally = async () => {
 
     const encryptedData = encrypt(JSON.stringify(requestData));
 
-    const response = await axios.post(`${BASE_URL}/ftVasService/v1/tokenGeneration`, encryptedData, {
+    const response = await axios.post(`${PROD_URL}/ftVasService/v1/tokenGeneration`, encryptedData, {
       headers: {
         'Content-Type': 'application/json',
         'aggr_channel': CHANNEL
@@ -133,7 +136,7 @@ const validateRCImagesForRegistration = async (requestId, sessionId) => {
     const encryptedData = encrypt(JSON.stringify(requestData));
     
     // We're using the uploadDocument endpoint with a special flag to check for RC images
-    const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/validateImages`, encryptedData, {
+    const response = await axios.post(`${PROD_URL}/ftAggregatorService/v1/validateImages`, encryptedData, {
       headers: {
         'Content-Type': 'application/json',
         'aggr_channel': CHANNEL,
@@ -264,7 +267,7 @@ const bajajApi = {
       console.log('=== SEND OTP ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/sendOtp`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v2/sendOtp`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -370,7 +373,7 @@ const bajajApi = {
       console.log('=== VALIDATE OTP ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -436,7 +439,7 @@ const bajajApi = {
       console.log('=== VALIDATE OTP ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v2/validateCustomerDetails`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -503,7 +506,7 @@ const bajajApi = {
       console.log('=== CREATE WALLET ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -644,7 +647,7 @@ const bajajApi = {
       // Send the properly formatted request to the API
       const encryptedData = encrypt(JSON.stringify(requestData));
       
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v1/createCustomer`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -704,7 +707,7 @@ const bajajApi = {
       console.log('=== GET VEHICLE MAKE ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/vehicleMakerList`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v1/vehicleMakerList`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -765,7 +768,7 @@ const bajajApi = {
       console.log('=== GET VEHICLE MODEL ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/vehicleModelList`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v1/vehicleModelList`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -870,7 +873,7 @@ const bajajApi = {
       console.log('=== UPLOAD DOCUMENT ENCRYPTED REQUEST ===');
       console.log(`[Encrypted data with length ${encryptedData.length}]`);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v1/uploadDocument`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v1/uploadDocument`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -934,7 +937,7 @@ const bajajApi = {
       console.log('=== REGISTER FASTAG ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -1001,7 +1004,7 @@ const bajajApi = {
       console.log('=== REGISTER NEW FASTAG ENCRYPTED REQUEST ===');
       console.log(`[Encrypted data with length ${encryptedData.length}]`);
 
-      const response = await axios.post(`${BASE_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftAggregatorService/v2/registerFastag`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -1099,7 +1102,7 @@ const bajajApi = {
       
       // Call the API with correct headers exactly as in the documentation
       const response = await axios.post(
-        `${BASE_URL}/ftAggregatorService/v2/replaceFastag`,
+        `${PROD_URL}/ftAggregatorService/v2/replaceFastag`,
         encryptedData,
         {
           headers: {
@@ -1171,7 +1174,7 @@ const bajajApi = {
       console.log('=== GENERATE TOKEN ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftVasService/v1/tokenGeneration`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftVasService/v1/tokenGeneration`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL
@@ -1242,7 +1245,7 @@ const bajajApi = {
       console.log('=== UPDATE VRN ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftVasService/v1/vrnUpdate`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftVasService/v1/vrnUpdate`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -1318,7 +1321,7 @@ const bajajApi = {
       console.log('=== UPDATE VRN DOCUMENT ENCRYPTED REQUEST ===');
       console.log(encryptedData.substring(0, 100) + '... (truncated)');
 
-      const response = await axios.post(`${BASE_URL}/ftVasService/v1/vrnUpdateDoc`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftVasService/v1/vrnUpdateDoc`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -1400,7 +1403,7 @@ const bajajApi = {
       console.log('=== UPLOAD RE-KYV IMAGE ENCRYPTED REQUEST ===');
       console.log(encryptedData.substring(0, 100) + '... (truncated)');
 
-      const response = await axios.post(`${BASE_URL}/ftVasService/v1/uploadKYVImages`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftVasService/v1/uploadKYVImages`, encryptedData, {
         headers: {
           'Content-Type': 'application/json',
           'aggr_channel': CHANNEL,
@@ -1473,7 +1476,7 @@ const bajajApi = {
       console.log('=== CHECK STATUS KYV IMAGES ENCRYPTED REQUEST ===');
       console.log(encryptedData);
 
-      const response = await axios.post(`${BASE_URL}/ftVasService/v1/checkStatusKYVImages`, encryptedData, {
+      const response = await axios.post(`${PROD_URL}/ftVasService/v1/checkStatusKYVImages`, encryptedData, {
         headers: {
           'Content-Type': 'text/plain',
           'aggr_channel': CHANNEL,
@@ -1511,6 +1514,12 @@ const bajajApi = {
     try {
       // Log the request data
       console.log('Checking Bajaj app status for mobile:', mobileNo);
+      console.log('CHANNEL', CHANNEL);
+      console.log('AGENT_ID', AGENT_ID);
+      console.log('PROD_URL', PROD_URL);
+      console.log('API_SUBSCRIPTION_KEY', API_SUBSCRIPTION_KEY);
+      console.log('ENCRYPTION_KEY', ENCRYPTION_KEY);
+      
       
       // Create request payload according to documentation
       const requestData = {
@@ -1531,13 +1540,13 @@ const bajajApi = {
       
       // API call with correct endpoint and headers as per documentation
       const response = await axios.post(
-        `${BASE_URL}/ftAggregatorService/v1/initDataCheck`, 
+        `${PROD_URL}/ftAggregatorService/v1/initDataCheck`, 
         encryptedData, 
         {
           headers: {
             'Content-Type': 'application/json',
-            'aggr_channel': CHANNEL, // Use PKPL as in the documentation
-            'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY // Add the subscription key for authentication
+            'aggr_channel': CHANNEL,
+            'Ocp-Apim-Subscription-Key': API_SUBSCRIPTION_KEY 
           }
         }
       );

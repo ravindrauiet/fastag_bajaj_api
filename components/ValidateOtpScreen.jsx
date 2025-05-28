@@ -410,131 +410,87 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           const walletStatus = response.validateOtpResp?.custDetails?.walletStatus;
           console.log('Wallet status:', walletStatus);
           
-          if (walletStatus === 'NE') {
-            // Wallet doesn't exist - navigate to CreateWallet
-            console.log('Wallet does not exist (NE) - navigating to CreateWallet');
-            
-            // Navigate to CreateWalletScreen to create a new wallet
-            navigation.navigate('CreateWallet', {
+          // Always navigate to DocumentUpload regardless of wallet status
+          // For registration - navigate to DocumentUploadScreen
+          if (reqType === 'REG') {
+            navigation.navigate('DocumentUpload', {
               requestId: requestId,
               sessionId: sessionId,
-              mobileNo,
-              vehicleNo,
-              chassisNo,
-              engineNo,
-              reqType,
-              // Pass the complete OTP verification response
+              // Pass basic details from OTP response
+              mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
+              // These fields use different names in the API response vs. registration request:
+              // OTP response: vehicleNo, chassisNo, engineNo
+              // Registration: vrn, chassis, engine
+              vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
+              chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
+              engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
+              customerId: response.validateOtpResp?.custDetails?.customerId || '',
+              walletId: response.validateOtpResp?.custDetails?.walletId || '',
+              name: response.validateOtpResp?.custDetails?.name || '',
+              // Pass the complete OTP verification response for FasTag registration
               otpResponse: response,
               // Pass vehicle details from OTP response
+              vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf || '',
+              model: response.validateOtpResp?.vrnDetails?.model || '',
+              vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour || '',
+              type: response.validateOtpResp?.vrnDetails?.type || '',
+              rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus || 'ACTIVE',
+              tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID || '4',
+              npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID || '4',
+              vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType || '',
+              rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount || '0.00',
+              securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit || '100.00',
+              tagCost: response.validateOtpResp?.vrnDetails?.tagCost || '100.00',
+              vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'DIESEL',
+              isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
+              permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
+              stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
+              commercial: response.validateOtpResp?.vrnDetails?.commercial === false ? false : true,
+              npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
+              
+              // Pass channel and agentId from OTP response
+              channel: response.validateOtpResp?.channel || 'CBPL',
+              agentId: response.validateOtpResp?.agentId || '70003',
+              
+              // Also pass all UDF fields
+              udf1: response.validateOtpResp?.udf1 || '',
+              udf2: response.validateOtpResp?.udf2 || '',
+              udf3: response.validateOtpResp?.udf3 || '',
+              udf4: response.validateOtpResp?.udf4 || '',
+              udf5: response.validateOtpResp?.udf5 || '',
+
+              // Pass form submission IDs for tracking
+              formSubmissionId: trackingResult.id,
+              fastagRegistrationId: fastagResult.registrationId
+            });
+          } else if (reqType === 'REP') {
+            // For replacement, go to FasTag replacement screen
+            navigation.navigate('FasTagReplacement', {
+              requestId: requestId,
+              sessionId: sessionId,
+              mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
+              vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
+              chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
+              engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
+              customerId: response.validateOtpResp?.custDetails?.customerId || '',
+              walletId: response.validateOtpResp?.custDetails?.walletId || '',
+              otpResponse: response,
               vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
               model: response.validateOtpResp?.vrnDetails?.model,
-              vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour,
-              type: response.validateOtpResp?.vrnDetails?.type,
-              rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus,
-              tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID,
-              npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID,
-              vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType,
-              rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount,
-              securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit,
-              tagCost: response.validateOtpResp?.vrnDetails?.tagCost,
-              vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor,
-              isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit,
-              permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate,
-              stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration,
-              commercial: response.validateOtpResp?.vrnDetails?.commercial,
-              npciStatus: response.validateOtpResp?.npciStatus
+              repTagCost: response.validateOtpResp?.vrnDetails?.repTagCost,
+              isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
+              permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
+              stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
+              vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'Petrol',
+              npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
+              channel: response.validateOtpResp?.channel || 'CBPL',
+              agentId: response.validateOtpResp?.agentId || '70003',
+              udf1: response.validateOtpResp?.udf1 || '',
+              udf2: response.validateOtpResp?.udf2 || '',
+              udf3: response.validateOtpResp?.udf3 || '',
+              udf4: response.validateOtpResp?.udf4 || '',
+              udf5: response.validateOtpResp?.udf5 || ''
             });
-            
-            // Add notification about what happened
-            addNotification({
-              id: Date.now(),
-              message: 'Creating new wallet for you',
-              time: 'Just now',
-              read: false
-            });
-          } else {
-            // Wallet exists - navigate based on request type
-            if (reqType === 'REG') {
-              // For registration - navigate to DocumentUploadScreen
-              navigation.navigate('DocumentUpload', {
-                requestId: requestId,
-                sessionId: sessionId,
-                // Pass basic details from OTP response
-                mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
-                // These fields use different names in the API response vs. registration request:
-                // OTP response: vehicleNo, chassisNo, engineNo
-                // Registration: vrn, chassis, engine
-                vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
-                chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
-                engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
-                customerId: response.validateOtpResp?.custDetails?.customerId || '',
-                walletId: response.validateOtpResp?.custDetails?.walletId || '',
-                name: response.validateOtpResp?.custDetails?.name || '',
-                // Pass the complete OTP verification response for FasTag registration
-                otpResponse: response,
-                // Pass vehicle details from OTP response
-                vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf || '',
-                model: response.validateOtpResp?.vrnDetails?.model || '',
-                vehicleColour: response.validateOtpResp?.vrnDetails?.vehicleColour || '',
-                type: response.validateOtpResp?.vrnDetails?.type || '',
-                rtoStatus: response.validateOtpResp?.vrnDetails?.rtoStatus || 'ACTIVE',
-                tagVehicleClassID: response.validateOtpResp?.vrnDetails?.tagVehicleClassID || '4',
-                npciVehicleClassID: response.validateOtpResp?.vrnDetails?.npciVehicleClassID || '4',
-                vehicleType: response.validateOtpResp?.vrnDetails?.vehicleType || '',
-                rechargeAmount: response.validateOtpResp?.vrnDetails?.rechargeAmount || '0.00',
-                securityDeposit: response.validateOtpResp?.vrnDetails?.securityDeposit || '100.00',
-                tagCost: response.validateOtpResp?.vrnDetails?.tagCost || '100.00',
-                vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'DIESEL',
-                isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
-                permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
-                stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
-                commercial: response.validateOtpResp?.vrnDetails?.commercial === false ? false : true,
-                npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
-                
-                // Pass channel and agentId from OTP response
-                channel: response.validateOtpResp?.channel || 'CBPL',
-                agentId: response.validateOtpResp?.agentId || '70003',
-                
-                // Also pass all UDF fields
-                udf1: response.validateOtpResp?.udf1 || '',
-                udf2: response.validateOtpResp?.udf2 || '',
-                udf3: response.validateOtpResp?.udf3 || '',
-                udf4: response.validateOtpResp?.udf4 || '',
-                udf5: response.validateOtpResp?.udf5 || '',
-
-                // Pass form submission IDs for tracking
-                formSubmissionId: trackingResult.id,
-                fastagRegistrationId: fastagResult.registrationId
-              });
-            } else if (reqType === 'REP') {
-              // For replacement, go to FasTag replacement screen
-              navigation.navigate('FasTagReplacement', {
-                requestId: requestId,
-                sessionId: sessionId,
-                mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
-                vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
-                chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
-                engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
-                customerId: response.validateOtpResp?.custDetails?.customerId || '',
-                walletId: response.validateOtpResp?.custDetails?.walletId || '',
-                otpResponse: response,
-                vehicleManuf: response.validateOtpResp?.vrnDetails?.vehicleManuf,
-                model: response.validateOtpResp?.vrnDetails?.model,
-                repTagCost: response.validateOtpResp?.vrnDetails?.repTagCost,
-                isNationalPermit: response.validateOtpResp?.vrnDetails?.isNationalPermit || '1',
-                permitExpiryDate: response.validateOtpResp?.vrnDetails?.permitExpiryDate || '31/12/2025',
-                stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
-                vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'Petrol',
-                npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
-                channel: response.validateOtpResp?.channel || 'CBPL',
-                agentId: response.validateOtpResp?.agentId || '70003',
-                udf1: response.validateOtpResp?.udf1 || '',
-                udf2: response.validateOtpResp?.udf2 || '',
-                udf3: response.validateOtpResp?.udf3 || '',
-                udf4: response.validateOtpResp?.udf4 || '',
-                udf5: response.validateOtpResp?.udf5 || ''
-              });
-            }
           }
         } else if (response.response.status === 'failed' && response.response.code === '11') {
           // Failed with code 11 - Need to create wallet or handle specific errors

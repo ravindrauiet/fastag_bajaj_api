@@ -216,17 +216,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
       isValid = false;
     }
     
-    // TID
-    if (!tid.trim()) {
-      newErrors.tid = 'TID is required';
-      isValid = false;
-    } else if (tid.trim().length < 3) {
-      newErrors.tid = 'TID is too short';
-      isValid = false;
-    } else if (tid.trim().length > 40) {
-      newErrors.tid = 'TID is too long';
-      isValid = false;
-    }
+    // TID is no longer required - removed validation
     
     setErrors(newErrors);
     
@@ -340,8 +330,8 @@ const ManualActivationScreen = ({ route, navigation }) => {
         regDetails: {
           requestId: requestId || generateRequestId(),
           sessionId: sessionId || requestId || generateRequestId(),
-          channel: channel || 'CBPL',
-          agentId: agentId || '70003',
+          channel: channel || 'TMSQ',
+          agentId: agentId || '70043',
           reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
         },
         vrnDetails: {
@@ -374,7 +364,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
         },
         fasTagDetails: {
           serialNo: serialNo.trim(),
-          tid: tid.trim(),
+          tid: tid.trim() || "",
           udf1: udf1 || "",
           udf2: udf2 || "",
           udf3: udf3 || "",
@@ -692,10 +682,10 @@ const ManualActivationScreen = ({ route, navigation }) => {
               
               {/* TID */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>TID<Text style={styles.required}></Text></Text>
+                <Text style={styles.label}>TID</Text>
                 <TextInput
                   style={[styles.input, errors.tid ? styles.inputError : null]}
-                  placeholder="Enter FasTag TID"
+                  placeholder="Enter FasTag TID (optional)"
                   value={tid}
                   onChangeText={setTid}
                   autoCapitalize="characters"
