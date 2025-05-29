@@ -601,6 +601,45 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           fastagResult.registrationId
         );
         
+        // Update Fastag status to inactive and set vehicle number
+        try {
+          if (fastagDbId) {
+            await FastagManager.updateFastag(fastagDbId, {
+              status: 'inactive',
+              vehicleNo: finalRegistrationData.vrnDetails.vrn,
+              lastUpdated: new Date().toISOString(),
+              statusHistory: [{
+                status: 'inactive',
+                vehicleNo: finalRegistrationData.vrnDetails.vrn,
+                timestamp: new Date().toISOString(),
+                reason: 'FasTag Registration Completed'
+              }]
+            });
+          } else if (finalRegistrationData.fasTagDetails?.serialNo) {
+            // Try to find by serial number
+            const serialNo = finalRegistrationData.fasTagDetails.serialNo;
+            const existingTag = await FastagManager.getTagBySerialNo(serialNo);
+            
+            if (existingTag.success && existingTag.fastag) {
+              await FastagManager.updateFastag(existingTag.fastag.id, {
+                status: 'inactive',
+                vehicleNo: finalRegistrationData.vrnDetails.vrn,
+                lastUpdated: new Date().toISOString(),
+                statusHistory: [{
+                  status: 'inactive',
+                  vehicleNo: finalRegistrationData.vrnDetails.vrn,
+                  timestamp: new Date().toISOString(),
+                  reason: 'FasTag Registration Completed'
+                }]
+              });
+            }
+          }
+          console.log('Fastag status updated to inactive after registration');
+        } catch (dbError) {
+          console.error('Error updating Fastag status:', dbError);
+          // Continue with registration despite status update error
+        }
+        
         // Deduct from user wallet
         if (userInfo && userInfo.uid) {
           try {
@@ -793,7 +832,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
                   totalAmountPaid += paymentAmount;
                   
                   await FastagManager.updateFastag(existingTag.fastag.id, {
-                    status: 'active',
+                    status: 'inactive',
                     mobileNo: finalRegistrationData.custDetails.mobileNo,
                     vehicleNo: finalRegistrationData.vrnDetails.vrn,
                     name: finalRegistrationData.custDetails.name,
@@ -828,7 +867,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
                   await FastagManager.addFastag({
                     serialNo,
                     tid: finalRegistrationData.fasTagDetails.tid || null,
-                    status: 'active',
+                    status: 'inactive',
                     mobileNo: finalRegistrationData.custDetails.mobileNo,
                     vehicleNo: finalRegistrationData.vrnDetails.vrn,
                     name: finalRegistrationData.custDetails.name,
