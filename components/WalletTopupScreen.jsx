@@ -31,6 +31,7 @@ const WalletTopupScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [qrImageLoaded, setQrImageLoaded] = useState(false);
   const [upiId, setUpiId] = useState('tarun1360@ybl');
+  const [utrNumber, setUtrNumber] = useState('');
 
   // Predefined amounts for quick selection
   const quickAmounts = [100, 200, 500, 1000, 2000];
@@ -78,6 +79,11 @@ const WalletTopupScreen = ({ navigation }) => {
       return;
     }
 
+    if (!utrNumber.trim()) {
+      Alert.alert('UTR Required', 'Please enter your UTR number');
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -87,6 +93,7 @@ const WalletTopupScreen = ({ navigation }) => {
         userName: userInfo.displayName || 'User',
         amount: parseFloat(amount),
         screenshotName: screenshotName,
+        utrNumber: utrNumber.trim(),
         status: 'pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -251,6 +258,23 @@ const WalletTopupScreen = ({ navigation }) => {
             {screenshot && (
               <Text style={styles.fileNameText}>Selected: {screenshotName}</Text>
             )}
+          </View>
+
+          {/* UTR Number Input */}
+          <View style={styles.utrSection}>
+            <Text style={styles.sectionTitle}>UTR Number</Text>
+            <TextInput
+              style={styles.utrInput}
+              value={utrNumber}
+              onChangeText={setUtrNumber}
+              placeholder="Enter UTR number"
+              placeholderTextColor="#999"
+              keyboardType="default"
+              autoCapitalize="characters"
+            />
+            <Text style={styles.utrHelpText}>
+              Enter the UTR number from your payment confirmation
+            </Text>
           </View>
 
           {/* Submit Button */}
@@ -493,6 +517,24 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'center',
     lineHeight: 18,
+  },
+  utrSection: {
+    marginBottom: 24,
+  },
+  utrInput: {
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    height: 50,
+    fontSize: 16,
+    color: '#333333',
+  },
+  utrHelpText: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 4,
   },
 });
 
