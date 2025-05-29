@@ -681,12 +681,9 @@ const bajajApi = {
   },
 
   // 4.1 Get Vehicle Make
-  getVehicleMake: async (requestId, sessionId) => {
+  getVehicleMake: async (requestId, sessionId, reqDateTime) => {
     try {
-      const requestId = requestId || generateRequestId();
-      const sessionId = sessionId || requestId;
-      const reqDateTime = getCurrentDateTime();
-
+      // Don't redefine these variables - use the ones passed as parameters
       const requestData = {
         getVehicleMake: {
           requestId,
@@ -741,16 +738,13 @@ const bajajApi = {
   },
 
   // 4.2 Get Vehicle Model
-  getVehicleModel: async (requestId, sessionId, vehicleMake) => {
+  getVehicleModel: async (requestId, sessionId, reqDateTime, vehicleMake) => {
     try {
-      const requestId = requestId || generateRequestId();
-      const sessionId = sessionId || requestId;
-      const reqDateTime = getCurrentDateTime();
-
+      // Don't redefine these variables - use the ones passed as parameters
       const requestData = {
         getVehicleModel: {
           requestId,
-          sessionId,
+          sessionId,  // Make sure sessionId is included
           channel: CHANNEL,
           agentId: AGENT_ID,
           reqDateTime,

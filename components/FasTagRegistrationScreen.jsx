@@ -11,7 +11,8 @@ import {
   Alert,
   Animated,
   ActivityIndicator,
-  Modal
+  Modal,
+  FlatList
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import bajajApi from '../api/bajajApi';
@@ -57,6 +58,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
   // Registration Details
   const [requestId] = useState(registrationData?.regDetails?.requestId || Date.now().toString());
   const [sessionId] = useState(registrationData?.regDetails?.sessionId || Date.now().toString());
+  const [reqDateTime] = useState(new Date().toISOString().replace('T', ' ').substring(0, 23));
   const [channel] = useState(registrationData?.regDetails?.channel || "APP");
   const [agentId] = useState(registrationData?.regDetails?.agentId || "");
   
@@ -75,6 +77,18 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
   const [debitAmt] = useState(registrationData?.vrnDetails?.debitAmt || "300.00");
   
   // Additional Vehicle Details
+  const [openVehicleMake, setOpenVehicleMake] = useState(false);
+  const [vehicleMake, setVehicleMake] = useState('');
+  const [vehicleMakeItems, setVehicleMakeItems] = useState([]);
+  const [loadingVehicleMakes, setLoadingVehicleMakes] = useState(false);
+  const [vehicleMakeSearchText, setVehicleMakeSearchText] = useState('');
+  
+  const [openVehicleModel, setOpenVehicleModel] = useState(false);
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [vehicleModelItems, setVehicleModelItems] = useState([]);
+  const [loadingVehicleModels, setLoadingVehicleModels] = useState(false);
+  const [vehicleModelSearchText, setVehicleModelSearchText] = useState('');
+  
   const [vehicleManuf] = useState(registrationData?.vrnDetails?.vehicleManuf || rawData?.vehicleManuf || '');
   const [model] = useState(registrationData?.vrnDetails?.model || rawData?.model || '');
   const [vehicleColour] = useState(registrationData?.vrnDetails?.vehicleColour || rawData?.vehicleColour || '');
@@ -124,12 +138,12 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
   // Vehicle Class
   const [tagVehicleClassID, setTagVehicleClassID] = useState(registrationData?.vrnDetails?.tagVehicleClassID || '4');
   const [openVehicleClass, setOpenVehicleClass] = useState(false);
-  const [vehicleClassItems, setVehicleClassItems] = useState([
-    {label: 'Car/Jeep/Van', value: '4'},
-    {label: 'LCV', value: '5'},
-    {label: 'Bus/Truck', value: '6'},
-    {label: 'Heavy Vehicle', value: '7'},
-  ]);
+  // const [vehicleClassItems, setVehicleClassItems] = useState([
+  //   {label: 'Car/Jeep/Van', value: '4'},
+  //   {label: 'LCV', value: '5'},
+  //   {label: 'Bus/Truck', value: '6'},
+  //   {label: 'Heavy Vehicle', value: '7'},
+  // ]);
   
   // Permit Expiry Date
   const [permitExpiryDate, setPermitExpiryDate] = useState(registrationData?.vrnDetails?.permitExpiryDate || '31/12/2025');
@@ -143,6 +157,22 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
   const [udf3, setUdf3] = useState(registrationData?.fasTagDetails?.udf3 || '');
   const [udf4, setUdf4] = useState(registrationData?.fasTagDetails?.udf4 || '');
   const [udf5, setUdf5] = useState(registrationData?.fasTagDetails?.udf5 || '');
+  
+  // Filter vehicle makes based on search text
+  const filteredVehicleMakes = React.useMemo(() => {
+    if (!vehicleMakeSearchText) return vehicleMakeItems;
+    return vehicleMakeItems.filter(item => 
+      item.label.toLowerCase().includes(vehicleMakeSearchText.toLowerCase())
+    );
+  }, [vehicleMakeItems, vehicleMakeSearchText]);
+
+  // Filter vehicle models based on search text
+  const filteredVehicleModels = React.useMemo(() => {
+    if (!vehicleModelSearchText) return vehicleModelItems;
+    return vehicleModelItems.filter(item => 
+      item.label.toLowerCase().includes(vehicleModelSearchText.toLowerCase())
+    );
+  }, [vehicleModelItems, vehicleModelSearchText]);
   
   // Animation effect on component mount
   useEffect(() => {
@@ -158,7 +188,144 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         useNativeDriver: true,
       })
     ]).start();
+    
+    // Fetch vehicle makes when component mounts
+    fetchVehicleMakes();
   }, []);
+  
+  // Fetch vehicle makes from API
+  const fetchVehicleMakes = async () => {
+    try {
+      setLoadingVehicleMakes(true);
+      console.log(`Using consistent requestId: ${requestId} and sessionId: ${sessionId} for vehicle makes`);
+      const response = await bajajApi.getVehicleMake(requestId, sessionId, reqDateTime);
+      
+      // Check both possible response structures
+      if ((response && response.getVehicleMake && response.getVehicleMake.status === 'success') || 
+          (response && response.response && response.response.status === 'success')) {
+        
+        // Get the vehicle maker list from either structure
+        const makes = (response.getVehicleMake?.vehicleMakerList || response.vehicleMakerList || []);
+        
+        // Format the makes for dropdown with unique keys
+        const formattedMakes = makes.map(make => ({
+          label: make,
+          value: make,
+          key: make
+        }));
+        
+        setVehicleMakeItems(formattedMakes);
+        
+        // If we already have a vehicle make (from existing data), load its models
+        if (vehicleMake) {
+          fetchVehicleModels(vehicleMake);
+        }
+      } else {
+        console.error('Failed to get vehicle makes:', response);
+        
+        // Fallback with some common vehicle makes if API fails
+        const fallbackMakes = [
+          {label: 'MARUTI', value: 'MARUTI', key: 'MARUTI'},
+          {label: 'HYUNDAI', value: 'HYUNDAI', key: 'HYUNDAI'},
+          {label: 'TATA', value: 'TATA', key: 'TATA'},
+          {label: 'MAHINDRA', value: 'MAHINDRA', key: 'MAHINDRA'},
+          {label: 'HONDA', value: 'HONDA', key: 'HONDA'},
+          {label: 'TOYOTA', value: 'TOYOTA', key: 'TOYOTA'},
+          {label: 'FORD', value: 'FORD', key: 'FORD'},
+          {label: 'VOLKSWAGEN', value: 'VOLKSWAGEN', key: 'VOLKSWAGEN'},
+          {label: 'RENAULT', value: 'RENAULT', key: 'RENAULT'},
+          {label: 'KIA', value: 'KIA', key: 'KIA'}
+        ];
+        setVehicleMakeItems(fallbackMakes);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle makes:', error);
+      
+      // Fallback with some common vehicle makes if API fails
+      const fallbackMakes = [
+        {label: 'MARUTI', value: 'MARUTI', key: 'MARUTI'},
+        {label: 'HYUNDAI', value: 'HYUNDAI', key: 'HYUNDAI'},
+        {label: 'TATA', value: 'TATA', key: 'TATA'},
+        {label: 'MAHINDRA', value: 'MAHINDRA', key: 'MAHINDRA'},
+        {label: 'HONDA', value: 'HONDA', key: 'HONDA'},
+        {label: 'TOYOTA', value: 'TOYOTA', key: 'TOYOTA'},
+        {label: 'FORD', value: 'FORD', key: 'FORD'},
+        {label: 'VOLKSWAGEN', value: 'VOLKSWAGEN', key: 'VOLKSWAGEN'},
+        {label: 'RENAULT', value: 'RENAULT', key: 'RENAULT'},
+        {label: 'KIA', value: 'KIA', key: 'KIA'}
+      ];
+      setVehicleMakeItems(fallbackMakes);
+    } finally {
+      setLoadingVehicleMakes(false);
+    }
+  };
+  
+  // Fetch vehicle models when make is selected
+  const fetchVehicleModels = async (selectedMake) => {
+    if (!selectedMake) {
+      setVehicleModelItems([]);
+      setVehicleModel('');
+      return;
+    }
+    
+    try {
+      setLoadingVehicleModels(true);
+      setVehicleModel(''); // Clear current model when fetching new ones
+      console.log(`Using consistent requestId: ${requestId} and sessionId: ${sessionId} for vehicle models`);
+      const response = await bajajApi.getVehicleModel(requestId, sessionId, reqDateTime, selectedMake);
+      
+      // Check both possible response structures
+      if ((response && response.getVehicleModel && response.getVehicleModel.status === 'success') || 
+          (response && response.response && response.response.status === 'success')) {
+        
+        // Get the vehicle model list from either structure
+        const models = (response.getVehicleModel?.vehicleModelList || response.vehicleModelList || []);
+        
+        // Format the models for dropdown with unique keys
+        const formattedModels = models.map(model => ({
+          label: model,
+          value: model,
+          key: `${selectedMake}-${model}`
+        }));
+        
+        setVehicleModelItems(formattedModels);
+      } else {
+        console.error('Failed to get vehicle models:', response);
+        // Add a generic model if API fails
+        setVehicleModelItems([{
+          label: 'Standard',
+          value: 'Standard',
+          key: `${selectedMake}-Standard`
+        }]);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle models:', error);
+      // Add a generic model if API fails
+      setVehicleModelItems([{
+        label: 'Standard',
+        value: 'Standard',
+        key: `${selectedMake}-Standard`
+      }]);
+    } finally {
+      setLoadingVehicleModels(false);
+    }
+  };
+  
+  // Handle vehicle make selection change
+  const handleVehicleMakeChange = (value) => {
+    setVehicleMake(value);
+    setVehicleModel(''); // Reset model when make changes
+    setVehicleModelItems([]); // Clear model items
+    
+    if (value) {
+      fetchVehicleModels(value);
+    }
+  };
+  
+  // Handle vehicle model selection change
+  const handleVehicleModelChange = (value) => {
+    setVehicleModel(value);
+  };
   
   // Handle date input with auto-formatting
   const handleDateChange = (text) => {
@@ -202,7 +369,16 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       isValid = false;
     }
     
-    // Wallet ID is no longer validated as it's not shown to the user
+    // Validate Vehicle Make and Model
+    if (!vehicleMake) {
+      newErrors.vehicleMake = 'Vehicle make is required';
+      isValid = false;
+    }
+    
+    if (!vehicleModel) {
+      newErrors.vehicleModel = 'Vehicle model is required';
+      isValid = false;
+    }
     
     // Validate Serial Number
     if (!serialNo) {
@@ -254,6 +430,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       formData = {
         requestId,
         sessionId,
+        reqDateTime,
         mobileNo,
         vehicleNo: vrn,
         chassisNo: chassis,
@@ -263,6 +440,8 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         serialNo: serialNo.trim(),
         tid: tid.trim(),
         tagVehicleClassID,
+        vehicleMake, // Include vehicle make
+        vehicleModel, // Include vehicle model
         vehicleDescriptor,
         permitExpiryDate,
         stateOfRegistration,
@@ -338,7 +517,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           chassis: chassis || "",
           engine: engine || "",
           vehicleManuf: vehicleManuf || "",
-          model: model || "",
+          model: vehicleModel || "",
           vehicleColour: vehicleColour || "",
           type: type || "",
           status: rtoStatus || "ACTIVE",
@@ -374,9 +553,10 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       
       // Log the registration data for debugging
       console.log('FasTag Registration Request:', JSON.stringify(finalRegistrationData, null, 2));
-      
-      // Additional validation for session ID to ensure it matches document uploads
-      console.log(`Using session ID for registration: ${finalRegistrationData.regDetails.sessionId}`);
+      console.log(`Using consistent requestId: ${finalRegistrationData.regDetails.requestId}`);
+      console.log(`Using consistent sessionId: ${finalRegistrationData.regDetails.sessionId}`);
+      console.log(`Using vehicle make: ${finalRegistrationData.vrnDetails.vehicleManuf}`);
+      console.log(`Using vehicle model: ${finalRegistrationData.vrnDetails.model}`);
       
       // Call the API to register the FasTag
       const response = await bajajApi.registerFasTag(finalRegistrationData);
@@ -898,7 +1078,240 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
       message: successMessage
     });
   };
-  
+
+  // Create a single item for FlatList
+  const renderContent = () => (
+    <Animated.View 
+      style={[styles.content, {
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }]
+      }]}
+    >
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>Bajaj FasTag Registration</Text>
+        <Text style={styles.infoText}>
+          Complete the registration process for your new FasTag.
+          Please provide accurate vehicle and owner details.
+        </Text>
+      </View>
+      
+      <View style={styles.formContainer}>
+        {/* Vehicle Registration Number */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Vehicle Number<Text style={styles.required}>*</Text></Text>
+          <TextInput
+            style={[styles.input, errors.vrn ? styles.inputError : null]}
+            placeholder="Enter vehicle number"
+            value={vrn}
+            onChangeText={(text) => {
+              const upperText = text.toUpperCase();
+              setVrn(upperText);
+            }}
+            autoCapitalize="characters"
+          />
+          {errors.vrn ? (
+            <Text style={styles.errorText}>{errors.vrn}</Text>
+          ) : null}
+        </View>
+        
+        {/* Chassis Number */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Chassis Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter chassis number"
+            value={chassis}
+            onChangeText={setChassis}
+            autoCapitalize="characters"
+          />
+        </View>
+        
+        {/* Engine Number */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Engine Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter engine number"
+            value={engine}
+            onChangeText={setEngine}
+            autoCapitalize="characters"
+          />
+        </View>
+        
+        {/* Vehicle Make */}
+        <View style={[styles.inputGroup, { zIndex: 5000 }]}>
+          <Text style={styles.label}>Vehicle Make<Text style={styles.required}>*</Text></Text>
+          <DropDownPicker
+            open={openVehicleMake}
+            value={vehicleMake}
+            items={filteredVehicleMakes}
+            setOpen={setOpenVehicleMake}
+            setValue={setVehicleMake}
+            setItems={setVehicleMakeItems}
+            onChangeValue={handleVehicleMakeChange}
+            placeholder="Select vehicle make"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            zIndex={5000}
+            loading={loadingVehicleMakes}
+            searchable={true}
+            searchPlaceholder="Search vehicle make..."
+            searchTextInputProps={{
+              value: vehicleMakeSearchText,
+              onChangeText: setVehicleMakeSearchText,
+              style: styles.searchInput
+            }}
+            ActivityIndicatorComponent={({ color }) => (
+              <ActivityIndicator color={color} size="small" />
+            )}
+          />
+          {errors.vehicleMake ? (
+            <Text style={styles.errorText}>{errors.vehicleMake}</Text>
+          ) : null}
+        </View>
+        
+        {/* Vehicle Model */}
+        <View style={[styles.inputGroup, { zIndex: 4000 }]}>
+          <Text style={styles.label}>Vehicle Model<Text style={styles.required}>*</Text></Text>
+          <DropDownPicker
+            open={openVehicleModel}
+            value={vehicleModel}
+            items={filteredVehicleModels}
+            setOpen={setOpenVehicleModel}
+            setValue={setVehicleModel}
+            setItems={setVehicleModelItems}
+            placeholder={vehicleMake ? "Select vehicle model" : "First select vehicle make"}
+            style={[styles.dropdown, !vehicleMake && styles.disabledDropdown]}
+            dropDownContainerStyle={styles.dropdownContainer}
+            zIndex={4000}
+            disabled={!vehicleMake}
+            loading={loadingVehicleModels}
+            searchable={true}
+            searchPlaceholder="Search vehicle model..."
+            searchTextInputProps={{
+              value: vehicleModelSearchText,
+              onChangeText: setVehicleModelSearchText,
+              style: styles.searchInput
+            }}
+            ActivityIndicatorComponent={({ color }) => (
+              <ActivityIndicator color={color} size="small" />
+            )}
+          />
+          {errors.vehicleModel ? (
+            <Text style={styles.errorText}>{errors.vehicleModel}</Text>
+          ) : null}
+        </View>
+        
+        {/* Permit Expiry Date */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Permit Expiry Date</Text>
+          <TextInput
+            style={[styles.input, errors.permitExpiryDate ? styles.inputError : null]}
+            placeholder="DD/MM/YYYY"
+            value={permitExpiryDate}
+            onChangeText={handleDateChange}
+            keyboardType="numeric"
+            maxLength={10}
+          />
+          {errors.permitExpiryDate ? (
+            <Text style={styles.errorText}>{errors.permitExpiryDate}</Text>
+          ) : null}
+        </View>
+        
+        
+        {/* Customer Name */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Customer Name<Text style={styles.required}>*</Text></Text>
+          <TextInput
+            style={[styles.input, errors.name ? styles.inputError : null]}
+            placeholder="Enter customer name"
+            value={name}
+            onChangeText={setName}
+          />
+          {errors.name ? (
+            <Text style={styles.errorText}>{errors.name}</Text>
+          ) : null}
+        </View>
+        
+        {/* Mobile Number */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Mobile Number<Text style={styles.required}>*</Text></Text>
+          <TextInput
+            style={[styles.input, errors.mobileNo ? styles.inputError : null]}
+            placeholder="Enter 10 digit mobile number"
+            value={mobileNo}
+            onChangeText={setMobileNo}
+            keyboardType="phone-pad"
+            maxLength={10}
+          />
+          {errors.mobileNo ? (
+            <Text style={styles.errorText}>{errors.mobileNo}</Text>
+          ) : null}
+        </View>
+        
+        {/* Wallet Balance */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Wallet Balance</Text>
+          <View style={styles.balanceContainer}>
+            <View style={styles.balanceCard}>
+              <Text style={styles.balanceAmount}>₹ {userInfo?.wallet || userProfile?.wallet || 0}</Text>
+              <Text style={styles.balanceLabel}>Available Balance</Text>
+            </View>
+            <View style={styles.requiredCard}>
+              <Text style={styles.requiredAmount}>
+                ₹ {userProfile && userProfile.minFasTagBalance ? userProfile.minFasTagBalance : 400}
+              </Text>
+              <Text style={styles.requiredLabel}>Required Amount</Text>
+            </View>
+          </View>
+          {(userInfo?.wallet || userProfile?.wallet || 0) < (userProfile?.minFasTagBalance || 400) && (
+            <Text style={styles.insufficientBalanceText}>
+              Insufficient balance. Registration will still proceed, but you may need to recharge your wallet.
+            </Text>
+          )}
+        </View>
+        
+        {/* Serial Number */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Serial Number<Text style={styles.required}>*</Text></Text>
+          <TextInput
+            style={[styles.input, errors.serialNo ? styles.inputError : null]}
+            placeholder="Enter FasTag serial number"
+            value={serialNo}
+            onChangeText={setSerialNo}
+          />
+          {errors.serialNo ? (
+            <Text style={styles.errorText}>{errors.serialNo}</Text>
+          ) : null}
+        </View>
+        
+        {/* TID */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>TID</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter TID"
+            value={tid}
+            onChangeText={setTid}
+          />
+        </View>
+      </View>
+      
+      {/* Submit Button */}
+      <TouchableOpacity 
+        style={[styles.submitButton, loading && styles.disabledButton]}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Register FasTag</Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -912,237 +1325,13 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         <View style={{ width: 40 }} />
       </View>
       
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Animated.View 
-          style={[styles.content, {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }]}
-        >
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Bajaj FasTag Registration</Text>
-            <Text style={styles.infoText}>
-              Complete the registration process for your new FasTag.
-              Please provide accurate vehicle and owner details.
-            </Text>
-          </View>
-          
-          <View style={styles.formContainer}>
-            {/* Vehicle Registration Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vehicle Number<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.vrn ? styles.inputError : null]}
-                placeholder="Enter vehicle number"
-                value={vrn}
-                onChangeText={(text) => {
-                  const upperText = text.toUpperCase();
-                  setVrn(upperText);
-                }}
-                autoCapitalize="characters"
-              />
-              {errors.vrn ? (
-                <Text style={styles.errorText}>{errors.vrn}</Text>
-              ) : null}
-            </View>
-            
-            {/* Chassis Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Chassis Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter chassis number"
-                value={chassis}
-                onChangeText={setChassis}
-                autoCapitalize="characters"
-              />
-            </View>
-            
-            {/* Engine Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Engine Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter engine number"
-                value={engine}
-                onChangeText={setEngine}
-                autoCapitalize="characters"
-              />
-            </View>
-            
-            {/* Vehicle Class */}
-            <View style={[styles.inputGroup, { zIndex: 3000 }]}>
-              <Text style={styles.label}>Vehicle Class<Text style={styles.required}>*</Text></Text>
-              <DropDownPicker
-                open={openVehicleClass}
-                value={tagVehicleClassID}
-                items={vehicleClassItems}
-                setOpen={setOpenVehicleClass}
-                setValue={setTagVehicleClassID}
-                setItems={setVehicleClassItems}
-                placeholder="Select vehicle class"
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-                zIndex={3000}
-              />
-            </View>
-            
-            {/* National Permit */}
-            <View style={[styles.inputGroup, { zIndex: 2500 }]}>
-              <Text style={styles.label}>National Permit</Text>
-              <DropDownPicker
-                open={openNationalPermit}
-                value={isNationalPermit}
-                items={nationalPermitItems}
-                setOpen={setOpenNationalPermit}
-                setValue={setIsNationalPermit}
-                setItems={setNationalPermitItems}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-                zIndex={2500}
-              />
-            </View>
-            
-            {/* Permit Expiry Date */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Permit Expiry Date</Text>
-              <TextInput
-                style={[styles.input, errors.permitExpiryDate ? styles.inputError : null]}
-                placeholder="DD/MM/YYYY"
-                value={permitExpiryDate}
-                onChangeText={handleDateChange}
-                keyboardType="numeric"
-                maxLength={10}
-              />
-              {errors.permitExpiryDate ? (
-                <Text style={styles.errorText}>{errors.permitExpiryDate}</Text>
-              ) : null}
-            </View>
-            
-            {/* State of Registration */}
-            <View style={[styles.inputGroup, { zIndex: 2000 }]}>
-              <Text style={styles.label}>State of Registration</Text>
-              <DropDownPicker
-                open={openState}
-                value={stateOfRegistration}
-                items={stateItems}
-                setOpen={setOpenState}
-                setValue={setStateOfRegistration}
-                setItems={setStateItems}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-                zIndex={2000}
-              />
-            </View>
-            
-            {/* Vehicle Descriptor */}
-            <View style={[styles.inputGroup, { zIndex: 1500 }]}>
-              <Text style={styles.label}>Vehicle Descriptor</Text>
-              <DropDownPicker
-                open={openVehicleDescriptor}
-                value={vehicleDescriptor}
-                items={vehicleDescriptorItems}
-                setOpen={setOpenVehicleDescriptor}
-                setValue={setVehicleDescriptor}
-                setItems={setVehicleDescriptorItems}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
-                zIndex={1500}
-              />
-            </View>
-            
-            {/* Customer Name */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Customer Name<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.name ? styles.inputError : null]}
-                placeholder="Enter customer name"
-                value={name}
-                onChangeText={setName}
-              />
-              {errors.name ? (
-                <Text style={styles.errorText}>{errors.name}</Text>
-              ) : null}
-            </View>
-            
-            {/* Mobile Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Mobile Number<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.mobileNo ? styles.inputError : null]}
-                placeholder="Enter 10 digit mobile number"
-                value={mobileNo}
-                onChangeText={setMobileNo}
-                keyboardType="phone-pad"
-                maxLength={10}
-              />
-              {errors.mobileNo ? (
-                <Text style={styles.errorText}>{errors.mobileNo}</Text>
-              ) : null}
-            </View>
-            
-            {/* Wallet Balance */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Wallet Balance</Text>
-              <View style={styles.balanceContainer}>
-                <View style={styles.balanceCard}>
-                  <Text style={styles.balanceAmount}>₹ {userInfo?.wallet || userProfile?.wallet || 0}</Text>
-                  <Text style={styles.balanceLabel}>Available Balance</Text>
-                </View>
-                <View style={styles.requiredCard}>
-                  <Text style={styles.requiredAmount}>
-                    ₹ {userProfile && userProfile.minFasTagBalance ? userProfile.minFasTagBalance : 400}
-                  </Text>
-                  <Text style={styles.requiredLabel}>Required Amount</Text>
-                </View>
-              </View>
-              {(userInfo?.wallet || userProfile?.wallet || 0) < (userProfile?.minFasTagBalance || 400) && (
-                <Text style={styles.insufficientBalanceText}>
-                  Insufficient balance. Registration will still proceed, but you may need to recharge your wallet.
-                </Text>
-              )}
-            </View>
-            
-            {/* Serial Number */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Serial Number<Text style={styles.required}>*</Text></Text>
-              <TextInput
-                style={[styles.input, errors.serialNo ? styles.inputError : null]}
-                placeholder="Enter FasTag serial number"
-                value={serialNo}
-                onChangeText={setSerialNo}
-              />
-              {errors.serialNo ? (
-                <Text style={styles.errorText}>{errors.serialNo}</Text>
-              ) : null}
-            </View>
-            
-            {/* TID */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>TID</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter TID"
-                value={tid}
-                onChangeText={setTid}
-              />
-            </View>
-          </View>
-          
-          {/* Submit Button */}
-          <TouchableOpacity 
-            style={[styles.submitButton, loading && styles.disabledButton]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>Register FasTag</Text>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      </ScrollView>
+      <FlatList
+        data={[1]} // Single item since we're using it as a container
+        renderItem={renderContent}
+        keyExtractor={() => 'registration-form'}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.flatListContent}
+      />
       
       {/* Success Modal */}
       <Modal
@@ -1196,6 +1385,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   content: {
+    flex: 1,
     padding: 16,
   },
   infoCard: {
@@ -1386,6 +1576,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  disabledDropdown: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#DDDDDD',
+  },
+  searchInput: {
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  flatListContent: {
+    flexGrow: 1,
   },
 });
 
