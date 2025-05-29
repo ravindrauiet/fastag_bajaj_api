@@ -681,10 +681,10 @@ const bajajApi = {
   },
 
   // 4.1 Get Vehicle Make
-  getVehicleMake: async () => {
+  getVehicleMake: async (requestId, sessionId) => {
     try {
-      const requestId = generateRequestId();
-      const sessionId = requestId;
+      const requestId = requestId || generateRequestId();
+      const sessionId = sessionId || requestId;
       const reqDateTime = getCurrentDateTime();
 
       const requestData = {
@@ -741,10 +741,10 @@ const bajajApi = {
   },
 
   // 4.2 Get Vehicle Model
-  getVehicleModel: async (vehicleMake) => {
+  getVehicleModel: async (requestId, sessionId, vehicleMake) => {
     try {
-      const requestId = generateRequestId();
-      const sessionId = requestId;
+      const requestId = requestId || generateRequestId();
+      const sessionId = sessionId || requestId;
       const reqDateTime = getCurrentDateTime();
 
       const requestData = {

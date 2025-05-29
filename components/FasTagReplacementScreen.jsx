@@ -259,8 +259,8 @@ const FasTagReplacementScreen = ({ navigation, route }) => {
         mobileNo: mobileNo,
         walletId: walletId || "",
         vehicleNo: vehicleNo,
-        channel: channel || "CBPL",
-        agentId: agentId || "70003",
+        channel: channel || "TMSQ",
+        agentId: agentId || "70043",
         // Don't set reqDateTime here, it will be set in the API function
         debitAmt: debitAmt,
         requestId: generatedRequestId,

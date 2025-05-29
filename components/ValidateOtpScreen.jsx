@@ -449,8 +449,8 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
               
               // Pass channel and agentId from OTP response
-              channel: response.validateOtpResp?.channel || 'CBPL',
-              agentId: response.validateOtpResp?.agentId || '70003',
+              channel: response.validateOtpResp?.channel || 'TMSQ',
+              agentId: response.validateOtpResp?.agentId || '70043',
               
               // Also pass all UDF fields
               udf1: response.validateOtpResp?.udf1 || '',
@@ -483,8 +483,8 @@ const ValidateOtpScreen = ({ navigation, route }) => {
               stateOfRegistration: response.validateOtpResp?.vrnDetails?.stateOfRegistration || 'MH',
               vehicleDescriptor: response.validateOtpResp?.vrnDetails?.vehicleDescriptor || 'Petrol',
               npciStatus: response.validateOtpResp?.npciStatus || 'ACTIVE',
-              channel: response.validateOtpResp?.channel || 'CBPL',
-              agentId: response.validateOtpResp?.agentId || '70003',
+              channel: response.validateOtpResp?.channel || 'TMSQ',
+              agentId: response.validateOtpResp?.agentId || '70043',
               udf1: response.validateOtpResp?.udf1 || '',
               udf2: response.validateOtpResp?.udf2 || '',
               udf3: response.validateOtpResp?.udf3 || '',

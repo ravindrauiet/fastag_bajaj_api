@@ -329,8 +329,8 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         regDetails: {
           requestId: requestId || generateRequestId(),
           sessionId: sessionId || requestId || generateRequestId(),
-          channel: channel || "CBPL",
-          agentId: agentId || "70003",
+          channel: channel || "TMSQ",
+          agentId: agentId || "70043",
           reqDateTime: new Date().toISOString().replace('T', ' ').substring(0, 23)
         },
         vrnDetails: {

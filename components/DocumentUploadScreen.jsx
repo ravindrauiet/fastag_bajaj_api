@@ -486,8 +486,8 @@ const DocumentUploadScreen = ({ navigation, route }) => {
         npciStatus: otpResponse.validateOtpResp?.npciStatus || 'ACTIVE',
         
         // Pass channel and agentId from OTP response
-        channel: otpResponse.validateOtpResp?.channel || route.params.channel || 'CBPL',
-        agentId: otpResponse.validateOtpResp?.agentId || route.params.agentId || '70003',
+        channel: otpResponse.validateOtpResp?.channel || route.params.channel || 'TMSQ',
+        agentId: otpResponse.validateOtpResp?.agentId || route.params.agentId || '70043',
         
         // UDF fields from OTP response
         udf1: otpResponse.validateOtpResp?.udf1 || '',
