@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   },
   logoTitleImage: {
     height: 35,
-    width: 180,
+    width: 120,
     marginVertical: 5,
   },
 });
