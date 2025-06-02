@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     padding: 16,
     margin: 16,
     borderRadius: 16,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   tagItem: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -490,11 +490,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   usedTag: {
     backgroundColor: '#F5F5F5',
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     opacity: 0.8,
   },
   tagInfo: {
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
   activateButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -559,12 +559,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalInfoCard: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   modalInfoTitle: {
     fontSize: 14,
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   textInput: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 1,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 12,
     marginLeft: 8,
@@ -652,12 +652,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   allocatedTag: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    backgroundColor: '#EDE7F6',
+    borderColor: '#6200EE',
     borderWidth: 1,
   },
   allocatedButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#6200EE',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,

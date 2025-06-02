@@ -224,7 +224,7 @@ const DebugConsole = ({ visible, onClose }) => {
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#333333" />
+            <ActivityIndicator size="large" color="#6200EE" />
             <Text style={styles.loadingText}>Loading logs...</Text>
           </View>
         ) : (
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     paddingVertical: 16,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -303,21 +303,21 @@ const styles = StyleSheet.create({
   tabsContainer: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   tab: {
     paddingHorizontal: 20,
     paddingVertical: 8,
     marginHorizontal: 4,
     borderRadius: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
   },
   activeTab: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   tabText: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
   },
   activeTabText: {
     color: '#FFFFFF',
@@ -330,10 +330,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   toolbarButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   },
   logCount: {
     fontSize: 14,
-    color: '#757575',
+    color: '#6200EE',
   },
   loadingContainer: {
     flex: 1,
@@ -354,19 +354,21 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#757575',
+    color: '#6200EE',
   },
   logsList: {
     flex: 1,
     padding: 16,
   },
   logItem: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#333333',
+    borderLeftColor: '#6200EE',
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   errorLogItem: {
     borderLeftColor: '#F44336',
@@ -380,7 +382,7 @@ const styles = StyleSheet.create({
   logType: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   logStatus: {
     fontSize: 12,
@@ -388,12 +390,12 @@ const styles = StyleSheet.create({
   },
   logAction: {
     fontSize: 14,
-    color: '#555555',
+    color: '#6200EE',
     marginBottom: 4,
   },
   logTimestamp: {
     fontSize: 12,
-    color: '#757575',
+    color: '#6200EE',
   },
   emptyContainer: {
     paddingVertical: 40,
@@ -401,12 +403,11 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#757575',
+    color: '#6200EE',
   },
-  // Modal styles
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(98, 0, 238, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -416,9 +417,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   modalHeader: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     paddingVertical: 16,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -437,18 +440,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   detailLabel: {
     width: 100,
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   detailValue: {
     flex: 1,
     fontSize: 14,
-    color: '#555555',
+    color: '#6200EE',
   },
   errorContainer: {
     marginTop: 16,
@@ -464,35 +467,35 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 14,
-    color: '#555555',
+    color: '#6200EE',
     marginBottom: 4,
   },
   errorCode: {
     fontSize: 12,
-    color: '#757575',
+    color: '#6200EE',
     marginBottom: 4,
   },
   errorStack: {
     fontSize: 10,
-    color: '#757575',
+    color: '#6200EE',
     fontFamily: 'monospace',
     marginTop: 8,
   },
   formDataContainer: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
   },
   formDataTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   formDataJson: {
     fontSize: 12,
-    color: '#333333',
+    color: '#6200EE',
     fontFamily: 'monospace',
   },
 });

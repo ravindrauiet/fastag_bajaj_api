@@ -447,10 +447,10 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
           
           {/* Engine Number */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Engine Number<Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Engine Number <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter engine number"
+              placeholder="Enter engine number (Last 5 digits)"
               value={engineNo}
               onChangeText={(text) => setEngineNo(text.toUpperCase())}
               autoCapitalize="characters"
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -524,20 +524,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   infoText: {
-    color: '#CCCCCC',
+    color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 20,
   },
   formContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputGroup: {
     marginBottom: 16,
@@ -545,7 +547,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   required: {
@@ -555,10 +557,11 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
   },
   inputError: {
     borderColor: '#FF0000',
@@ -574,14 +577,14 @@ const styles = StyleSheet.create({
   },
   optionButton: {
     flex: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EDE7F6',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 4,
   },
   selectedOption: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   selectedOptionText: {
     color: '#FFFFFF',
@@ -590,15 +593,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     marginVertical: 10,
-    color: '#777777',
+    color: '#6200EE',
   },
   noteText: {
     fontSize: 12,
-    color: '#777777',
+    color: '#6200EE',
     marginTop: 4,
   },
   submitButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -613,11 +616,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   disabledOption: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     opacity: 0.7,
   },
   disabledOptionText: {
-    color: '#999999',
+    color: '#6200EE',
   },
 });
 

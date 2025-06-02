@@ -477,12 +477,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 20,
     textAlign: 'center',
   },
   backButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -503,14 +503,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 15,
+    backgroundColor: '#EDE7F6',
   },
   transactionIconText: {
     fontSize: 30,
     fontWeight: 'bold',
+    color: '#6200EE',
   },
   transactionTitle: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 8,
   },
   transactionAmount: {
@@ -538,13 +540,15 @@ const styles = StyleSheet.create({
   detailsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 15,
   },
   detailsCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   detailRow: {
     flexDirection: 'row',
@@ -554,7 +558,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   detailValue: {
     fontSize: 14,
@@ -565,7 +569,7 @@ const styles = StyleSheet.create({
   },
   detailDivider: {
     height: 1,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#EDE7F6',
   },
   amountDetailsContainer: {
     marginBottom: 30,
@@ -573,13 +577,15 @@ const styles = StyleSheet.create({
   amountDetailsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 15,
   },
   amountDetailsCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   amountDetailsRow: {
     flexDirection: 'row',
@@ -589,7 +595,7 @@ const styles = StyleSheet.create({
   },
   amountDetailsLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   amountDetailsValue: {
     fontSize: 14,
@@ -606,7 +612,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     padding: 15,
     marginHorizontal: 5,
@@ -617,22 +623,22 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
   },
   infoContainer: {
-    backgroundColor: '#F0F8FF',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
   },
   infoText: {
     fontSize: 13,
-    color: '#555555',
+    color: '#6200EE',
     marginBottom: 8,
   },
   similarTransactionsButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -649,7 +655,7 @@ const styles = StyleSheet.create({
   additionalDetailsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 15,
   },
   additionalDetailsRow: {
@@ -660,7 +666,7 @@ const styles = StyleSheet.create({
   },
   additionalDetailsLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   additionalDetailsValue: {
     fontSize: 14,
@@ -672,7 +678,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 15,
   },
   emptyContainer: {
@@ -683,7 +689,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 20,
     textAlign: 'center',
   },

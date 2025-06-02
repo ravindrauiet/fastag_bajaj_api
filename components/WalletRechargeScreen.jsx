@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     paddingBottom: 90,
   },
   balanceSection: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#EDE7F6',
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
@@ -209,13 +209,13 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 8,
   },
   balanceAmount: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   amountSection: {
     marginBottom: 30,
@@ -223,38 +223,38 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 10,
   },
   amountLabel: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 20,
   },
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: '#333333',
+    borderBottomColor: '#6200EE',
     paddingBottom: 10,
     marginBottom: 12,
   },
   currencySymbol: {
     fontSize: 30,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
     fontSize: 30,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     padding: 0,
   },
   limitText: {
     fontSize: 12,
-    color: '#777777',
+    color: '#6200EE',
   },
   quickAmountSection: {
     marginBottom: 30,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   quickAmountTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   quickAmountContainer: {
@@ -274,26 +274,27 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 10,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     marginHorizontal: 5,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   quickAmountButtonActive: {
-    backgroundColor: 'rgba(51, 51, 51, 0.1)',
-    borderColor: '#333333',
+    backgroundColor: '#6200EE',
+    borderColor: '#6200EE',
   },
   quickAmountText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
   },
   quickAmountTextActive: {
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   paymentInfoSection: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   paymentInfoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   paymentMethodsContainer: {
@@ -319,11 +320,11 @@ const styles = StyleSheet.create({
   paymentMethodText: {
     fontSize: 12,
     textAlign: 'center',
-    color: '#555555',
+    color: '#6200EE',
   },
   termsText: {
     fontSize: 12,
-    color: '#999999',
+    color: '#6200EE',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -335,8 +336,8 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    shadowColor: '#000',
+    borderTopColor: '#EDE7F6',
+    shadowColor: '#6200EE',
     shadowOffset: {
       width: 0,
       height: -2,
@@ -346,13 +347,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   proceedButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   proceedButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: '#B0BEC5',
   },
   proceedButtonText: {
     color: '#FFFFFF',

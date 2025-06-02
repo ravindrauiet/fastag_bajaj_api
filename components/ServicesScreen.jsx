@@ -23,7 +23,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('NETCFastagScreen')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E3F2FD'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>📋</Text>
             </View>
             <Text style={styles.serviceCardText}>NETC FasTag</Text>
@@ -34,7 +34,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('VrnUpdateScreen')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#FFF8E1'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>🚗</Text>
             </View>
             <Text style={styles.serviceCardText}>VRN Update</Text>
@@ -45,7 +45,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('FasTagRekycScreen')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E8F5E9'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>📷</Text>
             </View>
             <Text style={styles.serviceCardText}>Re-KYC</Text>
@@ -56,7 +56,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('BarcodeScanner')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#F3E5F5'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>📱</Text>
             </View>
             <Text style={styles.serviceCardText}>Scanner</Text>
@@ -67,7 +67,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('ManualActivation')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#FFEBEE'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>🔄</Text>
             </View>
             <Text style={styles.serviceCardText}>Activation</Text>
@@ -78,7 +78,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('DocumentUpload')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#E0F7FA'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>📄</Text>
             </View>
             <Text style={styles.serviceCardText}>Documents</Text>
@@ -89,7 +89,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('FasTagReplacement')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#F8BBD0'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>🔁</Text>
             </View>
             <Text style={styles.serviceCardText}>Replacement</Text>
@@ -100,7 +100,7 @@ const ServicesScreen = ({ navigation }) => {
             style={styles.serviceCard}
             onPress={() => navigateToService('CreateWallet')}
           >
-            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#D1C4E9'}]}>
+            <View style={[styles.serviceCardIconContainer, {backgroundColor: '#6200EE'}]}>
               <Text style={styles.serviceCardIcon}>💼</Text>
             </View>
             <Text style={styles.serviceCardText}>Create Wallet</Text>
@@ -123,12 +123,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 16,
   },
   servicesGrid: {
@@ -140,19 +140,19 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     height: 160,
     justifyContent: 'flex-start',
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#EDE7F6',
   },
   serviceCardIconContainer: {
     width: 50,
@@ -164,16 +164,17 @@ const styles = StyleSheet.create({
   },
   serviceCardIcon: {
     fontSize: 24,
+    color: '#FFFFFF',
   },
   serviceCardText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   serviceCardDescription: {
     fontSize: 12,
-    color: '#777777',
+    color: '#FFFFFF',
     lineHeight: 16,
   },
 });

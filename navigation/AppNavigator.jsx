@@ -198,14 +198,14 @@ const NotificationBell = () => {
   
   return (
     <View style={styles.bellContainer}>
-      <TouchableOpacity onPress={toggleDropdown} style={styles.bellButton}>
+      {/* <TouchableOpacity onPress={toggleDropdown} style={styles.bellButton}>
         <Text style={styles.bellIcon}>🔔</Text>
         {unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount}</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       
       <Modal
         transparent={true}
@@ -274,7 +274,7 @@ const LogoTitle = () => (
   <View style={styles.logoTitleContainer}>
     <Image
       style={styles.logoTitleImage}
-      source={require('../assets/icons/tm_square_logo.png')}
+      source={require('../assets/icons/tm_square_png-removebg-preview.png')}
       resizeMode="contain"
     />
   </View>
@@ -334,13 +334,13 @@ const CustomDrawerContent = (props) => {
       <View style={styles.drawerHeader}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../assets/icons/tm_square_logo.png')}
+            source={require('../assets/icons/tm_square_png-removebg-preview.png')}
             style={styles.drawerLogo}
             resizeMode="contain"
           />
         </View>
         <Text style={styles.appName}>FasTag Admin Portal</Text>
-        <Text style={styles.userEmail}>Powered by TMsquare Global Solutions</Text>
+        <Text style={styles.userEmail}>Powered by Maydiv Infotech</Text>
       </View>
 
       {/* Menu Items */}
@@ -400,7 +400,7 @@ const AppStack = ({ navigation }) => {
           backgroundColor: '#FFFFFF',
           borderTopRightRadius: 20,
           borderBottomRightRadius: 20,
-          shadowColor: '#000',
+          shadowColor: '#6200EE',
           shadowOffset: {
             width: 2,
             height: 0,
@@ -410,7 +410,6 @@ const AppStack = ({ navigation }) => {
           elevation: 16,
           paddingVertical: 10,
         },
-        // Apply custom header to all screens by default
         headerTitle: props => <LogoTitle {...props} />,
         headerLeft: () => <FourDotMenuIcon onPress={() => navigation.openDrawer()} />,
         headerRight: () => <NotificationBell />,
@@ -423,13 +422,13 @@ const AppStack = ({ navigation }) => {
           borderBottomWidth: 0,
           height: 60,
         },
-        headerTintColor: '#333333',
+        headerTintColor: '#6200EE',
         headerTitleStyle: {
           fontWeight: 'bold',
           textAlign: 'center',
           alignSelf: 'center',
           flex: 1,
-          marginLeft: -40, // Adjust to center the logo properly accounting for the left menu button
+          marginLeft: -40,
         },
         headerTitleAlign: 'center',
       })}
@@ -765,12 +764,12 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 15,
   },
   drawerTitle: {
-    color: '#fff',
+    color: '#6200EE',
     fontSize: 24,
     fontWeight: 'bold',
   },
   drawerSubtitle: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontSize: 16,
   },
   drawerItems: {
@@ -779,7 +778,7 @@ const styles = StyleSheet.create({
   },
   drawerSectionTitle: {
     fontSize: 12,
-    color: '#777',
+    color: '#6200EE',
     marginTop: 25,
     marginBottom: 15,
     paddingHorizontal: 10,
@@ -790,10 +789,10 @@ const styles = StyleSheet.create({
   drawerItem: {
     fontSize: 16,
     marginVertical: 12,
-    color: '#333',
+    color: '#6200EE',
   },
   activeDrawerItem: {
-    color: '#000',
+    color: '#6200EE',
     fontWeight: 'bold',
   },
   bellContainer: {
@@ -804,12 +803,13 @@ const styles = StyleSheet.create({
   },
   bellIcon: {
     fontSize: 24,
+    color: '#6200EE',
   },
   badge: {
     position: 'absolute',
     right: -6,
     top: -3,
-    backgroundColor: 'red',
+    backgroundColor: '#6200EE',
     borderRadius: 10,
     width: 20,
     height: 20,
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     maxHeight: 400,
     backgroundColor: 'white',
     borderRadius: 10,
-    shadowColor: "#000",
+    shadowColor: "#6200EE",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -851,14 +851,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#EDE7F6',
   },
   notificationTitle: {
     fontWeight: 'bold',
     fontSize: 16,
+    color: '#6200EE',
   },
   markAllRead: {
-    color: '#007AFF',
+    color: '#6200EE',
     fontSize: 12,
   },
   emptyNotifications: {
@@ -866,7 +867,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#666',
+    color: '#6200EE',
   },
   notificationList: {
     maxHeight: 300,
@@ -877,10 +878,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#EDE7F6',
   },
   unreadNotification: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#EDE7F6',
   },
   notificationContent: {
     flex: 1,
@@ -888,10 +889,11 @@ const styles = StyleSheet.create({
   notificationMessage: {
     fontSize: 14,
     marginBottom: 4,
+    color: '#333333',
   },
   notificationTime: {
     fontSize: 12,
-    color: '#666',
+    color: '#6200EE',
   },
   deleteButton: {
     marginLeft: 10,
@@ -899,7 +901,7 @@ const styles = StyleSheet.create({
   },
   deleteIcon: {
     fontSize: 18,
-    color: '#999',
+    color: '#6200EE',
   },
   drawerHeader: {
     height: 180,
@@ -911,25 +913,24 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 15,
   },
   logoContainer: {
-    marginBottom: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   drawerLogo: {
-    width: 180,
-    height: 60,
+    width: 220,
+    height: 100,
     backgroundColor: 'transparent',
     marginVertical: 10,
   },
   appName: {
-    color: '#333333',
+    color: '#6200EE',
     fontSize: 18,
     fontWeight: '600',
     marginTop: 10,
     textAlign: 'center',
   },
   userEmail: {
-    color: '#666666',
+    color: '#6200EE',
     fontSize: 14,
     marginTop: 4,
     textAlign: 'center',
@@ -943,7 +944,7 @@ const styles = StyleSheet.create({
   },
   drawerDivider: {
     height: 1,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#EDE7F6',
     marginVertical: 15,
     marginHorizontal: 10,
   },
@@ -955,20 +956,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   activeDrawerMenuItem: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#EDE7F6',
   },
   drawerMenuItemText: {
     fontSize: 15,
     marginLeft: 12,
-    color: '#444',
+    color: '#6200EE',
   },
   activeDrawerMenuItemText: {
     fontWeight: '600',
-    color: '#333',
+    color: '#6200EE',
   },
   mainMenuItemText: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#6200EE',
   },
   menuIconContainer: {
     width: 30,
@@ -976,13 +978,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#EDE7F6',
   },
   menuIcon: {
     fontSize: 18,
+    color: '#6200EE',
   },
   activeMenuIcon: {
-    color: '#333',
+    color: '#6200EE',
   },
   logoutButton: {
     flexDirection: 'row',
@@ -990,17 +993,17 @@ const styles = StyleSheet.create({
     margin: 15,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: '#FFF5F5',
+    backgroundColor: '#EDE7F6',
   },
   logoutButtonIcon: {
     fontSize: 18,
     marginRight: 10,
-    color: '#FF3B30',
+    color: '#6200EE',
   },
   logoutButtonText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#FF3B30',
+    color: '#6200EE',
   },
   versionContainer: {
     padding: 20,
@@ -1008,7 +1011,7 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 12,
-    color: '#999',
+    color: '#6200EE',
   },
   hamburgerButton: {
     padding: 12,
@@ -1021,7 +1024,7 @@ const styles = StyleSheet.create({
   hamburgerLine: {
     width: '100%',
     height: 2,
-    backgroundColor: '#333',
+    backgroundColor: '#6200EE',
     borderRadius: 1,
   },
   loadingContainer: {
@@ -1033,7 +1036,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 20,
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   headerRight: {
     marginRight: 10,
@@ -1047,7 +1050,7 @@ const styles = StyleSheet.create({
   },
   logoTitleImage: {
     height: 35,
-    width: 120,
+    width: 170,
     marginVertical: 5,
   },
 });

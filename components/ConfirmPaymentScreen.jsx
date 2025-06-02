@@ -555,10 +555,10 @@ const ConfirmPaymentScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -585,10 +585,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -597,12 +597,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 16,
   },
   sectionContainer: {
@@ -611,20 +611,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   productOption: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     padding: 12,
     marginBottom: 8,
   },
   selectedProductOption: {
-    borderColor: '#333333',
-    backgroundColor: '#F5F5F5',
+    borderColor: '#6200EE',
+    backgroundColor: '#EDE7F6',
   },
   productOptionHeader: {
     flexDirection: 'row',
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: '#6200EE',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -645,32 +645,32 @@ const styles = StyleSheet.create({
     height: 10,
     width: 10,
     borderRadius: 5,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   productName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     flex: 1,
   },
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   productDescription: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginLeft: 30,
   },
   toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     padding: 16,
     marginBottom: 20,
   },
@@ -680,21 +680,21 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   toggleDescription: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   barcodeContainer: {
     marginBottom: 20,
   },
   scanFrame: {
     height: 100,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -702,11 +702,11 @@ const styles = StyleSheet.create({
   },
   scanText: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
   },
   scanButton: {
     flexDirection: 'row',
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -725,32 +725,34 @@ const styles = StyleSheet.create({
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
   },
   currencySymbol: {
     fontSize: 20,
-    color: '#333333',
+    color: '#6200EE',
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
     fontSize: 20,
-    color: '#333333',
+    color: '#6200EE',
   },
   summaryContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   summaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   summaryRow: {
@@ -760,11 +762,11 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   summaryValue: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
   },
   addOnsContainer: {
@@ -773,17 +775,17 @@ const styles = StyleSheet.create({
   },
   addOnsTitle: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 4,
   },
   addOnLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     paddingLeft: 16,
   },
   addOnValue: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
   },
   totalRow: {
     flexDirection: 'row',
@@ -793,20 +795,22 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   totalValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   userSummaryContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   confirmButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -818,17 +822,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   disabledButton: {
-    backgroundColor: '#9e9e9e',
+    backgroundColor: '#B0BEC5',
   },
   // New payment options styles
   paymentOptionsContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -838,14 +842,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
     paddingBottom: 16,
     marginBottom: 16,
   },
   paymentOptionsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     flex: 1,
   },
   backToFormButton: {
@@ -853,12 +857,12 @@ const styles = StyleSheet.create({
   },
   backToFormText: {
     fontSize: 20,
-    color: '#333333',
+    color: '#6200EE',
   },
   breakdownTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 16,
   },
   breakdownRow: {
@@ -869,16 +873,16 @@ const styles = StyleSheet.create({
   },
   breakdownLabel: {
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   breakdownValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
   },
   divider: {
     height: 1,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#EDE7F6',
     marginVertical: 16,
   },
   finalAmountContainer: {
@@ -891,7 +895,7 @@ const styles = StyleSheet.create({
   finalAmountLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   finalAmountBadge: {
     backgroundColor: '#FFFFFF',
@@ -899,8 +903,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
-    shadowColor: '#000',
+    borderColor: '#EDE7F6',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -909,7 +913,7 @@ const styles = StyleSheet.create({
   finalAmountValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   paymentButtonsContainer: {
     flexDirection: 'row',
@@ -925,10 +929,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   upiButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   cashButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   paymentButtonText: {
     color: '#FFFFFF',
@@ -943,7 +947,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#EDE7F6',
     padding: 16,
     borderRadius: 8,
     marginBottom: 16,
@@ -951,11 +955,11 @@ const styles = StyleSheet.create({
   successMessage: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     flex: 1,
   },
   completeBadge: {
-    backgroundColor: '#007F56',
+    backgroundColor: '#6200EE',
     borderRadius: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
@@ -971,7 +975,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   detailRow: {
     flexDirection: 'row',
@@ -982,16 +986,16 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#777777',
+    color: '#6200EE',
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   completeButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',

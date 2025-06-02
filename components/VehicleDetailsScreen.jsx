@@ -332,7 +332,7 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
               style={[styles.uploadButton, errors.rcImage ? styles.inputError : null]}
               onPress={() => setShowImageOptions(true)}
             >
-              <Icon name="cloud-upload-outline" size={24} color="#00ACC1" />
+              <Icon name="cloud-upload-outline" size={24} color="#6200EE" />
               <Text style={styles.uploadButtonText}>
                 {rcImageUri ? 'Change RC Image' : 'Upload RC Image'}
               </Text>
@@ -372,7 +372,7 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
                   style={styles.modalOption}
                   onPress={() => handleUploadImage('camera')}
                 >
-                  <Icon name="camera" size={24} color="#00ACC1" />
+                  <Icon name="camera" size={24} color="#6200EE" />
                   <Text style={styles.modalOptionText}>Take Photo</Text>
                 </TouchableOpacity>
                 
@@ -380,7 +380,7 @@ const VehicleDetailsScreen = ({ route, navigation }) => {
                   style={styles.modalOption}
                   onPress={() => handleUploadImage('gallery')}
                 >
-                  <Icon name="image" size={24} color="#00ACC1" />
+                  <Icon name="image" size={24} color="#6200EE" />
                   <Text style={styles.modalOptionText}>Choose from Gallery</Text>
                 </TouchableOpacity>
                 
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -445,10 +445,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -457,12 +457,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 16,
   },
   inputGroup: {
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   required: {
@@ -481,10 +481,11 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 4,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
   },
   inputError: {
     borderColor: '#FF0000',
@@ -497,30 +498,30 @@ const styles = StyleSheet.create({
   dropdown: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 4,
     minHeight: 45,
   },
   dropdownContainer: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderWidth: 1,
     borderTopWidth: 0,
   },
   dropdownText: {
-    color: '#333333',
+    color: '#6200EE',
     fontSize: 16,
   },
   uploadButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 4,
     padding: 12,
     alignItems: 'center',
   },
   uploadButtonText: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -542,7 +543,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   proceedButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(98, 0, 238, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -568,7 +569,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -577,14 +578,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   modalIcon: {
     marginRight: 16,
   },
   modalOptionText: {
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   cancelOption: {
     justifyContent: 'center',
@@ -600,7 +601,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 100,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#6200EE',
     borderRadius: 8,
     marginVertical: 20,
     alignSelf: 'center',

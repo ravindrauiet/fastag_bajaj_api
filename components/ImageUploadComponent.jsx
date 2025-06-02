@@ -164,11 +164,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   contentContainer: {
     flex: 1,
@@ -176,24 +178,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   description: {
     fontSize: 12,
-    color: '#999999',
+    color: '#6200EE',
   },
   imageIcon: {
     width: 40,
     height: 40,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   uploadIconText: {
     fontSize: 20,
-    color: '#999999',
+    color: '#6200EE',
   },
   previewImage: {
     width: 40,

@@ -101,7 +101,7 @@ const VehicleKYCScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFFFFF',
   },
   contentContainer: {
     flex: 1,
@@ -110,14 +110,14 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginVertical: 16,
   },
   fastagIdText: {
     fontSize: 16,
-    color: '#555555',
+    color: '#6200EE',
     marginBottom: 16,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#EDE7F6',
     padding: 8,
     borderRadius: 4,
   },
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   activateButton: {
-    backgroundColor: '#d32f2f',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',

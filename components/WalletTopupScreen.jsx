@@ -308,7 +308,7 @@ const WalletTopupScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FFFFFF',
   },
   keyboardAvoid: {
     flex: 1,
@@ -323,11 +323,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginTop: 4,
   },
   amountSection: {
@@ -336,14 +336,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
@@ -352,13 +352,13 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
     fontSize: 24,
-    color: '#333333',
+    color: '#6200EE',
     height: 60,
   },
   quickAmountSection: {
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   quickAmountLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 8,
   },
   quickAmountContainer: {
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   quickAmountButton: {
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     paddingVertical: 10,
@@ -386,15 +386,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedAmountButton: {
-    borderColor: '#00ACC1',
-    backgroundColor: '#E0F7FA',
+    borderColor: '#6200EE',
+    backgroundColor: '#EDE7F6',
   },
   quickAmountText: {
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
   },
   selectedAmountText: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontWeight: 'bold',
   },
   paymentInstructionSection: {
@@ -405,11 +405,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   instructionText: {
     fontSize: 14,
-    color: '#444444',
+    color: '#6200EE',
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     marginBottom: 12,
   },
   qrLoader: {
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   upiIdContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EDE7F6',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -448,13 +448,13 @@ const styles = StyleSheet.create({
   upiIdLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666666',
+    color: '#6200EE',
     marginRight: 6,
   },
   upiId: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
   },
   copyButton: {
     marginLeft: 8,
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     height: 160,
     backgroundColor: '#FFFFFF',
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   uploadText: {
     marginTop: 8,
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   previewImage: {
     width: '100%',
@@ -489,12 +489,12 @@ const styles = StyleSheet.create({
   },
   fileNameText: {
     fontSize: 12,
-    color: '#666666',
+    color: '#6200EE',
     marginTop: 8,
     textAlign: 'center',
   },
   submitButton: {
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     height: 56,
     justifyContent: 'center',
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 13,
-    color: '#666666',
+    color: '#6200EE',
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -523,17 +523,17 @@ const styles = StyleSheet.create({
   },
   utrInput: {
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     height: 50,
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   utrHelpText: {
     fontSize: 12,
-    color: '#666666',
+    color: '#6200EE',
     marginTop: 4,
   },
 });

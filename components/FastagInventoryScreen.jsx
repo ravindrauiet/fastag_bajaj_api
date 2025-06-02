@@ -274,7 +274,7 @@ const FastagInventoryScreen = ({ navigation }) => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00ACC1" />
+        <ActivityIndicator size="large" color="#6200EE" />
         <Text style={styles.loadingText}>Loading inventory and analytics...</Text>
       </SafeAreaView>
     );
@@ -424,12 +424,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#777777',
+    color: '#6200EE',
   },
   // Dashboard styles
   dashboardContainer: {
     padding: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     marginBottom: 16,
@@ -437,11 +437,11 @@ const styles = StyleSheet.create({
   dashboardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 16,
   },
   walletCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -482,32 +482,36 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 4,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#777777',
+    color: '#6200EE',
   },
   transactionSummaryContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   transactionSummaryHeader: {
     flexDirection: 'row',
@@ -518,10 +522,10 @@ const styles = StyleSheet.create({
   transactionSummaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   viewAllText: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontSize: 14,
   },
   transactionItem: {
@@ -530,19 +534,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#EDE7F6',
   },
   transactionDetails: {
     flex: 1,
   },
   transactionDescription: {
     fontSize: 15,
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   transactionDate: {
     fontSize: 13,
-    color: '#777777',
+    color: '#6200EE',
   },
   transactionAmount: {
     fontSize: 16,
@@ -561,12 +565,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -574,11 +578,18 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   statCard: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     width: '30%',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
+    shadowColor: '#6200EE',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   contentContainer: {
     padding: 16,
@@ -588,13 +599,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   item: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
+    shadowColor: '#6200EE',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   row: {
     flexDirection: 'row',
@@ -605,7 +623,7 @@ const styles = StyleSheet.create({
   tagId: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   status: {
     fontSize: 14,
@@ -628,12 +646,12 @@ const styles = StyleSheet.create({
   },
   customerName: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 4,
   },
   activationDate: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   emptyState: {
     justifyContent: 'center',
@@ -642,7 +660,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#777777',
+    color: '#6200EE',
     textAlign: 'center',
   },
   fab: {
@@ -652,11 +670,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#000000',
+    backgroundColor: '#6200EE',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

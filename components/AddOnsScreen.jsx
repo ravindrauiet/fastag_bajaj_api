@@ -108,16 +108,17 @@ const AddOnsScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F0F0',
-    
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   backButton: {
     padding: 8,
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   infoCard: {
@@ -155,20 +156,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   infoLabel: {
     fontSize: 14,
-    color: '#777777',
+    color: '#6200EE',
     marginTop: 4,
   },
   infoValue: {
     fontSize: 18,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '400',
   },
   addressHeader: {
@@ -179,13 +182,13 @@ const styles = StyleSheet.create({
   },
   addressTitle: {
     fontSize: 18,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
   },
   homeIcon: {
     width: 32,
     height: 32,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
@@ -196,7 +199,7 @@ const styles = StyleSheet.create({
   },
   addressValue: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
     lineHeight: 20,
   },
   addressState: {
@@ -208,11 +211,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   addOnHeader: {
     flexDirection: 'row',
@@ -226,21 +231,21 @@ const styles = StyleSheet.create({
   addOnTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   addOnSubtitle: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginTop: 2,
   },
   addOnPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   addOnDescription: {
     fontSize: 14,
-    color: '#555555',
+    color: '#6200EE',
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -253,7 +258,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#6200EE',
     borderRadius: 4,
     marginRight: 10,
     justifyContent: 'center',
@@ -262,28 +267,30 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     width: 14,
     height: 14,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 2,
   },
   checkboxText: {
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   summaryContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   summaryRow: {
@@ -294,30 +301,30 @@ const styles = StyleSheet.create({
   },
   summaryItem: {
     fontSize: 16,
-    color: '#555555',
+    color: '#6200EE',
   },
   summaryPrice: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
   },
   divider: {
     height: 1,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#EDE7F6',
     marginVertical: 8,
   },
   totalText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   totalPrice: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   proceedButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -326,7 +333,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   proceedButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: '#EDE7F6',
   },
   proceedButtonText: {
     color: '#FFFFFF',

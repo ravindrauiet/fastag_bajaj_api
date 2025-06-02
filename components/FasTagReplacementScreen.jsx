@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -629,20 +629,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   infoText: {
-    color: '#CCCCCC',
+    color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 20,
   },
   formContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputGroup: {
     marginBottom: 16,
@@ -650,7 +652,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   required: {
@@ -660,10 +662,11 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
   },
   inputError: {
     borderColor: '#FF0000',
@@ -675,15 +678,15 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
   },
   dropdownContainer: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
   },
   submitButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',

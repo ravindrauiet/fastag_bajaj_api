@@ -197,7 +197,7 @@ const SignUpScreen = ({ navigation }) => {
           <View style={styles.logoContainer}>
             <Image
               style={styles.logo}
-              source={require('../assets/icons/tm_square_logo.png')}
+              source={require('../assets/icons/tm_square_png-removebg-preview.png')}
               resizeMode="contain"
             />
           </View>
@@ -424,21 +424,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#6200EE',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#EDE7F6',
   },
   backButton: {
     padding: 8,
   },
   backButtonText: {
     fontSize: 24,
-    color: '#333333',
+    color: '#FFFFFF',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#FFFFFF',
   },
   logoContainer: {
     alignItems: 'center',
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   required: {
@@ -467,12 +467,13 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   input: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
   },
   inputError: {
     borderColor: '#FF3B30',
@@ -485,9 +486,9 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     height: 48,
   },
@@ -498,6 +499,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 0,
     height: '100%',
+    color: '#6200EE',
   },
   eyeButton: {
     paddingHorizontal: 12,
@@ -525,15 +527,15 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
     marginTop: 2,
   },
   checkboxChecked: {
-    backgroundColor: '#333333',
-    borderColor: '#333333',
+    backgroundColor: '#6200EE',
+    borderColor: '#6200EE',
   },
   checkboxError: {
     borderColor: '#FF3B30',
@@ -547,15 +549,15 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     lineHeight: 20,
   },
   termsLink: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontWeight: '500',
   },
   signupButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -573,11 +575,11 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   loginLink: {
     fontSize: 14,
-    color: '#00ACC1',
+    color: '#6200EE',
     fontWeight: '500',
   },
 });

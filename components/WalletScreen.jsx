@@ -434,18 +434,18 @@ const WalletScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7FA'
+    backgroundColor: '#FFFFFF'
   },
   container: {
     flex: 1,
   },
   balanceCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 20,
     padding: 20,
     margin: 15,
     marginTop: 20,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 16,
-    color: '#DDDDDD',
+    color: '#FFFFFF',
     fontWeight: '500',
   },
   visibilityToggle: {
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonIconContainer: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EDE7F6',
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 12,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
   },
   transactionsContainer: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginHorizontal: 15,
     marginTop: 5,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -528,11 +528,11 @@ const styles = StyleSheet.create({
   transactionsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
   },
   viewAllButton: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
   },
   transactionsList: {
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#EDE7F6',
   },
   transactionIconContainer: {
     width: 44,
@@ -559,12 +559,12 @@ const styles = StyleSheet.create({
   transactionTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   transactionDate: {
     fontSize: 12,
-    color: '#999999',
+    color: '#6200EE',
   },
   transactionAmount: {
     alignItems: 'flex-end',
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   },
   emptyTransactionsText: {
     fontSize: 14,
-    color: '#999999',
+    color: '#6200EE',
     marginTop: 10,
   },
   quickActionsContainer: {
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     margin: 15,
     marginBottom: 10,
     marginTop: 10,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
   quickActionsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 15,
   },
   quickActionGrid: {
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     width: '30%',
   },
   quickActionIconContainer: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EDE7F6',
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
   },
   quickActionText: {
     fontSize: 12,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
     textAlign: 'center',
   },

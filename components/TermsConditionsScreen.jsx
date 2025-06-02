@@ -162,10 +162,10 @@ const TermsConditionsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -195,36 +195,36 @@ const styles = StyleSheet.create({
   },
   lastUpdated: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     fontStyle: 'italic',
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginTop: 24,
     marginBottom: 10,
   },
   paragraphText: {
     fontSize: 15,
-    color: '#444444',
+    color: '#333333',
     lineHeight: 22,
     marginBottom: 12,
   },
   highlightedSection: {
-    backgroundColor: '#E8F4F8',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#00ACC1',
+    borderLeftColor: '#6200EE',
   },
   highlightedTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   highlightedText: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   acknowledgement: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginTop: 30,
     textAlign: 'center',
     paddingHorizontal: 20,

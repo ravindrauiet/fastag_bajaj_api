@@ -651,7 +651,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
         </View>
         
         {/* Dev Mode Toggle */}
-        <View style={styles.devModeContainer}>
+        {/* <View style={styles.devModeContainer}>
           <Text style={styles.devModeText}>Dev Mode</Text>
           <Switch
             value={devMode}
@@ -659,10 +659,10 @@ const ValidateOtpScreen = ({ navigation, route }) => {
             trackColor={{ false: '#767577', true: '#81b0ff' }}
             thumbColor={devMode ? '#2196F3' : '#f4f3f4'}
           />
-        </View>
+        </View> */}
         
         {/* Debug Info */}
-        <View style={styles.debugSection}>
+        {/* <View style={styles.debugSection}>
           <Text style={styles.debugTitle}>Debug Info (will be hidden in production)</Text>
           <Text style={styles.debugText}>RequestId: {requestId}</Text>
           <Text style={styles.debugText}>SessionId: {sessionId}</Text>
@@ -670,7 +670,7 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           <Text style={styles.debugText}>Vehicle: {vehicleNo || 'N/A'}</Text>
           <Text style={styles.debugText}>Current OTP: {otp.join('')}</Text>
           <Text style={styles.debugText}>Dev Mode: {devMode ? 'ON' : 'OFF'}</Text>
-        </View>
+        </View> */}
         
         {/* Timer & Resend */}
         <View style={styles.resendContainer}>
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   infoText: {
-    color: '#CCCCCC',
+    color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 20,
   },
@@ -758,28 +758,28 @@ const styles = StyleSheet.create({
     width: 45,
     height: 50,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     textAlign: 'center',
     fontSize: 20,
     backgroundColor: '#FFFFFF',
-    color: '#333333',
+    color: '#6200EE',
   },
   devModeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   devModeText: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
   },
   debugSection: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     padding: 12,
     borderRadius: 8,
     marginBottom: 24,
@@ -787,12 +787,12 @@ const styles = StyleSheet.create({
   debugTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   debugText: {
     fontSize: 12,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 4,
   },
   resendContainer: {
@@ -800,16 +800,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resendText: {
-    color: '#2196F3',
+    color: '#6200EE',
     fontSize: 16,
     fontWeight: 'bold',
   },
   timerText: {
-    color: '#999999',
+    color: '#6200EE',
     fontSize: 16,
   },
   verifyButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',

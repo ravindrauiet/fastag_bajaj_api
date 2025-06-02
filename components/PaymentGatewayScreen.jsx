@@ -286,17 +286,17 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   amountLabel: {
     fontSize: 16,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 8,
   },
   amount: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   methodsContainer: {
     padding: 20,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 16,
   },
   methodButton: {
@@ -312,13 +312,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 12,
     marginBottom: 12,
   },
   methodButtonActive: {
-    borderColor: '#333333',
-    backgroundColor: 'rgba(51, 51, 51, 0.05)',
+    borderColor: '#6200EE',
+    backgroundColor: '#EDE7F6',
   },
   methodIcon: {
     fontSize: 24,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   methodLabel: {
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   methodLabelActive: {
     fontWeight: '600',
@@ -336,11 +336,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
+    color: '#6200EE',
   },
   row: {
     flexDirection: 'row',
@@ -355,17 +356,17 @@ const styles = StyleSheet.create({
   bankOption: {
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 12,
     marginBottom: 8,
   },
   bankOptionActive: {
-    borderColor: '#333333',
-    backgroundColor: 'rgba(51, 51, 51, 0.05)',
+    borderColor: '#6200EE',
+    backgroundColor: '#EDE7F6',
   },
   bankName: {
     fontSize: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   bankNameActive: {
     fontWeight: '600',
@@ -373,16 +374,16 @@ const styles = StyleSheet.create({
   bottomContainer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
+    borderTopColor: '#EDE7F6',
   },
   payButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
   payButtonDisabled: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: '#B0BEC5',
   },
   payButtonText: {
     color: '#FFFFFF',

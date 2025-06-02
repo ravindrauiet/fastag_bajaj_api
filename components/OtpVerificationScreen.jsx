@@ -301,10 +301,10 @@ const OtpVerificationScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -337,10 +337,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -349,20 +349,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 15,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 24,
     textAlign: 'center',
     lineHeight: 22,
   },
   mobileText: {
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   otpContainer: {
     flexDirection: 'row',
@@ -373,21 +373,22 @@ const styles = StyleSheet.create({
   otpInput: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 12,
     width: 45,
     height: 55,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#6200EE',
   },
   otpInputFilled: {
-    borderColor: '#333333',
-    backgroundColor: '#F5F5F5',
+    borderColor: '#6200EE',
+    backgroundColor: '#EDE7F6',
   },
   otpInfo: {
     fontSize: 14,
-    color: '#777777',
+    color: '#6200EE',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -399,16 +400,16 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginRight: 4,
   },
   resendButton: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   resendButtonDisabled: {
-    color: '#999999',
+    color: '#B0BEC5',
   },
   termsContainer: {
     flexDirection: 'row',
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#6200EE',
     borderRadius: 4,
     marginRight: 12,
     justifyContent: 'center',
@@ -433,23 +434,23 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   checkboxChecked: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   termsTextContainer: {
     flex: 1,
   },
   termsText: {
     fontSize: 14,
-    color: '#555555',
+    color: '#6200EE',
     lineHeight: 20,
   },
   termsLink: {
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
   summaryContainer: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     padding: 16,
     marginTop: 8,
@@ -457,7 +458,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 12,
   },
   summaryRow: {
@@ -466,22 +467,22 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     width: 70,
   },
   summaryValue: {
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: '500',
     flex: 1,
   },
   verifyButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -498,7 +499,7 @@ const styles = StyleSheet.create({
   secureText: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#888888',
+    color: '#6200EE',
     marginTop: 8,
   },
 });

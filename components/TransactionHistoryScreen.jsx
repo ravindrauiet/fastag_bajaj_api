@@ -757,26 +757,26 @@ const TransactionHistoryScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F6F7',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -784,16 +784,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   searchIcon: {
     fontSize: 16,
-    color: '#999999',
+    color: '#6200EE',
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#333333',
+    color: '#6200EE',
     paddingVertical: 10,
   },
   clearButton: {
@@ -801,7 +803,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontSize: 18,
-    color: '#999999',
+    color: '#6200EE',
     fontWeight: 'bold',
   },
   filtersContainer: {
@@ -810,21 +812,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EDE7F6',
   },
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     marginHorizontal: 4,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
   },
   activeFilterButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   filterButtonText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     fontWeight: '500',
   },
   activeFilterButtonText: {
@@ -839,7 +841,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   listContentContainer: {
     flexGrow: 1,
@@ -852,7 +854,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#EDE7F6',
   },
   transactionIconContainer: {
     marginRight: 16,
@@ -863,10 +865,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#EDE7F6',
   },
   transactionIconText: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#6200EE',
   },
   transactionDetails: {
     flex: 1,
@@ -874,12 +878,12 @@ const styles = StyleSheet.create({
   transactionDescription: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 4,
   },
   transactionDateTime: {
     fontSize: 12,
-    color: '#777777',
+    color: '#6200EE',
     marginBottom: 2,
   },
   transactionDetailRow: {
@@ -888,12 +892,12 @@ const styles = StyleSheet.create({
   },
   transactionDetailText: {
     fontSize: 12,
-    color: '#777777',
+    color: '#6200EE',
     marginRight: 8,
   },
   transactionPaymentMethod: {
     fontSize: 12,
-    color: '#999999',
+    color: '#6200EE',
   },
   transactionAmount: {
     alignItems: 'flex-end',
@@ -918,12 +922,12 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: '#777777',
+    color: '#6200EE',
     textAlign: 'center',
   },
   troubleshootingContainer: {
@@ -932,17 +936,17 @@ const styles = StyleSheet.create({
   troubleshootingTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   troubleshootingItem: {
     fontSize: 14,
-    color: '#777777',
+    color: '#6200EE',
     marginBottom: 4,
   },
   refreshButton: {
     padding: 16,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 10,
   },
   refreshButtonText: {
@@ -951,7 +955,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   fastagTransactionItem: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#EDE7F6',
   },
   fastagTransactionDescription: {
     fontWeight: 'bold',

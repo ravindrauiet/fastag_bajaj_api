@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -457,20 +457,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   infoText: {
-    color: '#CCCCCC',
+    color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 20,
   },
   formContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputGroup: {
     marginBottom: 16,
@@ -478,7 +480,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   required: {
@@ -488,10 +490,11 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
   },
   inputError: {
     borderColor: '#FF0000',
@@ -502,21 +505,23 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   imagesContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   imageSection: {
     marginBottom: 20,
@@ -531,7 +536,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   noImageContainer: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     height: 180,
     justifyContent: 'center',
@@ -539,7 +544,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   noImageText: {
-    color: '#999999',
+    color: '#6200EE',
     fontSize: 16,
   },
   previewContainer: {
@@ -555,7 +560,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(98, 0, 238, 0.6)',
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -573,25 +578,25 @@ const styles = StyleSheet.create({
   },
   imageButton: {
     flex: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
     margin: 4,
   },
   imageButtonText: {
-    color: '#333333',
+    color: '#6200EE',
     fontWeight: 'bold',
   },
   submitButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     marginBottom: 24,
   },
   disabledButton: {
-    backgroundColor: '#a0a0a0',
+    backgroundColor: '#B0BEC5',
   },
   submitButtonText: {
     color: '#FFFFFF',

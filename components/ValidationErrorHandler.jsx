@@ -15,8 +15,14 @@ export const showErrorAlert = (title, message, onOk = null, allowContinue = true
     message,
     [{ 
       text: allowContinue ? 'Continue' : 'OK', 
-      onPress: onOk 
-    }]
+      onPress: onOk,
+      style: 'default'
+    }],
+    {
+      cancelable: false,
+      // Use the new color scheme for the alert
+      tintColor: '#6200EE'
+    }
   );
 };
 

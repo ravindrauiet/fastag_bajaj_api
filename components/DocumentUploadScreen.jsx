@@ -655,7 +655,7 @@ const DocumentUploadScreen = ({ navigation, route }) => {
             </Text>
           </View>
           
-          {renderDevelopmentModeToggle()}
+          {/* {renderDevelopmentModeToggle()} */}
           
           {/* Progress Indicator */}
           <View style={styles.progressContainer}>
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -743,12 +743,12 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -767,9 +767,11 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     marginBottom: 20,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 15,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -780,22 +782,22 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
   },
   progressPercentage: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   progressBar: {
     height: 6,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#EDE7F6',
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 3,
   },
   documentsContainer: {
@@ -805,26 +807,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 15,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     overflow: 'hidden',
   },
   documentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFFFFF',
   },
   documentIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EEEEEE',
+    backgroundColor: '#EDE7F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -838,17 +840,17 @@ const styles = StyleSheet.create({
   documentTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200EE',
   },
   documentSubtitle: {
     fontSize: 12,
-    color: '#666666',
+    color: '#6200EE',
   },
   uploadedBadge: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -880,7 +882,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFCDD2',
   },
   removeImageText: {
-    color: '#333333',
+    color: '#6200EE',
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -899,9 +901,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     marginHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#EDE7F6',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   imageOptionIcon: {
     fontSize: 24,
@@ -910,19 +912,19 @@ const styles = StyleSheet.create({
   imageOptionText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
   },
   documentFooter: {
     padding: 15,
   },
   uploadButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -941,20 +943,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
   uploadAllButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   proceedButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
   },
   disabledButton: {
-    backgroundColor: '#F0F0F0',
-    borderColor: '#DDDDDD',
+    backgroundColor: '#EDE7F6',
+    borderColor: '#EDE7F6',
   },
   buttonText: {
     color: '#FFFFFF',
@@ -967,16 +969,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 20,
     padding: 10,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
   },
   devModeText: {
     marginRight: 10,
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
+    color: '#6200EE',
   },
 });
 

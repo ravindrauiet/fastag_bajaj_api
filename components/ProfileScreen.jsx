@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -673,14 +673,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   kycBadge: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#EDE7F6',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
   },
   kycText: {
-    color: '#4CAF50',
+    color: '#6200EE',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -709,6 +709,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   walletInfo: {
     flex: 1,
@@ -724,7 +726,7 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   addMoneyButton: {
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
@@ -755,6 +757,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   infoRow: {
     padding: 12,
@@ -770,7 +774,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#EDE7F6',
     marginHorizontal: 12,
   },
   
@@ -787,7 +791,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333333',
     padding: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
   },
   editButtonsRow: {
@@ -810,7 +814,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -822,13 +826,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   editButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
   },
   editButtonText: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -843,6 +847,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   settingRow: {
     flexDirection: 'row',
@@ -865,6 +871,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   supportRow: {
     flexDirection: 'row',
@@ -875,7 +883,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -895,7 +903,7 @@ const styles = StyleSheet.create({
   
   // Logout Button
   logoutButton: {
-    backgroundColor: '#00ACC1',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

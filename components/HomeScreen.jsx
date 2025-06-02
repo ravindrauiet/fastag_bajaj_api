@@ -295,14 +295,6 @@ const HomeScreen = ({ navigation }) => {
             )}
           </View>
           
-          <View style={styles.barcodeSection}>
-            <Image
-              style={styles.barcode}
-              source={{ uri: 'https://via.placeholder.com/350x60/808080/FFFFFF' }}
-              resizeMode="contain"
-            />
-          </View>
-          
           <View style={styles.balanceBottomSection}>
             <View>
               <Text style={styles.userName}>{getDisplayName()}</Text>
@@ -372,7 +364,7 @@ const HomeScreen = ({ navigation }) => {
               onPress={startFasTagRegistration}
             >
               <View style={styles.serviceIconContainer}>
-                <Text style={styles.serviceIcon}>➕</Text>
+                <Text style={styles.serviceIconLarge}>+</Text>
               </View>
               <Text style={styles.serviceText}>Add{'\n'}FasTag</Text>
             </TouchableOpacity>
@@ -613,7 +605,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#777777',
+    color: '#6200EE',
   },
   // Header styles for message center
   headerMessageButton: {
@@ -623,12 +615,13 @@ const styles = StyleSheet.create({
   },
   messageIcon: {
     fontSize: 24,
+    color: '#6200EE',
   },
   badgeContainer: {
     position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: '#FF5252',
+    backgroundColor: '#03DAC5',
     borderRadius: 12,
     minWidth: 24,
     height: 24,
@@ -747,10 +740,15 @@ const styles = StyleSheet.create({
   
   // Balance Card
   balanceCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     margin: 16,
     overflow: 'hidden',
+    shadowColor: '#6200EE',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   balanceTopSection: {
     padding: 16,
@@ -766,7 +764,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   barcodeSection: {
-    backgroundColor: '#888888',
+    backgroundColor: '#E0E7FF',
     padding: 10,
     alignItems: 'center',
   },
@@ -786,7 +784,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   userId: {
-    color: '#CCCCCC',
+    color: '#FFFFFF',
     fontSize: 14,
   },
   inventoryButton: {
@@ -812,11 +810,11 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   welcomeSubtext: {
     fontSize: 14,
-    color: '#777777',
+    color: '#6200EE',
     marginTop: 4,
   },
   
@@ -829,7 +827,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333333',
+    color: '#6200EE',
   },
   
   // Frequently Used Grid
@@ -846,19 +844,26 @@ const styles = StyleSheet.create({
   serviceIconContainer: {
     width: 64,
     height: 64,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#6200EE',
   },
   serviceIcon: {
     fontSize: 24,
+    color: '#6200EE',
+  },
+  serviceIconLarge: {
+    fontSize: 45,
+    color: '#6200EE',
   },
   serviceText: {
     textAlign: 'center',
     fontSize: 11,
-    color: '#333333',
+    color: '#6200EE',
   },
   
   // Section Headers
@@ -869,7 +874,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   viewAllText: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -881,19 +886,21 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: 160,
+    // backgroundColor: '#6200EE',
     backgroundColor: '#FFFFFF',
+    // borderWidth: 2,
     borderRadius: 16,
     padding: 16,
     marginRight: 16,
     height: 160,
     justifyContent: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    // shadowColor: '#6200EE',
+    // shadowOffset: { width: 2, height: 2 },
+    // shadowOpacity: 0.06,
+    // shadowRadius: 4,
+    // elevation: 2,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#6200ee',
   },
   serviceCardIconContainer: {
     width: 50,
@@ -902,19 +909,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#6200EE',
   },
   serviceCardIcon: {
     fontSize: 24,
+    color: '#6200EE',
   },
   serviceCardText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: '#6200ee',
     marginBottom: 4,
   },
   serviceCardDescription: {
     fontSize: 12,
-    color: '#777777',
+    color: '#6200ee',
     lineHeight: 16,
   },
   
@@ -966,18 +977,19 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   activeNavIcon: {
-    backgroundColor: 'rgba(0, 172, 193, 0.1)',
+    backgroundColor: '#E0E7FF',
   },
   navIcon: {
     fontSize: 22,
+    color: '#6200EE',
   },
   navLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#777777',
+    color: '#6200EE',
   },
   activeNavLabel: {
-    color: '#00ACC1',
+    color: '#6200EE',
     fontWeight: '600',
   },
   navItemCenter: {
@@ -992,10 +1004,10 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: '#E0E7FF',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.12,
     shadowRadius: 5,
     elevation: 6,
     bottom: 20,
@@ -1005,16 +1017,20 @@ const styles = StyleSheet.create({
     width: 55,
     height: 55,
     borderRadius: 30,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderColor: '#EDE7F6',
+  },
+
+  fabIcon: {
+    color: '#FFFFFF',
   },
   
   // Debug Button
   debugButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 8,
     margin: 16,

@@ -118,7 +118,7 @@ const LoginScreen = ({ navigation }) => {
           <View style={styles.headerContainer}>
             <Image
               style={styles.logo}
-              source={require('../assets/icons/tm_square_logo.png')}
+              source={require('../assets/icons/tm_square_png-removebg-preview.png')}
               resizeMode="contain"
             />
             <Text style={styles.welcomeText}>Welcome Back</Text>
@@ -251,23 +251,25 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   subtitleText: {
     fontSize: 16,
-    color: '#777777',
+    color: '#6200EE',
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputGroup: {
     marginBottom: 16,
@@ -275,23 +277,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     height: 48,
   },
@@ -302,6 +305,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 0,
     height: '100%',
+    color: '#6200EE',
   },
   eyeButton: {
     paddingHorizontal: 12,
@@ -318,6 +322,7 @@ const styles = StyleSheet.create({
   eyeIcon: {
     fontSize: 16,
     opacity: 0.7,
+    color: '#6200EE',
   },
   inputError: {
     borderColor: '#FF3B30',
@@ -342,14 +347,14 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   checkboxChecked: {
-    backgroundColor: '#333333',
-    borderColor: '#333333',
+    backgroundColor: '#6200EE',
+    borderColor: '#6200EE',
   },
   checkmark: {
     color: '#FFFFFF',
@@ -357,15 +362,15 @@ const styles = StyleSheet.create({
   },
   rememberMeText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: '#00ACC1',
+    color: '#6200EE',
     fontWeight: '500',
   },
   loginButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -383,30 +388,30 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
   signupLink: {
     fontSize: 14,
-    color: '#00ACC1',
+    color: '#6200EE',
     fontWeight: '500',
   },
   testingNote: {
     marginTop: 40,
     padding: 16,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#00ACC1',
+    borderLeftColor: '#6200EE',
   },
   testingNoteTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 8,
   },
   testingNoteText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
   },
 });
 

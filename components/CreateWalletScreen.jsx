@@ -630,9 +630,9 @@ const CreateWalletScreen = ({ navigation, route }) => {
           <View style={styles.formContainer}>
             {/* First Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>First Name<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.inputLabel}>First Name<Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={[styles.input, errors.name ? styles.inputError : null]}
+                style={[styles.textInput, errors.name ? styles.inputError : null]}
                 placeholder="Enter your first name"
                 value={name}
                 onChangeText={(text) => {
@@ -648,9 +648,9 @@ const CreateWalletScreen = ({ navigation, route }) => {
             
             {/* Last Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Last Name<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.inputLabel}>Last Name<Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={[styles.input, errors.lastName ? styles.inputError : null]}
+                style={[styles.textInput, errors.lastName ? styles.inputError : null]}
                 placeholder="Enter your last name"
                 value={lastName}
                 onChangeText={(text) => {
@@ -666,9 +666,9 @@ const CreateWalletScreen = ({ navigation, route }) => {
             
             {/* Mobile Number */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Mobile Number<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.inputLabel}>Mobile Number<Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={[styles.input, errors.mobileNo ? styles.inputError : null]}
+                style={[styles.textInput, errors.mobileNo ? styles.inputError : null]}
                 placeholder="Enter 10 digit mobile number"
                 value={mobileNo}
                 onChangeText={(text) => {
@@ -687,9 +687,9 @@ const CreateWalletScreen = ({ navigation, route }) => {
             
             {/* Date of Birth - Text input instead of date picker */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Date of Birth (DD-MM-YYYY)<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.inputLabel}>Date of Birth (DD-MM-YYYY)<Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={[styles.input, errors.dob ? styles.inputError : null]}
+                style={[styles.textInput, errors.dob ? styles.inputError : null]}
                 placeholder="DD-MM-YYYY"
                 value={dob}
                 onChangeText={(text) => handleDateChange(text, setDob)}
@@ -704,7 +704,7 @@ const CreateWalletScreen = ({ navigation, route }) => {
             
             {/* Document Type - Custom Dropdown */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>ID Document Type<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.inputLabel}>ID Document Type<Text style={styles.required}>*</Text></Text>
               <TouchableOpacity
                 style={styles.dropdownButton}
                 onPress={() => setShowDocumentPicker(true)}
@@ -768,9 +768,9 @@ const CreateWalletScreen = ({ navigation, route }) => {
             
             {/* Document Number */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Document Number<Text style={styles.required}>*</Text></Text>
+              <Text style={styles.inputLabel}>Document Number<Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={[styles.input, errors.documentNumber ? styles.inputError : null]}
+                style={[styles.textInput, errors.documentNumber ? styles.inputError : null]}
                 placeholder={`Enter your ${getDocumentTypeLabel()} number`}
                 value={documentNumber}
                 onChangeText={(text) => {
@@ -788,9 +788,9 @@ const CreateWalletScreen = ({ navigation, route }) => {
             {/* Document Expiry Date - Only for DL and Passport */}
             {showExpiryDate && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Document Expiry Date (DD-MM-YYYY)<Text style={styles.required}>*</Text></Text>
+                <Text style={styles.inputLabel}>Document Expiry Date (DD-MM-YYYY)<Text style={styles.required}>*</Text></Text>
                 <TextInput
-                  style={[styles.input, errors.expiryDate ? styles.inputError : null]}
+                  style={[styles.textInput, errors.expiryDate ? styles.inputError : null]}
                   placeholder="DD-MM-YYYY"
                   value={expiryDate}
                   onChangeText={(text) => handleDateChange(text, setExpiryDate)}
@@ -807,7 +807,7 @@ const CreateWalletScreen = ({ navigation, route }) => {
           
           {/* Create Wallet Button */}
           <TouchableOpacity 
-            style={[styles.button, loading && styles.disabledButton]}
+            style={[styles.submitButton, loading && styles.disabledButton]}
             onPress={handleCreateWallet}
             activeOpacity={0.8}
             disabled={loading}
@@ -815,11 +815,12 @@ const CreateWalletScreen = ({ navigation, route }) => {
             {loading ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonText}>Create Wallet</Text>
+              <Text style={styles.submitButtonText}>Create Wallet</Text>
             )}
           </TouchableOpacity>
           
-          <View style={styles.noticeContainer}>
+          <View style={styles.noticeCard}>
+            <Text style={styles.noticeTitle}>Terms of Service and Privacy Policy</Text>
             <Text style={styles.noticeText}>
               By creating a wallet, you agree to our Terms of Service and Privacy Policy.
               Your information will be securely stored and used only for FasTag related services.
@@ -837,12 +838,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   backButton: {
     padding: 8,
@@ -857,65 +860,76 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   scrollContent: {
-    flexGrow: 1,
+    flex: 1,
+    padding: 16,
   },
   content: {
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-  },
-  infoTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  infoText: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  formContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
-    shadowColor: '#000',
+    marginBottom: 16,
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#6200EE',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#6200EE',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  formContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#6200EE',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputGroup: {
     marginBottom: 16,
   },
-  label: {
+  inputLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333333',
+    fontWeight: '600',
+    color: '#6200EE',
     marginBottom: 8,
   },
   required: {
     color: '#FF0000',
     marginLeft: 4,
   },
-  input: {
+  textInput: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#DDDDDD',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: '#6200EE',
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputError: {
     borderColor: '#FF0000',
   },
   errorText: {
-    color: '#FF0000',
+    color: '#E53935',
     fontSize: 12,
     marginTop: 4,
   },
@@ -986,31 +1000,50 @@ const styles = StyleSheet.create({
     color: '#0066CC',
     fontWeight: 'bold',
   },
-  button: {
-    backgroundColor: '#333333',
-    borderRadius: 16,
+  submitButton: {
+    backgroundColor: '#6200EE',
+    borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginBottom: 24,
+    marginTop: 8,
   },
   disabledButton: {
     backgroundColor: '#999999',
   },
-  buttonText: {
+  submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  noticeContainer: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    padding: 12,
+  noticeCard: {
+    backgroundColor: '#EDE7F6',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6200EE',
+  },
+  noticeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#6200EE',
+    marginBottom: 8,
   },
   noticeText: {
-    fontSize: 12,
-    color: '#666666',
-    lineHeight: 18,
-    textAlign: 'center',
+    fontSize: 14,
+    color: '#6200EE',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  bulletList: {
+    marginVertical: 8,
+    paddingLeft: 8,
+  },
+  bulletItem: {
+    fontSize: 14,
+    color: '#6200EE',
+    lineHeight: 22,
   },
 });
 

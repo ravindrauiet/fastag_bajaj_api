@@ -1449,7 +1449,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1473,7 +1473,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoCard: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1490,7 +1490,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   formContainer: {
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -1499,6 +1499,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#EDE7F6',
   },
   inputGroup: {
     marginBottom: 16,
@@ -1516,7 +1518,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -1531,15 +1533,15 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
     borderRadius: 8,
   },
   dropdownContainer: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#DDDDDD',
+    borderColor: '#EDE7F6',
   },
   submitButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
@@ -1560,7 +1562,7 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     flex: 1,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     marginRight: 8,
@@ -1569,7 +1571,7 @@ const styles = StyleSheet.create({
   balanceAmount: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#0D47A1',
+    color: '#6200EE',
     marginBottom: 4,
   },
   balanceLabel: {
@@ -1578,7 +1580,7 @@ const styles = StyleSheet.create({
   },
   requiredCard: {
     flex: 1,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#EDE7F6',
     borderRadius: 8,
     padding: 12,
     marginLeft: 8,
@@ -1587,7 +1589,7 @@ const styles = StyleSheet.create({
   requiredAmount: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#E65100',
+    color: '#6200EE',
     marginBottom: 4,
   },
   requiredLabel: {
@@ -1623,7 +1625,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -1648,7 +1650,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   continueButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,

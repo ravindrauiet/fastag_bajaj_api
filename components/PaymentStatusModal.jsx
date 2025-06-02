@@ -139,7 +139,7 @@ const PaymentStatusModal = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(98, 0, 238, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '90%',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#6200EE',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -168,8 +168,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   successCircle: {
-    backgroundColor: '#4CAF50',
-    shadowColor: '#4CAF50',
+    backgroundColor: '#6200EE',
+    shadowColor: '#6200EE',
   },
   failureCircle: {
     backgroundColor: '#FF5252',
@@ -178,18 +178,18 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 16,
     textAlign: 'center',
   },
   amountText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
     marginBottom: 16,
   },
   balanceContainer: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     padding: 16,
     width: '100%',
@@ -197,13 +197,13 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 4,
   },
   balanceAmount: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#6200EE',
   },
   errorMessage: {
     fontSize: 16,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   },
   transactionId: {
     fontSize: 14,
-    color: '#666666',
+    color: '#6200EE',
     marginBottom: 24,
   },
   buttonContainer: {
@@ -224,22 +224,22 @@ const styles = StyleSheet.create({
   },
   walletButton: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#EDE7F6',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#6200EE',
   },
   walletButtonText: {
-    color: '#333333',
+    color: '#6200EE',
     fontSize: 16,
     fontWeight: '600',
   },
   homeButton: {
     flex: 1,
-    backgroundColor: '#333333',
+    backgroundColor: '#6200EE',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
