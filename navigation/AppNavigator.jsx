@@ -380,7 +380,7 @@ const CustomDrawerContent = (props) => {
         </TouchableOpacity>
         
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>App Version 1.0.0</Text>
+          <Text style={styles.versionText}>App Version 1.0.38</Text>
         </View>
       </ScrollView>
     </View>
