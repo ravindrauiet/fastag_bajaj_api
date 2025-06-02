@@ -204,27 +204,19 @@ const ManualActivationScreen = ({ route, navigation }) => {
     let isValid = true;
     const newErrors = {};
     
-    // Serial Number
-    if (!serialNo.trim()) {
-      newErrors.serialNo = 'Serial Number is required';
-      isValid = false;
-    } else if (serialNo.trim().length < 3) {
-      newErrors.serialNo = 'Serial Number is too short';
-      isValid = false;
-    } else if (serialNo.trim().length > 40) {
-      newErrors.serialNo = 'Serial Number is too long';
+    // Check if the selected serial number exists in allocated tags
+    const selectedTag = suggestions.find(tag => tag.serialNo === serialNo.trim());
+    if (!selectedTag) {
+      newErrors.serialNo = 'Please select a valid FasTag from the list';
       isValid = false;
     }
-    
-    // TID is no longer required - removed validation
     
     setErrors(newErrors);
     
     if (!isValid) {
-      // Use error handler for validation errors instead of Alert
       ErrorHandler.showErrorAlert(
         'Validation Error',
-        'Please fix the errors in the form before continuing.',
+        'Please select a valid FasTag from the list.',
         null,
         false
       );
@@ -238,13 +230,24 @@ const ManualActivationScreen = ({ route, navigation }) => {
     if (!validateForm()) {
       return;
     }
+
+    // Find the selected tag
+    const selectedTag = suggestions.find(tag => tag.serialNo === serialNo.trim());
+    if (!selectedTag) {
+      ErrorHandler.showErrorAlert(
+        'Invalid Selection',
+        'Please select a valid FasTag from the list.',
+        null,
+        false
+      );
+      return;
+    }
     
     setLoading(true);
     
     try {
       console.log('Starting FasTag registration process...');
-      console.log('Document details status:', JSON.stringify(documentDetails));
-      console.log('Using session ID:', sessionId);
+      console.log('Selected FasTag:', selectedTag);
       
       // Create form data for tracking
       const formData = {
@@ -257,14 +260,14 @@ const ManualActivationScreen = ({ route, navigation }) => {
         customerId,
         walletId,
         name,
-        serialNo: serialNo.trim(),
+        serialNo: selectedTag.serialNo,
         tid: tid.trim(),
         timestamp: new Date().toISOString()
       };
       
       // Add FasTag to the database inventory
       const fastagInventoryResult = await FastagManager.addFastag({
-        serialNo: serialNo.trim(),
+        serialNo: selectedTag.serialNo,
         tid: tid.trim(),
         mobileNo,
         vehicleNo,
@@ -363,7 +366,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
           walletId: walletId || ""
         },
         fasTagDetails: {
-          serialNo: serialNo.trim(),
+          serialNo: selectedTag.serialNo,
           tid: tid.trim() || "",
           udf1: udf1 || "",
           udf2: udf2 || "",
@@ -554,7 +557,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>FasTag Manual Activation</Text>
+        <Text style={styles.headerTitle}>Select FasTag</Text>
         <View style={{ width: 40 }} />
       </View>
       
@@ -570,9 +573,9 @@ const ManualActivationScreen = ({ route, navigation }) => {
             }]}
           >
             <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>FasTag Manual Activation</Text>
+              <Text style={styles.infoTitle}>Select Your FasTag</Text>
               <Text style={styles.infoText}>
-                Please Select the FasTag Serial Number. These details are required to complete the registration process.
+                Please select a FasTag from your allocated tags. You must select a valid FasTag to proceed with the registration.
               </Text>
             </View>
             
@@ -587,13 +590,13 @@ const ManualActivationScreen = ({ route, navigation }) => {
                       errors.serialNo ? styles.inputError : null,
                       showSuggestions && styles.activeInput
                     ]}
-                    placeholder="Enter FasTag Serial Number"
+                    placeholder="Search FasTag Serial Number"
                     value={serialNo}
                     onChangeText={(text) => {
                       setSerialNo(text);
-                      setShowSuggestions(text.length > 0);
+                      setShowSuggestions(true);
                     }}
-                    onFocus={() => setShowSuggestions(serialNo.length > 0)}
+                    onFocus={() => setShowSuggestions(true)}
                     autoCapitalize="characters"
                   />
                   {serialNo ? (
@@ -601,7 +604,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
                       style={styles.clearButton}
                       onPress={() => {
                         setSerialNo('');
-                        setShowSuggestions(false);
+                        setShowSuggestions(true);
                       }}
                     >
                       <Text style={styles.clearButtonText}>✕</Text>
@@ -740,9 +743,12 @@ const ManualActivationScreen = ({ route, navigation }) => {
             
             {/* Submit Button */}
             <TouchableOpacity 
-              style={[styles.submitButton, loading && styles.disabledButton]}
+              style={[
+                styles.submitButton, 
+                (!serialNo || !suggestions.some(tag => tag.serialNo === serialNo.trim())) && styles.disabledButton
+              ]}
               onPress={handleSubmit}
-              disabled={loading}
+              disabled={!serialNo || !suggestions.some(tag => tag.serialNo === serialNo.trim()) || loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
