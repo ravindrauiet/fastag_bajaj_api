@@ -330,6 +330,10 @@ const HomeScreen = ({ navigation }) => {
               Your account was created on {" "}
               {userProfile.createdAt ? new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString() : 'recently'}
             </Text>
+            <Text style={styles.welcomeSubtext}>
+              Last login: {" "}
+              {userProfile.lastLogin ? new Date(userProfile.lastLogin.seconds * 1000).toLocaleString() : 'Just now'}
+            </Text>
           </View>
         )}
 
