@@ -270,11 +270,162 @@ export const getTagsByStatus = async (status) => {
   }
 };
 
+// Add new functions for allocatedFasTags collection
+export const addAllocatedFastag = async (fastagData) => {
+  try {
+    const docRef = await addDoc(collection(db, 'allocatedFasTags'), {
+      ...fastagData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    return { id: docRef.id, ...fastagData };
+  } catch (error) {
+    console.error('Error adding allocated Fastag:', error);
+    throw error;
+  }
+};
+
+export const updateAllocatedFastag = async (id, updateData) => {
+  try {
+    const docRef = doc(db, 'allocatedFasTags', id);
+    await updateDoc(docRef, {
+      ...updateData,
+      updatedAt: serverTimestamp()
+    });
+    return { id, ...updateData };
+  } catch (error) {
+    console.error('Error updating allocated Fastag:', error);
+    throw error;
+  }
+};
+
+export const getAllocatedFastagById = async (id) => {
+  try {
+    const docRef = doc(db, 'allocatedFasTags', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting allocated Fastag:', error);
+    throw error;
+  }
+};
+
+export const getAllocatedFastagBySerialNumber = async (serialNumber) => {
+  try {
+    const q = query(
+      collection(db, 'allocatedFasTags'),
+      where('serialNumber', '==', serialNumber)
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting allocated Fastag by serial number:', error);
+    throw error;
+  }
+};
+
+export const getAllocatedFastagsByUserId = async (userId) => {
+  try {
+    const q = query(
+      collection(db, 'allocatedFasTags'),
+      where('userId', '==', userId)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting allocated Fastags by user ID:', error);
+    throw error;
+  }
+};
+
+export const updateAllocatedFastagStatus = async (id, status, reason = '') => {
+  try {
+    const docRef = doc(db, 'allocatedFasTags', id);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      throw new Error('Fastag not found');
+    }
+
+    const currentData = docSnap.data();
+    const statusHistory = currentData.statusHistory || [];
+    
+    statusHistory.push({
+      status,
+      reason,
+      timestamp: serverTimestamp()
+    });
+
+    await updateDoc(docRef, {
+      status,
+      statusHistory,
+      updatedAt: serverTimestamp()
+    });
+
+    return { id, status, statusHistory };
+  } catch (error) {
+    console.error('Error updating allocated Fastag status:', error);
+    throw error;
+  }
+};
+
+export const getAllocatedFastagsByStatus = async (status) => {
+  try {
+    const q = query(
+      collection(db, 'allocatedFasTags'),
+      where('status', '==', status)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting allocated Fastags by status:', error);
+    throw error;
+  }
+};
+
+export const getAllocatedFastagsByVehicleNumber = async (vehicleNumber) => {
+  try {
+    const q = query(
+      collection(db, 'allocatedFasTags'),
+      where('vehicleNumber', '==', vehicleNumber)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error getting allocated Fastags by vehicle number:', error);
+    throw error;
+  }
+};
+
 export default {
   addFastag,
   updateFastag,
   getFastag,
   getTagBySerialNo,
   getTagsByAdmin,
-  getTagsByStatus
+  getTagsByStatus,
+  addAllocatedFastag,
+  updateAllocatedFastag,
+  getAllocatedFastagById,
+  getAllocatedFastagBySerialNumber,
+  getAllocatedFastagsByUserId,
+  updateAllocatedFastagStatus,
+  getAllocatedFastagsByStatus,
+  getAllocatedFastagsByVehicleNumber
 }; 

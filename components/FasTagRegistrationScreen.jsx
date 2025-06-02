@@ -23,6 +23,7 @@ import FormLogger from '../utils/FormLogger';
 import FasTagRegistrationHelper from '../utils/FasTagRegistrationHelper';
 import FastagManager from '../utils/FastagManager';
 import { deductFromUserWalletForFasTag } from '../services/transactionManager';
+import { updateAllocatedFastag } from '../utils/FastagManager';
 
 // Helper function to generate request ID
 const generateRequestId = () => {
@@ -601,45 +602,6 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           fastagResult.registrationId
         );
         
-        // Update Fastag status to inactive and set vehicle number
-        try {
-          if (fastagDbId) {
-            await FastagManager.updateFastag(fastagDbId, {
-              status: 'inactive',
-              vehicleNo: finalRegistrationData.vrnDetails.vrn,
-              lastUpdated: new Date().toISOString(),
-              statusHistory: [{
-                status: 'inactive',
-                vehicleNo: finalRegistrationData.vrnDetails.vrn,
-                timestamp: new Date().toISOString(),
-                reason: 'FasTag Registration Completed'
-              }]
-            });
-          } else if (finalRegistrationData.fasTagDetails?.serialNo) {
-            // Try to find by serial number
-            const serialNo = finalRegistrationData.fasTagDetails.serialNo;
-            const existingTag = await FastagManager.getTagBySerialNo(serialNo);
-            
-            if (existingTag.success && existingTag.fastag) {
-              await FastagManager.updateFastag(existingTag.fastag.id, {
-                status: 'inactive',
-                vehicleNo: finalRegistrationData.vrnDetails.vrn,
-                lastUpdated: new Date().toISOString(),
-                statusHistory: [{
-                  status: 'inactive',
-                  vehicleNo: finalRegistrationData.vrnDetails.vrn,
-                  timestamp: new Date().toISOString(),
-                  reason: 'FasTag Registration Completed'
-                }]
-              });
-            }
-          }
-          console.log('Fastag status updated to inactive after registration');
-        } catch (dbError) {
-          console.error('Error updating Fastag status:', dbError);
-          // Continue with registration despite status update error
-        }
-        
         // Deduct from user wallet
         if (userInfo && userInfo.uid) {
           try {
@@ -832,7 +794,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
                   totalAmountPaid += paymentAmount;
                   
                   await FastagManager.updateFastag(existingTag.fastag.id, {
-                    status: 'inactive',
+                    status: 'active',
                     mobileNo: finalRegistrationData.custDetails.mobileNo,
                     vehicleNo: finalRegistrationData.vrnDetails.vrn,
                     name: finalRegistrationData.custDetails.name,
@@ -867,7 +829,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
                   await FastagManager.addFastag({
                     serialNo,
                     tid: finalRegistrationData.fasTagDetails.tid || null,
-                    status: 'inactive',
+                    status: 'active',
                     mobileNo: finalRegistrationData.custDetails.mobileNo,
                     vehicleNo: finalRegistrationData.vrnDetails.vrn,
                     name: finalRegistrationData.custDetails.name,
@@ -996,8 +958,51 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           time: 'Just now',
           read: false
         });
+
+        // Update allocatedFasTags collection - now doing this for all error cases including code 11
+        try {
+          console.log('=== Updating FasTag Status ===');
+          console.log('Serial Number:', serialNo);
+          console.log('Vehicle Number:', vrn);
+          
+          // First get the allocated FasTag ID using serial number
+          const allocatedTag = await FastagManager.getAllocatedFastagBySerialNumber(serialNo);
+          console.log('Allocated Tag:', allocatedTag);
+          
+          if (!allocatedTag) {
+            console.error('❌ No allocated FasTag found with serial number:', serialNo);
+            return;
+          }
+          
+          const allocatedFastagData = {
+            status: 'allocated',
+            vehicleNo: vrn,
+            updatedAt: new Date().toISOString()
+          };
+          
+          console.log('Update Data:', JSON.stringify(allocatedFastagData, null, 2));
+          console.log('Using ID from allocated FasTag:', allocatedTag.id);
+          
+          // Update the allocatedFasTags document using the ID from allocatedTag
+          await FastagManager.updateAllocatedFastag(allocatedTag.id, allocatedFastagData);
+          console.log('✅ Successfully updated allocatedFasTags status to allocated');
+        } catch (error) {
+          console.error('❌ Error updating allocatedFasTags:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          // Continue with the flow even if update fails
+        }
+
+        // Check if wallet exists
+        const walletStatus = response.validateOtpResp?.custDetails?.walletStatus;
+        console.log('Wallet status:', walletStatus);
       } else {
         const errorMsg = response?.response?.errorDesc || 'Failed to register FasTag';
+        const errorCode = response?.response?.code || 'unknown';
+        
+        console.log('=== FasTag Registration Error Details ===');
+        console.log('Error Code:', errorCode);
+        console.log('Error Message:', errorMsg);
+        console.log('Response:', JSON.stringify(response, null, 2));
         
         // Update FormTracker with error
         await trackFormSubmission(
@@ -1012,6 +1017,39 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           trackingResult.id,
           SUBMISSION_STATUS.REJECTED
         );
+        
+        // Update allocatedFasTags collection - now doing this for all error cases including code 11
+        try {
+          console.log('=== Updating FasTag Status ===');
+          console.log('Serial Number:', serialNo);
+          console.log('Vehicle Number:', vrn);
+          
+          // First get the allocated FasTag ID using serial number
+          const allocatedTag = await FastagManager.getAllocatedFastagBySerialNumber(serialNo);
+          console.log('Allocated Tag:', allocatedTag);
+          
+          if (!allocatedTag) {
+            console.error('❌ No allocated FasTag found with serial number:', serialNo);
+            return;
+          }
+          
+          const allocatedFastagData = {
+            status: 'allocated',
+            vehicleNo: vrn,
+            updatedAt: new Date().toISOString()
+          };
+          
+          console.log('Update Data:', JSON.stringify(allocatedFastagData, null, 2));
+          console.log('Using ID from allocated FasTag:', allocatedTag.id);
+          
+          // Update the allocatedFasTags document using the ID from allocatedTag
+          await FastagManager.updateAllocatedFastag(allocatedTag.id, allocatedFastagData);
+          console.log('✅ Successfully updated allocatedFasTags status to allocated');
+        } catch (error) {
+          console.error('❌ Error updating allocatedFasTags:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          // Continue with the flow even if update fails
+        }
         
         // Log error with FormLogger
         await FormLogger.logFormAction(
@@ -1042,13 +1080,20 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         
         // Special handling for RC image errors
         if (errorMsg.includes('RCIMAGE')) {
+          console.log('RC Image error detected, showing special alert');
           Alert.alert(
             'Registration Error - RC Images',
             'There was an issue with your RC images. Please go back to the Document Upload screen and re-upload clearer images of your Registration Certificate.',
             [{ text: 'OK' }]
           );
         } else {
-          throw new Error(errorMsg);
+          // Show error message but don't throw error to allow status update
+          console.log('Showing general error alert');
+          Alert.alert(
+            'Registration Error',
+            errorMsg,
+            [{ text: 'OK' }]
+          );
         }
       }
     } catch (error) {
@@ -1325,7 +1370,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
         </View>
         
         {/* TID */}
-        <View style={styles.inputGroup}>
+        {/* <View style={styles.inputGroup}>
           <Text style={styles.label}>TID</Text>
           <TextInput
             style={styles.input}
@@ -1333,7 +1378,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
             value={tid}
             onChangeText={setTid}
           />
-        </View>
+        </View> */}
       </View>
       
       {/* Submit Button */}

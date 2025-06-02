@@ -165,6 +165,10 @@ export const AuthProvider = ({ children }) => {
           });
         } else {
           setIsAdmin(false);
+          // Update lastLogin for regular users
+          await createOrUpdateUser(result.user.uid, {
+            lastLogin: serverTimestamp()
+          });
         }
         
         // Fetch user profile from Firestore
@@ -215,7 +219,7 @@ export const AuthProvider = ({ children }) => {
       setError("");
       setIsLoading(true);
       
-      const { email, password, firstName, lastName, phone } = userData;
+      const { email, password, firstName, lastName, phone, aadharCard, panCard } = userData;
       const displayName = `${firstName} ${lastName}`;
       
       const result = await registerWithEmailAndPassword(email, password, { 
@@ -235,7 +239,11 @@ export const AuthProvider = ({ children }) => {
           lastName,
           email,
           phone: phone || '',
+          aadharCard: aadharCard || '',
+          panCard: panCard || '',
           photoURL: result.user.photoURL || '',
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
         };
         
         await createOrUpdateUser(result.user.uid, firestoreData);

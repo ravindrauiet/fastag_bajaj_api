@@ -52,7 +52,11 @@ const AllocatedFasTagsScreen = ({ navigation }) => {
       
       // Query Firestore for all allocated FastTags for this user
       const fastagRef = collection(db, "allocatedFasTags");
-      const q = query(fastagRef, where('bcId', '==', bcId));
+      const q = query(
+        fastagRef, 
+        where('bcId', '==', bcId),
+        where('status', 'in', ['available', 'used', 'revoked', 'pending_activation', 'inactive', 'allocated'])
+      );
       const querySnapshot = await getDocs(q);
       
       const tags = [];
@@ -62,7 +66,9 @@ const AllocatedFasTagsScreen = ({ navigation }) => {
           serialNo: doc.data().serialNumber,
           status: doc.data().status,
           activatedAt: doc.data().allocatedAt,
-          usedStyle: doc.data().status === 'used' ? styles.usedTag : {}
+          vehicleNo: doc.data().vehicleNo || '',
+          usedStyle: doc.data().status === 'used' ? styles.usedTag : 
+                    doc.data().status === 'allocated' ? styles.allocatedTag : {}
         });
       });
       
@@ -195,8 +201,15 @@ const AllocatedFasTagsScreen = ({ navigation }) => {
               ? 'Activation Pending'
               : item.status === 'inactive'
                 ? 'Inactive'
-                : 'Used'}
+                : item.status === 'allocated'
+                  ? 'Allocated'
+                  : 'Used'}
         </Text>
+        {item.vehicleNo && (
+          <Text style={styles.vehicleNo}>
+            Vehicle: {item.vehicleNo}
+          </Text>
+        )}
         {item.activatedAt && (
           <Text style={styles.tagDate}>
             Activated: {new Date(item.activatedAt.seconds * 1000).toLocaleDateString()}
@@ -213,6 +226,12 @@ const AllocatedFasTagsScreen = ({ navigation }) => {
       {item.status === 'pending_activation' && (
         <View style={styles.pendingButton}>
           <Text style={styles.pendingButtonText}>Pending</Text>
+        </View>
+      )}
+
+      {item.status === 'allocated' && (
+        <View style={styles.allocatedButton}>
+          <Text style={styles.allocatedButtonText}>Allocated</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -631,7 +650,28 @@ const styles = StyleSheet.create({
     color: '#666666',
     fontSize: 14,
     textDecorationLine: 'underline',
-  }
+  },
+  allocatedTag: {
+    backgroundColor: '#E3F2FD',
+    borderColor: '#2196F3',
+    borderWidth: 1,
+  },
+  allocatedButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  allocatedButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  vehicleNo: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 2,
+  },
 });
 
 export default AllocatedFasTagsScreen; 

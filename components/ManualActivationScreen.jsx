@@ -158,7 +158,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
       const q = query(
         fastagRef, 
         where('bcId', '==', bcId),
-        where('status', '==', 'available')
+        where('status', 'in', ['available'])
       );
       const querySnapshot = await getDocs(q);
       
@@ -572,7 +572,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
             <View style={styles.infoCard}>
               <Text style={styles.infoTitle}>FasTag Manual Activation</Text>
               <Text style={styles.infoText}>
-                Please enter the FasTag Serial Number and TID details manually. These details are required to complete the registration process.
+                Please Select the FasTag Serial Number. These details are required to complete the registration process.
               </Text>
             </View>
             
@@ -681,7 +681,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
               </View>
               
               {/* TID */}
-              <View style={styles.inputGroup}>
+              {/* <View style={styles.inputGroup}>
                 <Text style={styles.label}>TID</Text>
                 <TextInput
                   style={[styles.input, errors.tid ? styles.inputError : null]}
@@ -693,7 +693,7 @@ const ManualActivationScreen = ({ route, navigation }) => {
                 {errors.tid ? (
                   <Text style={styles.errorText}>{errors.tid}</Text>
                 ) : null}
-              </View>
+              </View> */}
             </View>
             
             {/* Vehicle Details Summary */}
