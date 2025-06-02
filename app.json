@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TM Square Agent",
-    "slug": "tm-square-agent",
+    "slug": "fastag",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icons/tm_square_logo.png",
