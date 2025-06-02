@@ -1034,7 +1034,7 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           }
           
           const allocatedFastagData = {
-            status: 'allocated',
+            status: 'failed',
             vehicleNo: vrn,
             updatedAt: new Date().toISOString()
           };
