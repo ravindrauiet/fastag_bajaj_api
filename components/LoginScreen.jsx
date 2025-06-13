@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -33,10 +34,50 @@ const LoginScreen = ({ navigation }) => {
   
   // Access auth context
   const { login, error: authError } = useAuth();
-  
+
+  // Check for saved credentials on component mount
+  useEffect(() => {
+    const checkSavedCredentials = async () => {
+      try {
+        const savedEmail = await AsyncStorage.getItem('userEmail');
+        const savedPassword = await AsyncStorage.getItem('userPassword');
+        const savedRememberMe = await AsyncStorage.getItem('rememberMe');
+
+        if (savedRememberMe === 'true' && savedEmail && savedPassword) {
+          setEmail(savedEmail);
+          setPassword(savedPassword);
+          setRememberMe(true);
+          // Auto login if remember me was enabled
+          handleLogin(savedEmail, savedPassword);
+        }
+      } catch (error) {
+        console.error('Error loading saved credentials:', error);
+      }
+    };
+
+    checkSavedCredentials();
+  }, []);
+
   // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  // Handle remember me toggle
+  const handleRememberMeToggle = async () => {
+    const newRememberMe = !rememberMe;
+    setRememberMe(newRememberMe);
+    
+    if (!newRememberMe) {
+      // If remember me is turned off, clear saved credentials
+      try {
+        await AsyncStorage.removeItem('userEmail');
+        await AsyncStorage.removeItem('userPassword');
+        await AsyncStorage.removeItem('rememberMe');
+      } catch (error) {
+        console.error('Error clearing saved credentials:', error);
+      }
+    }
   };
   
   // Validate form
@@ -62,16 +103,30 @@ const LoginScreen = ({ navigation }) => {
   };
   
   // Handle login
-  const handleLogin = async () => {
-    if (!validateForm()) return;
+  const handleLogin = async (savedEmail = null, savedPassword = null) => {
+    const emailToUse = savedEmail || email;
+    const passwordToUse = savedPassword || password;
+
+    if (!savedEmail && !validateForm()) return;
     
     setLoading(true);
     
     try {
       // Use AuthContext login function with Firebase
-      const success = await login({ email, password });
+      const success = await login({ email: emailToUse, password: passwordToUse });
       
       if (success) {
+        // Save credentials if remember me is enabled
+        if (rememberMe) {
+          try {
+            await AsyncStorage.setItem('userEmail', emailToUse);
+            await AsyncStorage.setItem('userPassword', passwordToUse);
+            await AsyncStorage.setItem('rememberMe', 'true');
+          } catch (error) {
+            console.error('Error saving credentials:', error);
+          }
+        }
+
         // Show success notification
         addNotification({
           id: Date.now(),
@@ -177,7 +232,7 @@ const LoginScreen = ({ navigation }) => {
             <View style={styles.optionsRow}>
               <TouchableOpacity 
                 style={styles.rememberMeContainer}
-                onPress={() => setRememberMe(!rememberMe)}
+                onPress={handleRememberMeToggle}
               >
                 <View style={[
                   styles.checkbox,
@@ -196,7 +251,7 @@ const LoginScreen = ({ navigation }) => {
             {/* Login Button */}
             <TouchableOpacity 
               style={styles.loginButton}
-              onPress={handleLogin}
+              onPress={() => handleLogin()}
               disabled={loading}
             >
               {loading ? (

@@ -860,11 +860,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   scrollContent: {
-    flex: 1,
+    flexGrow: 1,
     padding: 16,
   },
   content: {
     padding: 16,
+    paddingBottom: 32, // Add extra padding at bottom for better scrolling
   },
   infoCard: {
     backgroundColor: '#FFFFFF',

@@ -367,6 +367,7 @@ const CustomDrawerContent = (props) => {
           {/* {renderMenuItem('OTP Verification', '📱', 'ValidateOtp')} */}
           {renderMenuItem('Validate Customer', '👤', 'ValidateCustomer')}
           {renderMenuItem('Vehicle KYC Screen', '🚘', 'VehicleKYCScreen')}
+          {renderMenuItem('Create Wallet', '💳', 'CreateWallet')}
         </View>
         
         <View style={styles.drawerDivider} />
@@ -468,6 +469,14 @@ const AppStack = ({ navigation }) => {
         component={VrnUpdateScreen} 
         options={{
           title: 'VRN Update',
+          headerTitle: 'VRN Update'
+        }}
+      />
+      <Drawer.Screen 
+        name="CreateWallet" 
+        component={CreateWalletScreen} 
+        options={{
+          title: 'Create Wallet',
           headerTitle: 'VRN Update'
         }}
       />

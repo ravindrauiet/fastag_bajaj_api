@@ -410,6 +410,25 @@ const ValidateOtpScreen = ({ navigation, route }) => {
           const walletStatus = response.validateOtpResp?.custDetails?.walletStatus;
           console.log('Wallet status:', walletStatus);
           
+          // Handle NE (New Entity) wallet status
+          if (walletStatus === 'NE') {
+            console.log('New Entity detected - navigating to CreateWalletScreen');
+            navigation.navigate('CreateWallet', {
+              requestId: requestId,
+              sessionId: sessionId,
+              mobileNo: response.validateOtpResp?.custDetails?.mobileNo || mobileNo,
+              vehicleNo: response.validateOtpResp?.vrnDetails?.vehicleNo || vehicleNo,
+              chassisNo: response.validateOtpResp?.vrnDetails?.chassisNo || chassisNo,
+              engineNo: response.validateOtpResp?.vrnDetails?.engineNo || engineNo,
+              customerId: response.validateOtpResp?.custDetails?.customerId || '',
+              otpResponse: response,
+              // Pass form submission IDs for tracking
+              formSubmissionId: trackingResult.id,
+              fastagRegistrationId: fastagResult.registrationId
+            });
+            return;
+          }
+          
           // Always navigate to DocumentUpload regardless of wallet status
           // For registration - navigate to DocumentUploadScreen
           if (reqType === 'REG') {
