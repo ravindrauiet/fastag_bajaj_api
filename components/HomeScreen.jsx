@@ -4,7 +4,7 @@ import { NotificationContext } from '../contexts/NotificationContext';
 import { useAuth } from '../contexts/AuthContext';
 import DebugConsole from './DebugConsole';
 import { db } from '../services/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, getDocs, where } from 'firebase/firestore';
 
 const HomeScreen = ({ navigation }) => {
   // Access the notification context
@@ -13,9 +13,11 @@ const HomeScreen = ({ navigation }) => {
   // Access auth context to get user data
   const { userInfo, userProfile, isLoading } = useAuth();
   
-  // State for balance
+  // State for balance and active tags
   const [walletBalance, setWalletBalance] = useState(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
+  const [activeTagsCount, setActiveTagsCount] = useState(0);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
   
   // Debug console state
   const [debugVisible, setDebugVisible] = useState(false);
@@ -32,13 +34,16 @@ const HomeScreen = ({ navigation }) => {
     }
   }, [notifications]);
   
-  // Fetch wallet balance when the screen is focused
+  // Fetch wallet balance and active tags when the screen is focused
   useEffect(() => {
-    const fetchWalletBalance = async () => {
+    const fetchData = async () => {
       if (!userInfo || !userInfo.uid) return;
       
       setIsLoadingBalance(true);
+      setIsLoadingTags(true);
+      
       try {
+        // Fetch wallet balance
         const userRef = doc(db, 'users', userInfo.uid);
         const userDoc = await getDoc(userRef);
         
@@ -46,27 +51,66 @@ const HomeScreen = ({ navigation }) => {
           const userData = userDoc.data();
           // If wallet field exists, use it, otherwise default to 0
           setWalletBalance(userData.wallet || 0);
+          
+          // Fetch active tags count
+          await fetchActiveTagsCount(userData);
         } else {
           setWalletBalance(0);
+          setActiveTagsCount(0);
         }
       } catch (error) {
-        console.error('Error fetching wallet balance:', error);
+        console.error('Error fetching data:', error);
         setWalletBalance(0);
+        setActiveTagsCount(0);
       } finally {
         setIsLoadingBalance(false);
+        setIsLoadingTags(false);
       }
     };
     
-    fetchWalletBalance();
+    fetchData();
     
-    // Set up a focus listener to refresh balance when returning to this screen
+    // Set up a focus listener to refresh data when returning to this screen
     const unsubscribe = navigation.addListener('focus', () => {
-      console.log('HomeScreen focused, fetching wallet balance');
-      fetchWalletBalance();
+      console.log('HomeScreen focused, fetching data');
+      fetchData();
     });
     
     return unsubscribe;
   }, [navigation, userInfo]);
+
+  // Fetch active tags count
+  const fetchActiveTagsCount = async (userData) => {
+    try {
+      const bcId = userData.bcId || userData.BC_Id;
+      
+      if (bcId) {
+        console.log('Found BC ID:', bcId);
+        const allocatedTagsQuery = query(
+          collection(db, "allocatedFasTags"),
+          where('bcId', '==', bcId)
+        );
+        
+        const tagsSnapshot = await getDocs(allocatedTagsQuery);
+        console.log('Allocated tags query returned:', tagsSnapshot.size, 'documents');
+        
+        let activeCount = 0;
+        tagsSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.status === 'available') activeCount++;
+        });
+        
+        setActiveTagsCount(activeCount);
+        console.log('Active tags count:', activeCount);
+      } else {
+        console.log('No BC ID found in user profile');
+        setActiveTagsCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching active tags count:', error);
+      setActiveTagsCount(0);
+    }
+  };
   
   // Add a navigation listener to track screen changes
   useEffect(() => {
@@ -287,12 +331,24 @@ const HomeScreen = ({ navigation }) => {
         {/* Balance Card */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceTopSection}>
-            <Text style={styles.balanceLabel}>Available Balance</Text>
-            {isLoadingBalance ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.balanceAmount}>₹ {walletBalance.toLocaleString('en-IN')}</Text>
-            )}
+            <View style={styles.balanceRow}>
+              <View style={styles.balanceColumn}>
+                <Text style={styles.balanceLabel}>Available Balance</Text>
+                {isLoadingBalance ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.balanceAmount}>₹ {walletBalance.toLocaleString('en-IN')}</Text>
+                )}
+              </View>
+              <View style={styles.tagsColumn}>
+                <Text style={styles.tagsLabel}>Available</Text>
+                {isLoadingTags ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.tagsAmount}>{activeTagsCount}</Text>
+                )}
+              </View>
+            </View>
           </View>
           
           <View style={styles.balanceBottomSection}>
@@ -370,7 +426,7 @@ const HomeScreen = ({ navigation }) => {
               <View style={styles.serviceIconContainer}>
                 <Text style={styles.serviceIconLarge}>+</Text>
               </View>
-              <Text style={styles.serviceText}>Add{'\n'}FasTag</Text>
+              <Text style={styles.serviceText}>Allocate{'\n'}FasTag</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -757,15 +813,39 @@ const styles = StyleSheet.create({
   balanceTopSection: {
     padding: 16,
   },
+  balanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  balanceColumn: {
+    flex: 1,
+  },
+  tagsColumn: {
+    alignItems: 'flex-end',
+    minWidth: 80,
+  },
   balanceLabel: {
     color: '#FFFFFF',
     fontSize: 16,
     marginBottom: 4,
   },
+  tagsLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginBottom: 4,
+    textAlign: 'right',
+  },
   balanceAmount: {
     color: '#FFFFFF',
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  tagsAmount: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'right',
   },
   barcodeSection: {
     backgroundColor: '#E0E7FF',

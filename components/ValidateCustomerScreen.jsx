@@ -349,10 +349,10 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
             ) : null}
           </View>
           
-          <Text style={styles.orText}>OR</Text>
+          {/* <Text style={styles.orText}>OR</Text> */}
           
           {/* Chassis Number */}
-          <View style={styles.inputGroup}>
+          {/* <View style={styles.inputGroup}>
             <Text style={styles.label}>Chassis Number<Text style={styles.required}>**</Text></Text>
             <TextInput
               style={[styles.input, errors.chassisNo ? styles.inputError : null]}
@@ -364,7 +364,7 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
             {errors.chassisNo ? (
               <Text style={styles.errorText}>{errors.chassisNo}</Text>
             ) : null}
-          </View>
+          </View> */}
           
           {/* Engine Number */}
           <View style={styles.inputGroup}>
@@ -382,7 +382,7 @@ const ValidateCustomerScreen = ({ navigation, route }) => {
             * Required fields
           </Text>
           <Text style={styles.noteText}>
-            ** Either Vehicle Number or Chassis Number is required
+            ** Vehicle Number is required
           </Text>
         </View>
         

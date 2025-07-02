@@ -271,10 +271,10 @@ const LoginScreen = ({ navigation }) => {
           </View>
           
           {/* Testing credentials */}
-          <View style={styles.testingNote}>
-            <Text style={styles.testingNoteTitle}>Firebase Authentication:</Text>
-            <Text style={styles.testingNoteText}>Please create an account using a valid email and password combination.</Text>
-          </View>
+          {/* <View style={styles.testingNote}>
+            <Text style={styles.testingNoteTitle}>Powered by: Maydiv Infotech</Text>
+            <Text style={styles.testingNoteText}></Text>
+          </View> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
