@@ -201,8 +201,8 @@ const HomeScreen = ({ navigation }) => {
       return;
     }
     
-    // Navigate to the ValidateCustomerScreen to start the registration process
-    navigateWithNotification('ValidateCustomer');
+    // Navigate to the ApiSelection screen to choose API provider
+    navigateWithNotification('ApiSelection');
     
     // Add notification about starting the process
     addNotification({

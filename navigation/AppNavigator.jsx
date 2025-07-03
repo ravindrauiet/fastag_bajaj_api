@@ -45,6 +45,8 @@ import ServicesScreen from '../components/ServicesScreen';
 import UserDetailScreen from '../components/admin/UserDetailScreen';
 import FormDetailScreen from '../components/admin/FormDetailScreen';
 import AllocatedFasTagsScreen from '../components/AllocatedFasTagsScreen';
+import ApiSelectionScreen from '../components/ApiSelectionScreen';
+// import IDFCDedupeInitiateScreen from '../components/IDFC/IDFCDedupeInitiateScreen';
 // Import Support Screens
 import ContactSupportScreen from '../components/ContactSupportScreen';
 import FAQScreen from '../components/FAQScreen';
@@ -90,6 +92,8 @@ const HomeStack = () => {
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
+      <Stack.Screen name="ApiSelection" component={ApiSelectionScreen} />
+      {/* <Stack.Screen name="IDFCDedupeInitiate" component={IDFCDedupeInitiateScreen} /> */}
       <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
       <Stack.Screen name="VrnUpdate" component={VrnUpdateScreen} />
@@ -129,6 +133,7 @@ const NETCStack = () => {
       <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
       <Stack.Screen name="ValidateOtp" component={ValidateOtpScreen} />
       <Stack.Screen name="ValidateCustomer" component={ValidateCustomerScreen} />
+      <Stack.Screen name="ApiSelection" component={ApiSelectionScreen} />
       <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
       <Stack.Screen name="AllocatedFasTags" component={AllocatedFasTagsScreen} />
     </Stack.Navigator>
@@ -144,6 +149,7 @@ const InventoryStack = () => {
       <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
       <Stack.Screen name="FasTagReplacement" component={FasTagReplacementScreen} />
       <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
+      <Stack.Screen name="ApiSelection" component={ApiSelectionScreen} />
       <Stack.Screen name="VehicleKYCScreen" component={VehicleKYCScreen} />
       <Stack.Screen name="AllocatedFasTags" component={AllocatedFasTagsScreen} />
     </Stack.Navigator>
