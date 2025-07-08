@@ -591,6 +591,30 @@ const FasTagRegistrationScreen = ({ navigation, route }) => {
           'success'
         );
         
+        // Log to efficient collection for admin dashboard
+        if (userInfo && userInfo.uid) {
+          try {
+            await FormLogger.logSuccessfulRegistration(
+              {
+                ...formData,
+                finalRegistrationData,
+                registrationResponse: response,
+                apiSuccess: true
+              },
+              userInfo.uid,
+              userInfo.email,
+              {
+                bcId: userProfile?.bcId || 'N/A',
+                displayName: userProfile?.displayName || 'Unknown',
+                minFasTagBalance: userProfile?.minFasTagBalance || '400'
+              }
+            );
+          } catch (efficientLogError) {
+            console.error('Error logging to efficient collection:', efficientLogError);
+            // Don't block the main flow if this fails
+          }
+        }
+        
         // Update FasTag tracking with success
         await FasTagRegistrationHelper.trackFasTagRegistration(
           {

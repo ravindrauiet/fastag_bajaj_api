@@ -4,8 +4,9 @@ import { getAuth } from 'firebase/auth';
 import FasTagTracker, { STAGES } from './FasTagTracker';
 import { FORM_TYPES } from './FormTracker';
 
-// Collection name
+// Collection names
 const FORM_LOGS_COLLECTION = 'formLogs';
+const SUCCESSFUL_REGISTRATIONS_COLLECTION = 'successfulRegistrations';
 
 // Map FormTracker form types to FasTag tracker stages
 const FORM_TYPE_TO_STAGE_MAP = {
@@ -92,6 +93,63 @@ export const logFormAction = async (formType, formData, action, status, error = 
     };
   } catch (error) {
     console.error('Error logging form action:', error);
+    return { success: false, error: String(error) };
+  }
+};
+
+/**
+ * Logs successful registration to a separate collection for admin dashboard efficiency
+ * This collection only stores successful registrations to reduce Firebase reads
+ * @param {Object} formData - The form data from successful registration
+ * @param {string} userId - User ID
+ * @param {string} userEmail - User email
+ * @param {Object} userData - User data (bcId, displayName, minFasTagBalance)
+ * @returns {Promise<Object>} Object containing success status and document ID
+ */
+export const logSuccessfulRegistration = async (formData, userId, userEmail, userData = {}) => {
+  try {
+    const timestamp = new Date().toISOString();
+    
+    // Extract relevant data for admin dashboard
+    const vehicleNo = formData.vehicleNo || 
+                     formData.finalRegistrationData?.vrnDetails?.vrn ||
+                     formData.vrn ||
+                     'N/A';
+                     
+    const serialNo = formData.serialNo || 
+                     formData.finalRegistrationData?.fasTagDetails?.serialNo ||
+                     'N/A';
+                     
+    const mobileNo = formData.mobileNo || 
+                     formData.finalRegistrationData?.custDetails?.mobileNo ||
+                     'N/A';
+    
+    const registrationData = {
+      vehicleNo,
+      serialNo,
+      mobileNo,
+      userId,
+      userEmail,
+      bcId: userData.bcId || 'N/A',
+      displayName: userData.displayName || 'Unknown',
+      minFasTagBalance: userData.minFasTagBalance || '400',
+      timestamp,
+      createdAt: timestamp,
+      // Store original form data for reference
+      originalFormData: formData
+    };
+    
+    console.log('Saving successful registration:', registrationData);
+    const docRef = await addDoc(collection(db, SUCCESSFUL_REGISTRATIONS_COLLECTION), registrationData);
+    
+    console.log('Successful registration saved with ID:', docRef.id);
+    
+    return { 
+      success: true, 
+      registrationId: docRef.id
+    };
+  } catch (error) {
+    console.error('Error logging successful registration:', error);
     return { success: false, error: String(error) };
   }
 };
@@ -192,6 +250,7 @@ export const getAllFormLogs = async (maxResults = 50) => {
 
 export default {
   logFormAction,
+  logSuccessfulRegistration,
   getFormLogs,
   getUserFormLogs,
   getAllFormLogs
