@@ -4,7 +4,8 @@ import { Alert, Platform } from 'react-native';
 
 // Constants for API integration
 const BASE_URL = 'https://pay-api-uat.bajajfinserv.in/'; // UAT URL
-const PROD_URL = 'https://pay-pgapi.bajajfinserv.in/'; // Production URL
+const old_PROD_URL = 'https://pay-pgapi.bajajfinserv.in/'; // oldProduction URL
+const PROD_URL = 'https://pay-fastag.bajajfinserv.in/'; // Production URL
 const ENCRYPTION_KEY_old = 'dmdkgehajqc87net3lzgcirsgao2yy8f'; // UAT Encryption Key
 const API_SUBSCRIPTION_KEY_old = 'b9f873ec7376470dad2609d2d200f621'; // UAT Subscription Key
 const ENCRYPTION_KEY = 'tmsqkjsdjfklsvy673bgs9edu0cssjv0'; // Production Encryption Key
