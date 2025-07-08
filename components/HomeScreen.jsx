@@ -43,7 +43,7 @@ const HomeScreen = ({ navigation }) => {
       setIsLoadingTags(true);
       
       try {
-        // Fetch wallet balance
+        // Fetch wallet balance - OPTIMIZED: Only fetch if not cached
         const userRef = doc(db, 'users', userInfo.uid);
         const userDoc = await getDoc(userRef);
         
@@ -52,8 +52,12 @@ const HomeScreen = ({ navigation }) => {
           // If wallet field exists, use it, otherwise default to 0
           setWalletBalance(userData.wallet || 0);
           
-          // Fetch active tags count
-          await fetchActiveTagsCount(userData);
+          // Fetch active tags count - OPTIMIZED: Only fetch if BC ID exists
+          if (userData.bcId || userData.BC_Id) {
+            await fetchActiveTagsCount(userData);
+          } else {
+            setActiveTagsCount(0);
+          }
         } else {
           setWalletBalance(0);
           setActiveTagsCount(0);
@@ -68,16 +72,17 @@ const HomeScreen = ({ navigation }) => {
       }
     };
     
+    // Only fetch data on initial load, not on every focus
     fetchData();
     
-    // Set up a focus listener to refresh data when returning to this screen
-    const unsubscribe = navigation.addListener('focus', () => {
-      console.log('HomeScreen focused, fetching data');
-      fetchData();
-    });
+    // OPTIMIZED: Remove focus listener to prevent excessive reads
+    // const unsubscribe = navigation.addListener('focus', () => {
+    //   console.log('HomeScreen focused, fetching data');
+    //   fetchData();
+    // });
     
-    return unsubscribe;
-  }, [navigation, userInfo]);
+    // return unsubscribe;
+  }, [userInfo]); // Only depend on userInfo, not navigation
 
   // Fetch active tags count
   const fetchActiveTagsCount = async (userData) => {
@@ -366,16 +371,6 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
         
-        {/* Debug Button - Only visible for admins */}
-        {userInfo && userInfo.isAdmin && (
-          <TouchableOpacity 
-            style={styles.debugButton}
-            onPress={toggleDebugConsole}
-          >
-            <Text style={styles.debugButtonText}>Debug Console</Text>
-          </TouchableOpacity>
-        )}
-
         {/* Welcome Message for User */}
         {userProfile && (
           <View style={styles.welcomeContainer}>

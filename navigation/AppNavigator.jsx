@@ -37,13 +37,14 @@ import TransactionHistoryScreen from '../components/TransactionHistoryScreen';
 import TransactionDetailScreen from '../components/TransactionDetailScreen';
 import BankAccountLinkScreen from '../components/BankAccountLinkScreen';
 import FeedbackForm from '../components/FeedbackForm';
-import AdminDashboard from '../components/AdminDashboard';
-import FormSubmissionsScreen from '../components/admin/FormSubmissionsScreen';
-import FormSubmissionDetailScreen from '../components/admin/FormSubmissionDetailScreen';
-import AllUsersScreen from '../components/admin/AllUsersScreen';
 import ServicesScreen from '../components/ServicesScreen';
-import UserDetailScreen from '../components/admin/UserDetailScreen';
-import FormDetailScreen from '../components/admin/FormDetailScreen';
+// Remove admin imports since admin functionality is now in web dashboard
+// import AdminDashboard from '../components/AdminDashboard';
+// import FormSubmissionsScreen from '../components/admin/FormSubmissionsScreen';
+// import FormSubmissionDetailScreen from '../components/admin/FormSubmissionDetailScreen';
+// import AllUsersScreen from '../components/admin/AllUsersScreen';
+// import UserDetailScreen from '../components/admin/UserDetailScreen';
+// import FormDetailScreen from '../components/admin/FormDetailScreen';
 import AllocatedFasTagsScreen from '../components/AllocatedFasTagsScreen';
 // Import Support Screens
 import ContactSupportScreen from '../components/ContactSupportScreen';
@@ -282,7 +283,7 @@ const LogoTitle = () => (
 
 // Custom drawer content component
 const CustomDrawerContent = (props) => {
-  const { logout, userProfile, isAdmin } = useAuth();
+  const { logout, userProfile } = useAuth();
   
   const renderMenuItem = (label, iconName, screenName, isMain = false) => {
     const isActive = props.state.routes[props.state.index].name === screenName;
@@ -523,11 +524,10 @@ const AppStack = ({ navigation }) => {
 
 // Main Navigator that handles authentication flow
 const MainNavigator = () => {
-  const { isAuthenticated, isAdmin, isLoading, userInfo } = useAuth();
+  const { isAuthenticated, isLoading, userInfo } = useAuth();
   
   console.log('MainNavigator state:', { 
     isAuthenticated, 
-    isAdmin, 
     isLoading,
     email: userInfo?.email 
   });
@@ -542,214 +542,113 @@ const MainNavigator = () => {
     );
   }
   
-  // Special case: admin user - should always go to admin dashboard
-  const isAdminEmail = userInfo?.email === 'admin@gmail.com';
-  
-  // Force admin nav if email is admin@gmail.com, even if isAdmin flag isn't set yet
-  const showAdminDashboard = isAuthenticated && (isAdmin || isAdminEmail);
-  
-  console.log('Navigation decision:', { 
-    showAdminDashboard, 
-    isAuthenticated, 
-    isAdmin, 
-    isAdminEmail 
-  });
-  
   return (
     <NavigationContainer>
       {isAuthenticated ? (
-        showAdminDashboard ? (
-          // Admin is authenticated, show admin dashboard
-          <Stack.Navigator>
-            <Stack.Screen 
-              name="AdminDashboard" 
-              component={AdminDashboard}
-              options={{
-                headerShown: false // Use the custom header in AdminDashboard
-              }}
-            />
-            <Stack.Screen 
-              name="ProfileScreen" 
-              component={ProfileScreen}
-              options={{
-                headerTitle: 'Profile',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen 
-              name="ContactSupport" 
-              component={ContactSupportScreen}
-              options={{
-                headerTitle: 'Contact Support',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen 
-              name="FAQ" 
-              component={FAQScreen}
-              options={{
-                headerTitle: 'FAQ',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen 
-              name="TermsConditions" 
-              component={TermsConditionsScreen}
-              options={{
-                headerTitle: 'Terms & Conditions',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen
-              name="FormSubmissionsScreen"
-              component={FormSubmissionsScreen}
-              options={{
-                headerTitle: 'Form Submissions',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen
-              name="AllUsersScreen"
-              component={AllUsersScreen}
-              options={{
-                headerTitle: 'All Users',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{
-                headerShown: false
-              }}
-            />
-            <Stack.Screen
-              name="ServicesScreen"
-              component={ServicesScreen}
-              options={{
-                headerTitle: 'All Services',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            {/* Add other screens that might be needed in admin flow */}
-            <Stack.Screen name="HomeScreen" component={HomeScreen} />
-            <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
-            <Stack.Screen name="ManualActivation" component={ManualActivationScreen} />
-            <Stack.Screen name="FasTagRegistration" component={FasTagRegistrationScreen} />
-            <Stack.Screen name="DocumentUpload" component={DocumentUploadScreen} />
-            <Stack.Screen
-              name="UserDetailScreen"
-              component={UserDetailScreen}
-              options={{
-                headerTitle: 'User Details',
-                headerStyle: {
-                  backgroundColor: '#333333',
-                },
-                headerTintColor: '#fff',
-              }}
-            />
-            <Stack.Screen
-              name="FormDetailScreen"
-              component={FormDetailScreen}
-              options={{ headerTitle: 'Form Details' }}
-            />
-          </Stack.Navigator>
-        ) : (
-          // User is authenticated, show main app flow
-          <Drawer.Navigator
-            drawerContent={(props) => <CustomDrawerContent {...props} />}
-            screenOptions={{
-              drawerStyle: {
-                backgroundColor: '#FFFFFF',
-                width: 280,
-              },
-              headerStyle: {
-                backgroundColor: '#FFFFFF',
-                elevation: 0,
-                shadowOpacity: 0,
-              },
-              headerTintColor: '#333333',
-              headerTitleStyle: {
-                fontWeight: 'bold',
-              },
-              headerTitleAlign: 'center',
+        // User is authenticated, show main app flow
+        <Drawer.Navigator
+          drawerContent={(props) => <CustomDrawerContent {...props} />}
+          screenOptions={{
+            drawerStyle: {
+              backgroundColor: '#FFFFFF',
+              width: 280,
+            },
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+              elevation: 0,
+              shadowOpacity: 0,
+            },
+            headerTintColor: '#333333',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+            headerTitleAlign: 'center',
+          }}
+        >
+          <Drawer.Screen
+            name="Home"
+            component={HomeStack}
+            options={{
+              headerTitle: (props) => <LogoTitle {...props} />,
+              headerRight: () => (
+                <View style={styles.headerRight}>
+                  <NotificationBell />
+                </View>
+              ),
             }}
-          >
-            <Drawer.Screen
-              name="Home"
-              component={HomeStack}
-              options={{
-                headerTitle: (props) => <LogoTitle {...props} />,
-                headerRight: () => (
-                  <View style={styles.headerRight}>
-                    <NotificationBell />
-                  </View>
-                ),
-              }}
-            />
-            <Drawer.Screen
-              name="ProfileScreen"
-              component={ProfileScreen}
-              options={{ headerTitle: 'My Profile' }}
-            />
-            <Drawer.Screen
-              name="NETC"
-              component={NETCStack}
-              options={{ headerTitle: 'NETC FasTag' }}
-            />
-            <Drawer.Screen
-              name="Inventory"
-              component={InventoryStack}
-              options={{ headerTitle: 'FasTag Inventory' }}
-            />
-            <Drawer.Screen
-              name="Wallet"
-              component={WalletStack}
-              options={{ headerTitle: 'My Wallet' }}
-            />
-            <Drawer.Screen
-              name="ServicesScreen"
-              component={ServicesScreen}
-              options={{ headerTitle: 'All Services' }}
-            />
-            <Drawer.Screen
-              name="ContactSupport"
-              component={ContactSupportScreen}
-              options={{ headerTitle: 'Contact Support' }}
-            />
-            <Drawer.Screen
-              name="FAQ"
-              component={FAQScreen}
-              options={{ headerTitle: 'FAQ' }}
-            />
-            <Drawer.Screen
-              name="TermsConditions"
-              component={TermsConditionsScreen}
-              options={{ headerTitle: 'Terms & Conditions' }}
-            />
-          </Drawer.Navigator>
-        )
+          />
+          <Drawer.Screen
+            name="ProfileScreen"
+            component={ProfileScreen}
+            options={{ headerTitle: 'My Profile' }}
+          />
+          <Drawer.Screen
+            name="NETC"
+            component={NETCStack}
+            options={{ headerTitle: 'NETC FasTag' }}
+          />
+          <Drawer.Screen
+            name="Inventory"
+            component={InventoryStack}
+            options={{ headerTitle: 'FasTag Inventory' }}
+          />
+          <Drawer.Screen
+            name="Wallet"
+            component={WalletStack}
+            options={{
+              title: 'My Wallet',
+              headerTitle: 'My Wallet'
+            }}
+          />
+          <Drawer.Screen
+            name="VrnUpdate"
+            component={VrnUpdateScreen}
+            options={{
+              title: 'VRN Update',
+              headerTitle: 'VRN Update'
+            }}
+          />
+          <Drawer.Screen
+            name="CreateWallet"
+            component={CreateWalletScreen}
+            options={{
+              title: 'Create Wallet',
+              headerTitle: 'Create Wallet'
+            }}
+          />
+          <Drawer.Screen
+            name="ContactSupport"
+            component={ContactSupportScreen}
+            options={{
+              title: 'Contact Support',
+              headerTitle: 'Contact Support'
+            }}
+          />
+          <Drawer.Screen
+            name="FAQ"
+            component={FAQScreen}
+            options={{
+              title: 'FAQ',
+              headerTitle: 'FAQ'
+            }}
+          />
+          <Drawer.Screen
+            name="TermsConditions"
+            component={TermsConditionsScreen}
+            options={{
+              title: 'Terms & Conditions',
+              headerTitle: 'Terms & Conditions'
+            }}
+          />
+          <Drawer.Screen
+            name="ServicesScreen"
+            component={ServicesScreen}
+            options={{
+              title: 'All Services',
+              headerTitle: 'All Services'
+            }}
+          />
+        </Drawer.Navigator>
       ) : (
         // User is not authenticated, show auth flow
         <AuthNavigator />

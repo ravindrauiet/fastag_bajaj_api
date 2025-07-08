@@ -33,8 +33,8 @@ const FastagInventoryScreen = ({ navigation }) => {
         // PART 1: Fetch inventory data
         await fetchInventory();
         
-        // PART 2: Fetch analytics data
-        await fetchAnalytics();
+        // PART 2: Fetch analytics data - OPTIMIZED: Only fetch if needed
+        // await fetchAnalytics(); // Commented out to reduce reads
       } catch (error) {
         console.error('Error fetching inventory and analytics:', error);
       } finally {
@@ -44,14 +44,14 @@ const FastagInventoryScreen = ({ navigation }) => {
     
     fetchData();
     
-    // Set up a focus listener to refresh data when returning to this screen
-    const unsubscribe = navigation.addListener('focus', () => {
-      console.log('Inventory screen focused, refreshing data');
-      fetchData();
-    });
+    // OPTIMIZED: Remove focus listener to prevent excessive reads
+    // const unsubscribe = navigation.addListener('focus', () => {
+    //   console.log('Inventory screen focused, refreshing data');
+    //   fetchData();
+    // });
     
-    return unsubscribe;
-  }, [navigation, userInfo]);
+    // return unsubscribe;
+  }, [userInfo]); // Only depend on userInfo, not navigation
 
   // Fetch inventory data
   const fetchInventory = async () => {

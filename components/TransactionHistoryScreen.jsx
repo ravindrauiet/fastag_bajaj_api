@@ -32,8 +32,174 @@ const TransactionHistoryScreen = ({ navigation }) => {
 
   // Load transaction data
   useEffect(() => {
-    loadTransactions();
-  }, []);
+    const fetchTransactions = async () => {
+      if (!auth.currentUser || !auth.currentUser.uid) return;
+      
+      setLoading(true);
+      setTransactions([]);
+      
+      const userId = auth.currentUser.uid;
+      const allTransactions = [];
+      
+      // OPTIMIZED: Add pagination and limit to reduce reads
+      const limitCount = 20; // Limit to 20 transactions per collection
+      
+      console.log('=========== TRANSACTIONS COLLECTION QUERY ===========');
+      try {
+        const transactionsRef = collection(db, 'transactions');
+        
+        // OPTIMIZED: Add limit to reduce reads
+        const transactionsQuery = query(
+          transactionsRef,
+          where('userId', '==', userId),
+          limit(limitCount) // Limit results
+        );
+        
+        const transactionsSnapshot = await getDocs(transactionsQuery);
+        console.log('Transaction query results:', transactionsSnapshot.size, 'documents');
+        
+        transactionsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          console.log(`Processing transaction: ${doc.id}`);
+          
+          // Handle timestamp for transactions
+          let timestamp;
+          try {
+            if (data.createdAt) {
+              timestamp = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+            } else if (data.timestamp) {
+              timestamp = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+            } else if (data.date) {
+              timestamp = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+            } else if (data.updatedAt) {
+              timestamp = data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
+            } else {
+              timestamp = new Date(); // Fallback to current date if no timestamp found
+            }
+          } catch (err) {
+            console.log('Error parsing transaction date:', err);
+            timestamp = new Date();
+          }
+          
+          // Determine transaction type
+          let transactionType = 'debit';
+          if (data.type === 'credit' || data.type === 'recharge' || data.type === 'topup') {
+            transactionType = 'credit';
+          } else if (data.type === 'debit' || data.type === 'withdrawal' || data.type === 'payment') {
+            transactionType = 'debit';
+          }
+          
+          // Build details object
+          const details = {
+            collection: 'transactions',
+            relatedDocId: data.relatedDocId || null,
+            method: data.method || null,
+            userName: data.userName || null,
+            ...data.details || {}
+          };
+          
+          allTransactions.push({
+            id: doc.id,
+            transactionId: data.transactionId || doc.id,
+            type: transactionType,
+            amount: data.amount || 0,
+            date: formatDate(timestamp),
+            time: formatTime(timestamp),
+            description: data.purpose || data.description || 'Transaction',
+            status: data.status || 'Pending',
+            paymentMethod: data.method || data.paymentMethod || 'Wallet',
+            previousBalance: data.previousBalance,
+            newBalance: data.newBalance,
+            details: details
+          });
+        });
+        
+        console.log(`Processed ${allTransactions.length} transactions from transactions collection`);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      }
+      
+      // OPTIMIZED: Only fetch wallet top-ups if transactions are few
+      if (allTransactions.length < limitCount) {
+        console.log('=========== WALLET TOP-UPS COLLECTION QUERY ===========');
+        try {
+          const topupsRef = collection(db, 'wallet_topups');
+          
+          // OPTIMIZED: Add limit to reduce reads
+          const topupsQuery = query(
+            topupsRef,
+            where('userId', '==', userId),
+            limit(limitCount - allTransactions.length) // Fill remaining slots
+          );
+          
+          const topupsSnapshot = await getDocs(topupsQuery);
+          console.log('Wallet top-ups query results:', topupsSnapshot.size, 'documents');
+          
+          topupsSnapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log(`Processing wallet top-up: ${doc.id}`);
+            
+            // Handle timestamp for wallet top-ups
+            let timestamp;
+            if (data.timestamp) {
+              timestamp = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+            } else if (data.createdAt) {
+              timestamp = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+            } else if (data.date) {
+              timestamp = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+            } else if (data.updatedAt) {
+              timestamp = data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
+            } else {
+              timestamp = new Date(); // Fallback to current date if no timestamp found
+            }
+            
+            allTransactions.push({
+              id: doc.id,
+              transactionId: data.transactionId || doc.id,
+              type: 'credit', // Always credit for wallet top-ups
+              amount: data.amount || 0,
+              date: formatDate(timestamp),
+              time: formatTime(timestamp),
+              description: data.description || 'Wallet Recharge',
+              status: data.status === 'approved' ? 'Completed' : 
+                     data.status === 'success' ? 'Completed' :
+                     data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Pending',
+              paymentMethod: data.method || data.paymentMethod || 'UPI',
+              previousBalance: data.previousBalance,
+              newBalance: data.newBalance,
+              details: {
+                collection: data.collection || 'wallet_topups',
+                relatedDocId: data.relatedDocId || null,
+                method: data.method || null,
+                userName: data.userName || null,
+                ...data.details || {}
+              }
+            });
+          });
+          
+          console.log(`Added ${topupsSnapshot.size} wallet top-ups to transactions list`);
+        } catch (error) {
+          console.error('Error fetching wallet top-ups:', error);
+        }
+      }
+      
+      // Final summary
+      console.log('=========== RESULTS SUMMARY ===========');
+      console.log(`Total transactions processed: ${allTransactions.length}`);
+      
+      // Sort by timestamp (most recent first)
+      allTransactions.sort((a, b) => {
+        const dateA = new Date(a.date + ' ' + a.time);
+        const dateB = new Date(b.date + ' ' + b.time);
+        return dateB - dateA;
+      });
+      
+      setTransactions(allTransactions);
+      setLoading(false);
+    };
+    
+    fetchTransactions();
+  }, [auth.currentUser]); // Only depend on userInfo
 
   // Apply filters when filter or search changes
   useEffect(() => {

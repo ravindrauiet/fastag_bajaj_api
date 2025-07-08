@@ -12,6 +12,7 @@ import {
   getUserData
 } from '../api/firestoreApi';
 import { serverTimestamp } from 'firebase/firestore';
+import dataCache from '../utils/dataCache';
 
 // Create auth context
 export const AuthContext = createContext();
@@ -19,34 +20,33 @@ export const AuthContext = createContext();
 // Custom hook to use the auth context
 export const useAuth = () => useContext(AuthContext);
 
-// Admin credentials
-const ADMIN_EMAIL = 'admin@gmail.com';
-const ADMIN_PASSWORD = '123456';
-
-// Auth provider component
+// Auth provider component - NO ADMIN LOGIC
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userInfo, setUserInfo] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [error, setError] = useState("");
 
-  // Fetch user profile data from Firestore
+  // Fetch user profile data from Firestore - OPTIMIZED WITH CACHING
   const fetchUserProfile = async (userId) => {
     try {
+      // Check cache first
+      const cachedData = dataCache.getUserData(userId);
+      if (cachedData) {
+        console.log('User profile loaded from cache');
+        setUserProfile(cachedData);
+        return cachedData;
+      }
+
+      // Fetch from Firebase if not cached
       const result = await getUserData(userId);
       if (result.success) {
-        console.log('User profile fetched:', result.user);
-        
-        // Set user profile
+        console.log('User profile fetched from Firebase');
         setUserProfile(result.user);
         
-        // Check if this user is the admin and set the flag accordingly
-        if (result.user.email === ADMIN_EMAIL || result.user.isAdmin === true) {
-          console.log('Setting isAdmin flag to true from Firestore data');
-          setIsAdmin(true);
-        }
+        // Cache the data
+        dataCache.setUserData(userId, result.user);
         
         return result.user;
       } else {
@@ -59,37 +59,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check for existing Firebase session on app start
+  // Check for existing Firebase session on app start - OPTIMIZED
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // User is signed in
+        // User is signed in - REGULAR USERS ONLY
         console.log('Auth state changed: user signed in', user.email);
         setUserInfo(user);
         setIsAuthenticated(true);
         
-        // Preliminary check if user is admin by email
-        const isAdminByEmail = user.email === ADMIN_EMAIL;
-        console.log('User authenticated, email:', user.email);
-        console.log('Is admin by email check?', isAdminByEmail);
+        // Fetch user profile for regular users only
+        await fetchUserProfile(user.uid);
         
-        // Set initial admin status by email
-        if (isAdminByEmail) {
-          setIsAdmin(true);
-        }
-        
-        // Fetch user profile from Firestore which might update the admin status
-        const profile = await fetchUserProfile(user.uid);
-        
-        // Final admin status check after profile is loaded
-        console.log('Final admin status after profile load:', isAdmin, 'profile:', profile);
+        console.log('Auth state updated for user:', user.email);
       } else {
         // User is signed out
         console.log('Auth state changed: user signed out');
         setUserInfo(null);
         setUserProfile(null);
         setIsAuthenticated(false);
-        setIsAdmin(false);
+        
+        // Clear cache on logout
+        dataCache.clear();
       }
       setIsLoading(false);
     });
@@ -98,80 +89,24 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Login function
-  const login = async ({ email, password }) => {
+  // Login function - OPTIMIZED
+  const login = async (email, password) => {
     try {
-      setError("");
       setIsLoading(true);
+      setError("");
       
-      // Check if login is with admin credentials
-      const isAdminLogin = email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
-      console.log('Login attempt with:', { email, isAdminAttempt: isAdminLogin });
-      
-      // If trying to log in as admin, handle it directly
-      if (isAdminLogin) {
-        console.log('Admin login detected');
-        // For admin login, we need to sign in with Firebase first
-        const result = await loginWithEmailAndPassword(email, password);
-        
-        if (result.success) {
-          console.log('Firebase login successful for admin');
-          setUserInfo(result.user);
-          setIsAuthenticated(true);
-          setIsAdmin(true); // Explicitly set admin status
-          
-          // Make sure admin user has a profile in Firestore
-          const firestoreResult = await createOrUpdateUser(result.user.uid, {
-            email: result.user.email,
-            displayName: 'Admin User',
-            isAdmin: true,
-            role: 'admin',
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp()
-          });
-          
-          console.log('Admin Firestore update result:', firestoreResult);
-          
-          // Fetch the admin profile
-          const profileResult = await fetchUserProfile(result.user.uid);
-          console.log('Admin profile fetched:', profileResult);
-          
-          console.log('Admin login successful, isAdmin set to:', isAdmin);
-          return true;
-        } else {
-          console.error('Admin login failed:', result.error);
-          setError("Admin login failed. Please check your credentials.");
-          return false;
-        }
-      }
-      
-      // Regular user login
       const result = await loginWithEmailAndPassword(email, password);
       
       if (result.success) {
         setUserInfo(result.user);
         setIsAuthenticated(true);
         
-        // Check if this is the admin email (as a fallback)
-        if (result.user.email === ADMIN_EMAIL) {
-          console.log('Admin email detected, setting admin privileges');
-          setIsAdmin(true);
-          
-          // Ensure the admin flag is set in Firestore
-          await createOrUpdateUser(result.user.uid, {
-            isAdmin: true,
-            role: 'admin',
-            lastLogin: serverTimestamp()
-          });
-        } else {
-          setIsAdmin(false);
-          // Update lastLogin for regular users
-          await createOrUpdateUser(result.user.uid, {
-            lastLogin: serverTimestamp()
-          });
-        }
+        // Update lastLogin for regular users
+        await createOrUpdateUser(result.user.uid, {
+          lastLogin: serverTimestamp()
+        });
         
-        // Fetch user profile from Firestore
+        // Fetch user profile from Firestore for regular users
         await fetchUserProfile(result.user.uid);
         
         return true;
@@ -181,6 +116,43 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (e) {
       console.log('Login error:', e.message);
+      setError(e.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Register function - REGULAR USERS ONLY
+  const register = async ({ email, password, displayName }) => {
+    try {
+      setIsLoading(true);
+      setError("");
+      
+      const result = await registerWithEmailAndPassword(email, password, { displayName });
+      
+      if (result.success) {
+        setUserInfo(result.user);
+        setIsAuthenticated(true);
+        
+        // Create user profile in Firestore
+        await createOrUpdateUser(result.user.uid, {
+          email: result.user.email,
+          displayName: displayName || result.user.displayName,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
+        });
+        
+        // Fetch the created profile
+        await fetchUserProfile(result.user.uid);
+        
+        return true;
+      } else {
+        setError(result.error || "Registration failed");
+        return false;
+      }
+    } catch (e) {
+      console.log('Registration error:', e.message);
       setError(e.message);
       return false;
     } finally {
@@ -198,7 +170,10 @@ export const AuthProvider = ({ children }) => {
         setUserInfo(null);
         setUserProfile(null);
         setIsAuthenticated(false);
-        setIsAdmin(false);
+        
+        // Clear cache on logout
+        dataCache.clear();
+        
         return true;
       } else {
         setError(result.error || "Logout failed");
@@ -213,79 +188,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
-  const register = async (userData) => {
-    try {
-      setError("");
-      setIsLoading(true);
-      
-      const { email, password, firstName, lastName, phone, aadharCard, panCard } = userData;
-      const displayName = `${firstName} ${lastName}`;
-      
-      const result = await registerWithEmailAndPassword(email, password, { 
-        displayName 
-      });
-      
-      if (result.success) {
-        // Update profile with additional information if needed
-        await updateUserProfile({ 
-          displayName
-        });
-        
-        // Store user data in Firestore
-        const firestoreData = {
-          displayName,
-          firstName,
-          lastName,
-          email,
-          phone: phone || '',
-          aadharCard: aadharCard || '',
-          panCard: panCard || '',
-          photoURL: result.user.photoURL || '',
-          createdAt: serverTimestamp(),
-          lastLogin: serverTimestamp()
-        };
-        
-        await createOrUpdateUser(result.user.uid, firestoreData);
-        
-        // Set user info
-        setUserInfo(result.user);
-        setUserProfile({ id: result.user.uid, ...firestoreData });
-        setIsAuthenticated(true);
-        
-        // Check if user is admin (should never be true for new registrations)
-        setIsAdmin(email === ADMIN_EMAIL);
-        
-        return true;
-      } else {
-        setError(result.error || "Registration failed");
-        return false;
-      }
-    } catch (e) {
-      console.log('Registration error:', e.message);
-      setError(e.message);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Update user profile data
+  // Update user profile
   const updateProfile = async (profileData) => {
     try {
-      setError("");
       setIsLoading(true);
-      
-      if (!userInfo || !userInfo.uid) {
-        throw new Error('No authenticated user found');
-      }
-      
-      // Update Firestore user data
-      const result = await createOrUpdateUser(userInfo.uid, profileData);
+      const result = await updateUserProfile(profileData);
       
       if (result.success) {
-        // Update local state
-        const updatedProfile = await fetchUserProfile(userInfo.uid);
+        // Update local user info
+        setUserInfo(prev => ({
+          ...prev,
+          ...profileData
+        }));
+        
+        // Update Firestore profile
+        if (userInfo?.uid) {
+          await createOrUpdateUser(userInfo.uid, profileData);
+          await fetchUserProfile(userInfo.uid);
+        }
         
         return true;
       } else {
@@ -301,22 +221,44 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // The context value that will be supplied to any descendants of this provider
-  const authContext = {
+  // Reset password
+  const resetPassword = async (email) => {
+    try {
+      setIsLoading(true);
+      setError("");
+      
+      const result = await resetPassword(email);
+      
+      if (result.success) {
+        return true;
+      } else {
+        setError(result.error || "Password reset failed");
+        return false;
+      }
+    } catch (e) {
+      console.log('Password reset error:', e.message);
+      setError(e.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value = {
     isAuthenticated,
-    isAdmin,
     isLoading,
     userInfo,
     userProfile,
+    error,
     login,
-    logout,
     register,
+    logout,
     updateProfile,
-    error
+    resetPassword
   };
 
   return (
-    <AuthContext.Provider value={authContext}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
