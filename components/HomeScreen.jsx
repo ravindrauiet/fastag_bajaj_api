@@ -450,7 +450,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Services</Text>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => {
                 console.log('View All button pressed');
                 // Try direct navigation without using the notification wrapper
@@ -458,7 +458,7 @@ const HomeScreen = ({ navigation }) => {
               }}
             >
               <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
           
           <ScrollView 

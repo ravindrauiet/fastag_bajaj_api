@@ -400,12 +400,12 @@ const FastagInventoryScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Floating Action Button */}
-      <TouchableOpacity 
+      {/* <TouchableOpacity 
         style={styles.fab}
         onPress={() => navigation.navigate('Wallet')}
       >
         <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </SafeAreaView>
   );
 };

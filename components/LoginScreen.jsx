@@ -10,7 +10,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -37,16 +38,21 @@ const LoginScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logo}>🚗</Text>
-            <Text style={styles.appName}>TM Square</Text>
-            <Text style={styles.appSubtitle}>FasTag Services</Text>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Logo and Header */}
+          <View style={styles.headerContainer}>
+            <Image
+              style={styles.logo}
+              source={require('../assets/icons/tm_square_png-removebg-preview.png')}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.formContainer}>
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Text style={styles.subtitle}>Log in to your account</Text>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
@@ -82,7 +88,7 @@ const LoginScreen = ({ navigation }) => {
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.loginButtonText}>Sign In</Text>
+                <Text style={styles.loginButtonText}>Login</Text>
               )}
             </TouchableOpacity>
 
@@ -96,7 +102,7 @@ const LoginScreen = ({ navigation }) => {
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                <Text style={styles.signupLink}>Sign Up</Text>
+                <Text style={styles.signupLink}>Register</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -114,28 +120,30 @@ const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
   },
-  scrollContainer: {
+  scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 0,
   },
   logo: {
-    fontSize: 60,
-    marginBottom: 10,
+    width: 250,
+    height: 80,
+    marginBottom: 0,
   },
-  appName: {
+  welcomeText: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333333',
-    marginBottom: 5,
+    marginBottom: 8,
   },
-  appSubtitle: {
+  subtitleText: {
     fontSize: 16,
     color: '#666666',
+    marginBottom: 10,
   },
   formContainer: {
     backgroundColor: '#FFFFFF',

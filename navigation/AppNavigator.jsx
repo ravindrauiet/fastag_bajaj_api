@@ -367,8 +367,8 @@ const CustomDrawerContent = (props) => {
           {renderMenuItem('FasTag Re-KYC', '🔐', 'FasTagRekyc')}
           {/* {renderMenuItem('OTP Verification', '📱', 'ValidateOtp')} */}
           {renderMenuItem('Validate Customer', '👤', 'ValidateCustomer')}
-          {renderMenuItem('Vehicle KYC Screen', '🚘', 'VehicleKYCScreen')}
-          {renderMenuItem('Create Wallet', '💳', 'CreateWallet')}
+          {/* {renderMenuItem('Vehicle KYC Screen', '🚘', 'VehicleKYCScreen')} */}
+          {/* {renderMenuItem('Create Wallet', '💳', 'CreateWallet')} */}
         </View>
         
         <View style={styles.drawerDivider} />
@@ -825,8 +825,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   drawerLogo: {
-    width: 220,
-    height: 100,
+    width: 200,
+    height: 60,
     backgroundColor: 'transparent',
     marginVertical: 10,
   },
