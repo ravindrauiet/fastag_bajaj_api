@@ -30,11 +30,11 @@ const FastagInventoryScreen = ({ navigation }) => {
       
       setIsLoading(true);
       try {
-        // PART 1: Fetch inventory data
+        // PART 1: Fetch inventory data first
         await fetchInventory();
         
-        // PART 2: Fetch analytics data - OPTIMIZED: Only fetch if needed
-        // await fetchAnalytics(); // Commented out to reduce reads
+        // PART 2: Fetch analytics data after inventory is loaded
+        await fetchAnalytics();
       } catch (error) {
         console.error('Error fetching inventory and analytics:', error);
       } finally {
@@ -43,14 +43,6 @@ const FastagInventoryScreen = ({ navigation }) => {
     };
     
     fetchData();
-    
-    // OPTIMIZED: Remove focus listener to prevent excessive reads
-    // const unsubscribe = navigation.addListener('focus', () => {
-    //   console.log('Inventory screen focused, refreshing data');
-    //   fetchData();
-    // });
-    
-    // return unsubscribe;
   }, [userInfo]); // Only depend on userInfo, not navigation
 
   // Fetch inventory data
@@ -142,31 +134,30 @@ const FastagInventoryScreen = ({ navigation }) => {
         console.log('User document not found in Firestore');
       }
 
-      // 2. Get allocated tags stats
-      const bcId = userDoc.exists() ? (userDoc.data().bcId || userDoc.data().BC_Id) : null;
+      // 2. Use inventory data for tag statistics (more accurate)
+      analyticsData.totalAllocatedTags = inventory.length;
       
-      if (bcId) {
-        console.log('Found BC ID:', bcId);
-        const allocatedTagsQuery = query(
-          collection(db, "allocatedFasTags"),
-          where('bcId', '==', bcId)
-        );
-        
-        const tagsSnapshot = await getDocs(allocatedTagsQuery);
-        console.log('Allocated tags query returned:', tagsSnapshot.size, 'documents');
-        
-        analyticsData.totalAllocatedTags = tagsSnapshot.size;
-        
-        tagsSnapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.status === 'available') analyticsData.activeTags++;
-          else if (data.status === 'inactive') analyticsData.inactiveTags++;
-          else if (data.status === 'pending_activation') analyticsData.pendingTags++;
-          else if (data.status === 'used') analyticsData.usedTags++;
-        });
-      } else {
-        console.log('No BC ID found in user profile');
-      }
+      // Count tags by status from inventory data
+      inventory.forEach(item => {
+        const status = item.status.toLowerCase();
+        if (status === 'available' || status === 'active') {
+          analyticsData.activeTags++;
+        } else if (status === 'inactive') {
+          analyticsData.inactiveTags++;
+        } else if (status === 'pending' || status === 'pending_activation') {
+          analyticsData.pendingTags++;
+        } else if (status === 'used') {
+          analyticsData.usedTags++;
+        }
+      });
+      
+      console.log('Tag statistics calculated from inventory:', {
+        total: analyticsData.totalAllocatedTags,
+        active: analyticsData.activeTags,
+        inactive: analyticsData.inactiveTags,
+        pending: analyticsData.pendingTags,
+        used: analyticsData.usedTags
+      });
 
       // 3. Get transaction stats - FIX: Removed orderBy to avoid index issue
       try {
