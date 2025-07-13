@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,12 +13,59 @@ import {
   ScrollView,
   Image
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error } = useAuth();
+
+  // Load saved credentials on component mount
+  useEffect(() => {
+    loadSavedCredentials();
+  }, []);
+
+  // Load saved credentials from AsyncStorage
+  const loadSavedCredentials = async () => {
+    try {
+      const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+      const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+      const savedRememberMe = await AsyncStorage.getItem('rememberMe');
+      
+      if (savedEmail && savedPassword && savedRememberMe === 'true') {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRememberMe(true);
+      }
+    } catch (error) {
+      console.log('Error loading saved credentials:', error);
+    }
+  };
+
+  // Save credentials to AsyncStorage
+  const saveCredentials = async (email, password) => {
+    try {
+      await AsyncStorage.setItem('rememberedEmail', email);
+      await AsyncStorage.setItem('rememberedPassword', password);
+      await AsyncStorage.setItem('rememberMe', 'true');
+    } catch (error) {
+      console.log('Error saving credentials:', error);
+    }
+  };
+
+  // Clear saved credentials
+  const clearSavedCredentials = async () => {
+    try {
+      await AsyncStorage.removeItem('rememberedEmail');
+      await AsyncStorage.removeItem('rememberedPassword');
+      await AsyncStorage.removeItem('rememberMe');
+    } catch (error) {
+      console.log('Error clearing saved credentials:', error);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -27,9 +74,21 @@ const LoginScreen = ({ navigation }) => {
     }
 
     const success = await login(email, password);
-    if (!success) {
+    if (success) {
+      // Handle remember me functionality
+      if (rememberMe) {
+        await saveCredentials(email, password);
+      } else {
+        await clearSavedCredentials();
+      }
+    } else {
       Alert.alert('Login Failed', error || 'Please check your credentials');
     }
+  };
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -69,16 +128,41 @@ const LoginScreen = ({ navigation }) => {
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeButton}
+                  onPress={togglePasswordVisibility}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.eyeIcon}>
+                    {showPassword ? '👁️' : '🔒'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
+
+            {/* Remember Me Checkbox */}
+            <TouchableOpacity 
+              style={styles.rememberMeContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <View style={[
+                styles.checkbox,
+                rememberMe ? styles.checkboxChecked : null
+              ]}>
+                {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.rememberMeText}>Remember Me</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.loginButton, isLoading && styles.disabledButton]}
@@ -92,12 +176,29 @@ const LoginScreen = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.forgotPasswordButton}
-              onPress={() => navigation.navigate('ForgotPassword')}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+            <View style={styles.bottomButtonsContainer}>
+              <TouchableOpacity
+                style={styles.forgotPasswordButton}
+                onPress={() => navigation.navigate('ForgotPassword')}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              </TouchableOpacity>
+              
+              {rememberMe && (
+                <TouchableOpacity
+                  style={styles.clearCredentialsButton}
+                  onPress={async () => {
+                    await clearSavedCredentials();
+                    setEmail('');
+                    setPassword('');
+                    setRememberMe(false);
+                    Alert.alert('Success', 'Saved credentials cleared');
+                  }}
+                >
+                  <Text style={styles.clearCredentialsText}>Clear Saved</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={styles.signupContainer}>
               <Text style={styles.signupText}>Don't have an account? </Text>
@@ -213,6 +314,20 @@ const styles = StyleSheet.create({
     color: '#6200EE',
     fontSize: 16,
   },
+  bottomButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  clearCredentialsButton: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  clearCredentialsText: {
+    color: '#FF3B30',
+    fontSize: 16,
+  },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -226,6 +341,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6200EE',
     fontWeight: '600',
+  },
+  // Password container styles
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: 'transparent',
+  },
+  eyeButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+  },
+  eyeIcon: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  // Remember Me styles
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: '#6200EE',
+    borderColor: '#6200EE',
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  rememberMeText: {
+    fontSize: 16,
+    color: '#333333',
   },
 });
 

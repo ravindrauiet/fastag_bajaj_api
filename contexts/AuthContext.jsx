@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function - REGULAR USERS ONLY
-  const register = async ({ email, password, displayName }) => {
+  const register = async ({ email, password, displayName, ...additionalData }) => {
     try {
       setIsLoading(true);
       setError("");
@@ -135,13 +135,16 @@ export const AuthProvider = ({ children }) => {
         setUserInfo(result.user);
         setIsAuthenticated(true);
         
-        // Create user profile in Firestore
-        await createOrUpdateUser(result.user.uid, {
+        // Create user profile in Firestore with all user data
+        const userDataToSave = {
           email: result.user.email,
           displayName: displayName || result.user.displayName,
           createdAt: serverTimestamp(),
-          lastLogin: serverTimestamp()
-        });
+          lastLogin: serverTimestamp(),
+          ...additionalData // Include all additional user data (firstName, lastName, phone, etc.)
+        };
+        
+        await createOrUpdateUser(result.user.uid, userDataToSave);
         
         // Fetch the created profile
         await fetchUserProfile(result.user.uid);

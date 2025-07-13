@@ -58,11 +58,15 @@ const SignUpScreen = ({ navigation }) => {
     // First name validation
     if (!firstName.trim()) {
       newErrors.firstName = 'First name is required';
+    } else if (!/^[A-Za-z\s]+$/.test(firstName.trim())) {
+      newErrors.firstName = 'First name should contain only alphabetic characters';
     }
     
     // Last name validation
     if (!lastName.trim()) {
       newErrors.lastName = 'Last name is required';
+    } else if (!/^[A-Za-z\s]+$/.test(lastName.trim())) {
+      newErrors.lastName = 'Last name should contain only alphabetic characters';
     }
     
     // Email validation
@@ -79,15 +83,19 @@ const SignUpScreen = ({ navigation }) => {
       newErrors.phone = 'Phone number must be 10 digits';
     }
     
-    // Aadhar card validation
-    if (aadharCard && !/^\d{12}$/.test(aadharCard)) {
-      newErrors.aadharCard = 'Aadhar Card must be 12 digits';
-    }
+      // Aadhar card validation
+  if (!aadharCard) {
+    newErrors.aadharCard = 'Aadhar Card is required';
+  } else if (!/^\d{12}$/.test(aadharCard)) {
+    newErrors.aadharCard = 'Aadhar Card must be 12 digits';
+  }
     
-    // PAN card validation
-    if (panCard && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCard)) {
-      newErrors.panCard = 'Invalid PAN Card format (e.g., ABCDE1234F)';
-    }
+      // PAN card validation
+  if (!panCard) {
+    newErrors.panCard = 'PAN Card is required';
+  } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCard)) {
+    newErrors.panCard = 'Invalid PAN Card format (e.g., ABCDE1234F)';
+  }
     
     // Password validation
     if (!password) {
@@ -118,16 +126,17 @@ const SignUpScreen = ({ navigation }) => {
     
     setLoading(true);
     
-    try {
-      // Prepare user data
+        try {
+      // Prepare user data for registration
       const userData = {
+        email,
+        password,
+        displayName: `${firstName} ${lastName}`.trim(),
         firstName,
         lastName,
-        email,
         phone,
         aadharCard,
-        panCard,
-        password
+        panCard
       };
       
       // Use AuthContext register function with Firebase
@@ -145,7 +154,7 @@ const SignUpScreen = ({ navigation }) => {
         // Alert success and navigate to Login
         Alert.alert(
           'Registration Successful',
-          'Your account has been created successfully. Please log in.',
+          'Your account has been created successfully.',
           [
             { 
               text: 'OK', 

@@ -381,6 +381,27 @@ const CustomDrawerContent = (props) => {
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
         
+        <TouchableOpacity
+          style={styles.exitButton}
+          onPress={() => {
+            Alert.alert(
+              'Exit App',
+              'Are you sure you want to exit the app?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Exit', 
+                  onPress: () => BackHandler.exitApp(),
+                  style: 'destructive'
+                }
+              ]
+            );
+          }}
+        >
+          <Text style={styles.exitButtonIcon}>❌</Text>
+          <Text style={styles.exitButtonText}>Exit App</Text>
+        </TouchableOpacity>
+        
         <View style={styles.versionContainer}>
           <Text style={styles.versionText}>App Version 1.0.38</Text>
         </View>
@@ -543,7 +564,12 @@ const MainNavigator = () => {
   }
   
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      onStateChange={(state) => {
+        // Handle navigation state changes
+        console.log('Navigation state changed:', state);
+      }}
+    >
       {isAuthenticated ? (
         // User is authenticated, show main app flow
         <Drawer.Navigator
@@ -912,6 +938,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#6200EE',
+  },
+  exitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 15,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FFE5E5',
+  },
+  exitButtonIcon: {
+    fontSize: 18,
+    marginRight: 10,
+    color: '#FF3B30',
+  },
+  exitButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FF3B30',
   },
   versionContainer: {
     padding: 20,
